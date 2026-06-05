@@ -7,6 +7,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.4] - 2026-06-05
+
+### Añadido
+- Licencia MIT (`LICENSE`).
+- README principal: tabla de **Skills** (catálogo) y tabla de **Versiones**
+  (historial enlazado al CHANGELOG).
+- Badges en el README: License, Last commit, Top language y Bash.
+
 ## [0.2.3] - 2026-06-05
 
 ### Añadido
@@ -50,7 +58,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.3...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/bacsystem/skills/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bacsystem/skills/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bacsystem/skills/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bacsystem/skills/compare/v0.2.0...v0.2.1

@@ -50,12 +50,14 @@ check "1.4.0 feat"     1.5.0  1.4.0 feat
 check "1.4.0 breaking" 2.0.0  1.4.0 breaking
 check "1.4.0 major"    2.0.0  1.4.0 major
 check "v1.0.0 chore"   1.0.1  v1.0.0 chore
+check "1.4.0 feat!"    2.0.0  1.4.0 feat!
 
 # Errors (exit 2)
 check_err "malformed 1.2"     1.2 fix
 check_err "malformed abc"     abc fix
 check_err "unknown type frob" 1.2.3 frob
-check_err "missing args"      1.2.3
+check_err "too few args"      1.2.3
+check_err "too many args"     1.2.3 fix extra
 
 echo
 if [ "$fail" -eq 0 ]; then

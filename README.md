@@ -22,7 +22,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 
 | Skill | Descripción | Versión |
 |---|---|---|
-| [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) | `v0.2.3` |
+| [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) | `v0.2.4` |
 
 ## Estructura
 
@@ -48,6 +48,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.2.4`](https://github.com/bacsystem/skills/releases/tag/v0.2.4) | 2026-06-05 | Tablas de Skills y Versiones, badges y licencia MIT |
 | [`v0.2.3`](https://github.com/bacsystem/skills/releases/tag/v0.2.3) | 2026-06-05 | Script `next-version.sh` (bump SemVer) + primer runner de tests |
 | [`v0.2.2`](https://github.com/bacsystem/skills/releases/tag/v0.2.2) | 2026-06-05 | Paso «Verify», SemVer `0.x`, resolución de remoto, `verify-commands.md` |
 | [`v0.2.1`](https://github.com/bacsystem/skills/releases/tag/v0.2.1) | 2026-06-05 | Workflow `auto-tag` + READMEs + badges |

@@ -34,15 +34,16 @@ PR), pausing for your confirmation at the review, doc-update, and PR steps.
 
 ## What it does
 
-1. **Detect context** — changes, version files, `gh` auth.
+1. **Detect context** — changes, version files, push remote, `gh` auth.
 2. **Classify** — one Conventional Commit type + SemVer bump.
 3. **Create branch** — `type/description` (e.g. `feat/login-form`).
 4. **Code review** — bugs, conventions, simplifications.
-5. **Compute version** — per source precedence, apply the bump.
-6. **Update docs** — CHANGELOG, version files, README (shown before staging).
-7. **Stage & commit** — Conventional Commit message in English.
-8. **Push & PR** — builds the body from the template, asks before creating.
-9. **Tag after merge** — `vX.Y.Z` on `main` (automated by CI in this repo).
+5. **Verify** — run the project's test/lint command; stop if it fails.
+6. **Compute version** — per source precedence, apply the bump.
+7. **Update docs** — CHANGELOG, version files, README (shown before staging).
+8. **Stage & commit** — Conventional Commit message in English.
+9. **Push & PR** — builds the body from the template, asks before creating.
+10. **Tag after merge** — `vX.Y.Z` on `main`.
 
 ## Conventions
 
@@ -56,10 +57,17 @@ PR), pausing for your confirmation at the review, doc-update, and PR steps.
 
 ## Tagging
 
-In this repository, step 9 is automated: the
-[`auto-tag` workflow](../.github/workflows/auto-tag.yml) reads the latest version
-from `CHANGELOG.md` and creates the matching `vX.Y.Z` tag when changes land on
-`main`. You do not need to tag manually.
+This repository ships an [`auto-tag` workflow](../.github/workflows/auto-tag.yml)
+that reads the latest version from `CHANGELOG.md` and creates the matching
+`vX.Y.Z` tag when changes land on `main`.
+
+> **Heads-up:** the workflow only runs where GitHub Actions is enabled. While
+> Actions is unavailable (e.g. an org with billing disabled), the tag is **not**
+> created automatically — tag manually after merge:
+>
+> ```bash
+> git tag -a vX.Y.Z -m "vX.Y.Z" && git push <remote> vX.Y.Z
+> ```
 
 ## Files
 

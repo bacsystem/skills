@@ -7,6 +7,20 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.2] - 2026-06-05
+
+### Añadido
+- Skill `git-flow`: paso «Verify» que ejecuta el comando de test/lint del
+  proyecto antes de commitear y se detiene si falla.
+
+### Corregido
+- SemVer pre-1.0 (`0.x`): un cambio incompatible sube la *minor* y el resto la
+  *patch* (antes `feat` subía la minor, sobre-versionando proyectos 0.x).
+- El flujo ya no asume el remoto `origin`: lo resuelve con `git remote -v`
+  (soporta remotos con alias SSH).
+- README de `git-flow`: el auto-tag se documenta como condicional a que GitHub
+  Actions esté habilitado, con instrucción de tag manual mientras tanto.
+
 ## [0.2.1] - 2026-06-05
 
 ### Añadido
@@ -25,7 +39,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.1...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/bacsystem/skills/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bacsystem/skills/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bacsystem/skills/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bacsystem/skills/releases/tag/v0.1.0

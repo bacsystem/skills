@@ -73,10 +73,11 @@ Run in order. Stop and report if a precondition fails.
    If already on a work branch, keep it.
 4. **Code review** — review the diff for bugs, convention issues, and
    simplifications. Show findings; continue after the user's OK.
-5. **Verify** — detect the project's test/lint command (`package.json` scripts,
-   `Makefile`, `pyproject.toml`/`tox`, `go test`, etc.) and run it. **Stop and
-   report if it fails;** continue once green. If the project has no test/lint
-   setup, say so and move on — don't fabricate a command.
+5. **Verify** — detect the project's test/lint command and run it (see
+   `references/verify-commands.md` for the per-ecosystem mapping). Prefer a
+   command the repo already defines (scripts, `Makefile` targets, CI) over a
+   generic guess. **Stop and report if it fails;** continue once green. If the
+   project has no test/lint setup, say so and move on — don't fabricate a command.
 6. **Compute version** — read current version per precedence, apply the bump.
 7. **Validate & update docs** — list the files to update and **show the user
    before staging**:

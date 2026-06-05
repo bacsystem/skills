@@ -73,6 +73,7 @@ that reads the latest version from `CHANGELOG.md` and creates the matching
 
 - [`SKILL.md`](./SKILL.md) — the full skill definition (the authoritative spec).
 - [`references/pr-template.md`](./references/pr-template.md) — PR body template.
+- [`references/verify-commands.md`](./references/verify-commands.md) — per-ecosystem test/lint commands for the Verify step.
 
 ## Installation
 

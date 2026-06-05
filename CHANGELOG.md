@@ -12,6 +12,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Skill `git-flow`: paso «Verify» que ejecuta el comando de test/lint del
   proyecto antes de commitear y se detiene si falla.
+- Referencia `git-flow/references/verify-commands.md`: mapa de comandos de
+  test/lint por ecosistema (Node, Python, Go, Rust, etc.) para el paso «Verify».
 
 ### Corregido
 - SemVer pre-1.0 (`0.x`): un cambio incompatible sube la *minor* y el resto la

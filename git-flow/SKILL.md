@@ -78,7 +78,10 @@ Run in order. Stop and report if a precondition fails.
    command the repo already defines (scripts, `Makefile` targets, CI) over a
    generic guess. **Stop and report if it fails;** continue once green. If the
    project has no test/lint setup, say so and move on — don't fabricate a command.
-6. **Compute version** — read current version per precedence, apply the bump.
+6. **Compute version** — read current version per precedence, then apply the
+   bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
+   implementation of the SemVer table, including the `0.x` rule). The
+   Conventions table stays the human-readable reference.
 7. **Validate & update docs** — list the files to update and **show the user
    before staging**:
    - `CHANGELOG.md`: add `## [X.Y.Z] - YYYY-MM-DD` with the right section

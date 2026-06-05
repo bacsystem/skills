@@ -46,7 +46,7 @@ Skip when: the user only wants a quick local commit with no review/PR.
   If no source records a version, start from `0.1.0` and create `CHANGELOG.md`.
 - **Staging:** only stage the reviewed files plus the docs you updated. Never
   `git add -A` / `git add .` blindly.
-- **"Changes" = ** tracked modifications (staged or unstaged) and/or new files.
+- **Changes** = tracked modifications (staged or unstaged) and/or new files.
   Whitespace-only or no changes → stop.
 
 ## Workflow

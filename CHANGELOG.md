@@ -10,7 +10,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.2.0] - 2026-06-05
 
 ### Añadido
-- Skill `git-flow`: flujo guiado de entrega (rama `tipo/descripcion`, code review, Conventional Commits, SemVer automático y PR) con plantilla de PR en `references/`.
+- Skill `git-flow`: flujo guiado de entrega (rama `tipo/descripcion`, code review, Conventional Commits, SemVer automático y PR) con plantilla de PR en `git-flow/references/pr-template.md`.
 - Documento de diseño de la skill `git-flow` en `docs/superpowers/specs/`.
 
 ## [0.1.0] - 2026-06-05

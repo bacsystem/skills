@@ -7,6 +7,15 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.3] - 2026-06-05
+
+### Añadido
+- Script `git-flow/scripts/next-version.sh`: calcula la próxima versión SemVer
+  a partir de `(versión actual, tipo de commit)`, encapsulando la regla 0.x.
+  Es función pura y testeable; el skill lo usa en el paso «Compute version».
+- Runner de tests `git-flow/scripts/test-next-version.sh` (bash sin
+  dependencias): primer conjunto de tests del repo.
+
 ## [0.2.2] - 2026-06-05
 
 ### Añadido
@@ -41,7 +50,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.2...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/bacsystem/skills/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bacsystem/skills/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bacsystem/skills/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bacsystem/skills/compare/v0.1.0...v0.2.0

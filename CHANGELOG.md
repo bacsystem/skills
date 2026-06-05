@@ -7,6 +7,12 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.1] - 2026-06-05
+
+### Añadido
+- GitHub Action `auto-tag`: crea el tag `vX.Y.Z` automáticamente al mergear a `main`, leyendo la versión del `CHANGELOG.md`.
+- README de la skill `git-flow` (`git-flow/README.md`).
+
 ## [0.2.0] - 2026-06-05
 
 ### Añadido
@@ -18,6 +24,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.0...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bacsystem/skills/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bacsystem/skills/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bacsystem/skills/releases/tag/v0.1.0

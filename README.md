@@ -18,9 +18,9 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 
 ## Skills
 
-| Skill | Descripción | Versión |
-|---|---|---|
-| [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) | `v0.2.4` |
+| Skill | Descripción |
+|---|---|
+| [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
 
 ## Estructura
 

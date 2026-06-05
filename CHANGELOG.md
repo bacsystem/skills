@@ -7,6 +7,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.6] - 2026-06-05
+
+### Cambiado
+- Tabla **Skills** del README: se quita la columna «Versión». Para un repo de un
+  solo skill cuya versión coincide con la del repo, esa celda duplicaba info y
+  se desincronizaba en cada release docs-only. La versión vive en el badge, la
+  tabla de Versiones y los tags.
+
 ## [0.2.5] - 2026-06-05
 
 ### Eliminado
@@ -66,7 +74,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.5...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/bacsystem/skills/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/bacsystem/skills/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bacsystem/skills/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bacsystem/skills/compare/v0.2.2...v0.2.3

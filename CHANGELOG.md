@@ -7,6 +7,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.5] - 2026-06-05
+
+### Eliminado
+- Badges `auto-tag` y `Top language` del README principal: el primero queda en
+  rojo mientras GitHub Actions esté deshabilitado (billing de la org); el
+  segundo renderiza de forma intermitente el error de pool de tokens de
+  shields.io. El badge `Bash` ya comunica el stack.
+
 ## [0.2.4] - 2026-06-05
 
 ### Añadido
@@ -58,7 +66,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.4...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/bacsystem/skills/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bacsystem/skills/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bacsystem/skills/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bacsystem/skills/compare/v0.2.1...v0.2.2

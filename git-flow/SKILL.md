@@ -30,7 +30,8 @@ Skip when: the user only wants a quick local commit with no review/PR.
 | SemVer (≥ 1.0) | `feat` → minor · `fix` → patch · `BREAKING CHANGE` (or `!`) → major |
 | Other types | `docs`/`style`/`refactor`/`perf`/`test`/`build`/`ci`/`chore` → patch |
 | SemVer (`0.x`) | `BREAKING` → minor (`0.y`→`0.(y+1)`, resets patch) · everything else → patch |
-| Tag | Created **after** the PR merges to `main`, not on the branch |
+| PR base | `develop` if that branch exists (local or on the remote), else `main` |
+| Tag | Created **after** the PR merges, and only if that merge's base was `main` — a merge into `develop` is not a release, see step 10 |
 | PR | Via `gh`, **ask before creating** |
 
 ## Rules & tie-breakers
@@ -65,7 +66,10 @@ Run in order. Stop and report if a precondition fails.
 
 1. **Detect context** — `git status` / `git diff`; stop if no changes. Detect
    version files (`package.json`, `VERSION`, `CHANGELOG.md`, `README.md`).
-   Resolve the push remote (`git remote -v`; see the Remote rule). Check
+   Resolve the push remote (`git remote -v`; see the Remote rule). Detect
+   whether a `develop` branch exists (`git show-ref --verify --quiet
+   refs/heads/develop` or `refs/remotes/<remote>/develop`) — if so, it's the
+   PR base for this run (GitFlow repo); otherwise the base is `main`. Check
    `gh auth status`.
 2. **Classify** — pick the one Conventional Commit type and the SemVer bump
    (see Conventions + tie-breakers).
@@ -93,17 +97,25 @@ Run in order. Stop and report if a precondition fails.
    in English. Scope optional (derive from path only if obvious).
 9. **Push & PR (ask first)** — `git push -u <remote> <branch>` (the remote
    resolved in step 1). Build the PR body from `references/pr-template.md` (if
-   missing, use a minimal Summary/Changes/Version body). PR base `main`,
-   title = commit subject. **Show the body and ask before creating.** On
-   confirmation: `gh pr create`. If `gh` is unavailable, output the body and the
-   compare URL instead.
-10. **Tag after merge** — once the PR is merged to `main`:
-    `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push <remote> vX.Y.Z`. Skip if the
-    tag already exists.
+   missing, use a minimal Summary/Changes/Version body). PR base is the branch
+   resolved in step 1 (`develop` if it exists, else `main`), title = commit
+   subject. **Show the body and ask before creating.** On confirmation:
+   `gh pr create --base <resolved base>`. If `gh` is unavailable, output the
+   body and the compare URL instead.
+10. **Tag after merge** — once the PR is merged, tag **only if its base was
+    `main`**: `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push <remote> vX.Y.Z`.
+    Skip if the tag already exists. If the base was `develop`, don't tag here —
+    that merge is an integration step, not a release; the tag happens later
+    when `develop` is promoted to `main` (release/hotfix branch), which is
+    outside this skill's scope.
 
 ## Common Mistakes
 
 - **Tagging on the feature branch** — the tag goes on `main` after merge (step 10).
+- **Tagging a `develop` merge** — only tag when the PR's base was `main`; a merge into
+  `develop` is an integration step, not a release.
+- **Hardcoding PR base to `main`** — detect a `develop` branch first (step 1); GitFlow
+  repos merge feature branches into `develop`, not `main`.
 - **Committing on `main`** — branch first (step 3) unless already on a work branch.
 - **Assuming `package.json`** — follow the version-source precedence; detect first.
 - **Hardcoding `origin`** — resolve the real remote (step 1); some repos use an SSH-alias remote.

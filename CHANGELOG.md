@@ -7,6 +7,15 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.7] - 2026-07-04
+
+### Corregido
+- `git-flow/SKILL.md`: el paso 9 fijaba la base del PR en `main` sin condición.
+  Ahora el paso 1 detecta si existe una rama `develop` (local o en el remoto) y,
+  si existe, esa es la base del PR — para repos que siguen GitFlow con rama
+  `develop`. El paso 10 (tag post-merge) solo taguea si la base fue `main`; un
+  merge a `develop` es un paso de integración, no un release.
+
 ## [0.2.6] - 2026-06-05
 
 ### Cambiado

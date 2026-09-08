@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Use when reviewing a pull request or a set of changes against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
+description: Use when reviewing a pull request or a set of changes — your own or someone else's — against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
 ---
 
 # pr-review
@@ -21,6 +21,27 @@ It reviews and reports. It never edits files, commits, or merges.
 
 Skip when: the user wants the fixes *applied* — that is a separate task
 requiring their explicit go-ahead after this review.
+
+Works the same for the user's own PRs and for someone else's — authorship
+never softens or sharpens a finding.
+
+## Invocation
+
+```
+/pr-review <target> [--es|--en] [--comment]
+```
+
+| Flag | Effect |
+|---|---|
+| `--es` / `-es` | Report in Spanish. **Default when no language flag is given.** |
+| `--en` / `-en` | Report in English. |
+| `--comment` | After showing the report, offer to post it on the GitHub PR. |
+
+Without `--comment` the report stays in the terminal — nothing is posted.
+
+The section headers and verdict values are fixed per language (see **Output
+format**); the flag switches which set is used, for both the terminal output
+and the posted comment.
 
 ## Getting the diff
 
@@ -94,7 +115,8 @@ repository.
 - No hardcoded values that belong in configuration — style values (colors,
   spacing, typography), URLs, timeouts, magic numbers.
 - **No secrets in the diff** — keys, tokens, connection strings, credentials.
-  This is always `BLOQUEANTE`.
+  This is always the blocking severity. Name the file and line, never quote
+  the secret's value — the report may end up in a public PR comment.
 - Security: input validation at trust boundaries, authorization checks not
   bypassable, no injection-prone string building.
 - Consistency with the repository's existing patterns — a PR that invents a
@@ -102,15 +124,20 @@ repository.
 
 ## Severity
 
-| Level | Meaning |
-|---|---|
-| `BLOQUEANTE` | Breaks correctness, security, or data integrity. Must not merge. |
-| `IMPORTANTE` | Real defect or design problem. Should be fixed in this PR. |
-| `MENOR` | Worth improving, does not block the merge. |
+| `--es` | `--en` | Meaning |
+|---|---|---|
+| `BLOQUEANTE` | `BLOCKER` | Breaks correctness, security, or data integrity. Must not merge. |
+| `IMPORTANTE` | `IMPORTANT` | Real defect or design problem. Should be fixed in this PR. |
+| `MENOR` | `MINOR` | Worth improving, does not block the merge. |
+
+An unverified but plausible finding is marked `[POSIBLE]` / `[POSSIBLE]`.
 
 ## Output format
 
-Always these three sections, in this order:
+Always these three sections, in this order. Use the wording matching the
+language flag (`--es` is the default).
+
+**Spanish (`--es`):**
 
 ```
 ## ✅ Lo que está bien
@@ -125,13 +152,58 @@ Always these three sections, in this order:
 APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
 ```
 
-Verdict rules:
+**English (`--en`):**
 
-- Any `BLOQUEANTE` → `REQUIERE CORRECCIONES`.
-- Any `IMPORTANTE`, no blockers → `APROBADO CON CAMBIOS`.
-- Only `MENOR` findings, or none → `APROBADO`.
+```
+## ✅ What's done well
+- [file:line] — which concrete decision in the diff is well resolved, and why
+
+## ⚠️ Must be fixed
+- [BLOCKER] [file:line] — the defect, its concrete consequence, and the change that resolves it
+- [IMPORTANT] [file:line] — same
+- [MINOR] [file:line] — same
+
+## Verdict
+APPROVED | APPROVED WITH CHANGES | CHANGES REQUIRED
+```
+
+Verdict rules (identical in both languages):
+
+- Any blocker → `REQUIERE CORRECCIONES` / `CHANGES REQUIRED`.
+- Any important, no blockers → `APROBADO CON CAMBIOS` / `APPROVED WITH CHANGES`.
+- Only minor findings, or none → `APROBADO` / `APPROVED`.
 
 Order findings most severe first.
+
+## Posting to the PR (`--comment`)
+
+Only when `--comment` was passed. Without it, the report stays in the terminal
+and nothing is posted.
+
+1. **Confirm the target before posting.** Run `gh pr view <target> --json
+   number,title,url,author` and show the user the repo, PR number, title and
+   author you are about to comment on. A comment on a public PR — especially
+   someone else's — cannot be cleanly unpublished.
+2. **Show the exact comment body** and ask for explicit confirmation. A bare
+   "yes" to the review itself is not consent to post it.
+3. On confirmation, post it as a single issue comment:
+   `gh pr comment <target> --body-file <path>`
+   Write the body to a temp file rather than inlining it — review bodies
+   contain backticks, quotes and newlines that break shell escaping.
+4. Report the resulting comment URL from `gh`'s output.
+5. If `gh` is unavailable or unauthenticated, say so and print the body for
+   the user to paste manually. Never fail silently.
+
+The posted comment is the same three sections, prefixed with one line naming
+what was reviewed:
+
+```
+Code review de `<base>...<head>` — Clean Code, SOLID, DRY y buenas prácticas.
+```
+
+Post **one** comment per review. Never open a GitHub *review* with
+approve/request-changes state — the verdict is text in the comment, not a
+GitHub approval. Approving a PR is the human's call.
 
 ## Rules
 
@@ -144,9 +216,15 @@ Order findings most severe first.
   valid result and reporting it honestly is the point of the review.
 - **Never edit, commit, push, or merge.** If the user wants the fixes applied,
   that is a new task and needs their explicit go-ahead.
-- Works regardless of the repository's language — the axes are language-neutral,
-  the idioms are not. Judge against the conventions of the language and
-  framework actually in the diff.
+- **Never post without `--comment` and an explicit confirmation.** Publishing
+  to a PR is outward-facing and, on someone else's PR, public.
+- **Same standard regardless of authorship.** The user's own PR gets the same
+  scrutiny as a stranger's; a third party's PR gets the same fairness as the
+  user's. When commenting on someone else's PR, address the change, never the
+  person.
+- Works regardless of the repository's programming language — the axes are
+  language-neutral, the idioms are not. Judge against the conventions of the
+  language and framework actually in the diff.
 
 ## Common Mistakes
 
@@ -159,3 +237,11 @@ Order findings most severe first.
 - **Findings without `file:line`** or without a concrete consequence.
 - **Applying fixes mid-review** — this skill reports only.
 - **Reviewing the whole repository** instead of the change.
+- **Posting without `--comment`**, or posting on a bare "yes" that only
+  approved the review, not its publication.
+- **Mixing languages** — the whole report follows one flag; the default is
+  Spanish.
+- **Quoting a secret's value** in a finding that may be posted publicly — cite
+  the location, not the value.
+- **Opening a GitHub review with approve/request-changes** instead of a plain
+  comment — the verdict is text, not a GitHub approval.

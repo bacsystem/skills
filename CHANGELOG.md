@@ -10,13 +10,20 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.2.8] - 2026-09-08
 
 ### Añadido
-- Skill `pr-review`: code review de un pull request contra cuatro ejes (Clean
-  Code, SOLID, DRY y buenas prácticas de desarrollo), con salida en tres
-  secciones fijas — lo que está bien, lo que debe corregirse (con severidad
-  `BLOQUEANTE`/`IMPORTANTE`/`MENOR`) y un veredicto explícito. Cada hallazgo
-  exige `archivo:línea` y una consecuencia concreta; cero hallazgos es un
-  resultado válido. El skill solo revisa y reporta: nunca edita, commitea ni
-  mergea.
+- Skill `pr-review`: code review de un pull request —propio o de terceros—
+  contra cuatro ejes (Clean Code, SOLID, DRY y buenas prácticas de desarrollo),
+  con salida en tres secciones fijas: lo que está bien, lo que debe corregirse
+  (con severidad `BLOQUEANTE`/`IMPORTANTE`/`MENOR`) y un veredicto explícito.
+  Cada hallazgo exige `archivo:línea` y una consecuencia concreta; cero
+  hallazgos es un resultado válido. El skill solo revisa y reporta: nunca
+  edita, commitea ni mergea.
+- Flags de idioma `--es`/`--en` (por defecto español) que cambian los
+  encabezados, las severidades y el veredicto del reporte.
+- Flag `--comment` para publicar el review como comentario en el PR de GitHub
+  (`gh pr comment`), mostrando antes el PR objetivo y el cuerpo exacto y
+  pidiendo confirmación explícita. Sin el flag, el reporte queda solo en
+  consola. Publica un comentario plano: nunca abre un review de GitHub con
+  estado approve/request-changes.
 
 ## [0.2.7] - 2026-07-04
 

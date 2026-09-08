@@ -7,6 +7,17 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.8] - 2026-09-08
+
+### Añadido
+- Skill `pr-review`: code review de un pull request contra cuatro ejes (Clean
+  Code, SOLID, DRY y buenas prácticas de desarrollo), con salida en tres
+  secciones fijas — lo que está bien, lo que debe corregirse (con severidad
+  `BLOQUEANTE`/`IMPORTANTE`/`MENOR`) y un veredicto explícito. Cada hallazgo
+  exige `archivo:línea` y una consecuencia concreta; cero hallazgos es un
+  resultado válido. El skill solo revisa y reporta: nunca edita, commitea ni
+  mergea.
+
 ## [0.2.7] - 2026-07-04
 
 ### Corregido
@@ -83,7 +94,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.6...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.8...HEAD
+[0.2.8]: https://github.com/bacsystem/skills/compare/v0.2.7...v0.2.8
+[0.2.7]: https://github.com/bacsystem/skills/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/bacsystem/skills/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/bacsystem/skills/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bacsystem/skills/compare/v0.2.3...v0.2.4

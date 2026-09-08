@@ -21,6 +21,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 | Skill | Descripción |
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
+| [`pr-review`](./pr-review) | Code review de un PR contra Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito: lo que está bien y lo que hay que corregir |
 
 ## Estructura
 
@@ -46,6 +47,10 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.2.8`](https://github.com/bacsystem/skills/releases/tag/v0.2.8) | 2026-09-08 | Skill `pr-review` (Clean Code, SOLID, DRY y buenas prácticas) |
+| [`v0.2.7`](https://github.com/bacsystem/skills/releases/tag/v0.2.7) | 2026-07-04 | Base del PR según exista `develop`; tag solo en merges a `main` |
+| [`v0.2.6`](https://github.com/bacsystem/skills/releases/tag/v0.2.6) | 2026-06-05 | Tabla de Skills sin columna «Versión» |
+| [`v0.2.5`](https://github.com/bacsystem/skills/releases/tag/v0.2.5) | 2026-06-05 | Limpieza de badges inestables en el README |
 | [`v0.2.4`](https://github.com/bacsystem/skills/releases/tag/v0.2.4) | 2026-06-05 | Tablas de Skills y Versiones, badges y licencia MIT |
 | [`v0.2.3`](https://github.com/bacsystem/skills/releases/tag/v0.2.3) | 2026-06-05 | Script `next-version.sh` (bump SemVer) + primer runner de tests |
 | [`v0.2.2`](https://github.com/bacsystem/skills/releases/tag/v0.2.2) | 2026-06-05 | Paso «Verify», SemVer `0.x`, resolución de remoto, `verify-commands.md` |

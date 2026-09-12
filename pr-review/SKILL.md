@@ -74,7 +74,14 @@ what you could not verify. Never present a guess as a confirmed defect.
 ## Evaluation axes
 
 Review against all four. Judge the code as changed by this PR, not the whole
-repository.
+repository. Also check these two references — they supplement, never
+replace, the four axes below:
+
+- `references/case-studies.md` — cross-cutting finding patterns learned
+  from real reviews (how to catch a defect shape, regardless of language).
+- `references/language-idioms.md` — known pitfalls specific to a language
+  or framework. Check the section for the language actually in the diff, if
+  one exists.
 
 ### 1. Clean Code
 
@@ -84,6 +91,9 @@ repository.
 - Nesting depth stays readable; guard clauses over nested conditionals.
 - Comments explain **why**, not **what**. A comment restating the code is
   noise; a comment explaining a non-obvious decision is valuable.
+- A comment's claim about what the code does or fixes must be verified, not
+  assumed true — cross-check it against other evidence in the diff (a test,
+  another file's comment). See `references/case-studies.md`.
 - Errors are handled explicitly — no silent catch, no ignored return value.
 - No dead code, commented-out blocks, or leftover debug output.
 
@@ -225,6 +235,27 @@ GitHub approval. Approving a PR is the human's call.
 - Works regardless of the repository's programming language — the axes are
   language-neutral, the idioms are not. Judge against the conventions of the
   language and framework actually in the diff.
+
+## Growing this skill
+
+After a real review surfaces something worth keeping, add it to the file
+that matches its shape — don't add findings that are project-specific,
+one-off, or already covered by an existing entry or axis bullet:
+
+- **A finding technique or defect shape that applies across languages**
+  (e.g. "verify a comment's claim against other evidence in the same
+  diff") → `references/case-studies.md`. Short, generalized entry: pattern
+  name, axis, what to watch for, how to verify it, one abstracted example
+  — no project/PR-specific names.
+- **A pitfall specific to one language or framework** (e.g. "Go: ignored
+  error from `os.Create`", "Next.js: function prop crossing the
+  Server→Client boundary") → `references/language-idioms.md`, under that
+  language's heading (add the heading if it's the first entry for that
+  language). Short bullet: pattern name, what to look for, the concrete
+  consequence.
+
+Both files grow over time — skim them during every review, not just after
+writing to them.
 
 ## Common Mistakes
 

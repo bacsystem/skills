@@ -55,7 +55,10 @@ verdict is text, and approving a PR stays your call.
 | **Clean Code** | Intent-revealing names, single-purpose functions, nesting, comments that explain *why*, explicit error handling, dead code |
 | **SOLID** | One reason to change, extension over modification, contract-honoring implementations, cohesive interfaces, depending on abstractions across layers |
 | **DRY** | Real duplication that must be extracted — distinguished from coincidental similarity |
-| **Best practices** | Test coverage of the change, hardcoded values, secrets, security at trust boundaries, consistency with existing repo patterns |
+| **Best practices** | Test coverage of the change — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with existing repo patterns |
+
+Before reading the diff it reads the repo's own conventions (`CLAUDE.md`,
+`AGENTS.md`, `CONTRIBUTING.md`, QA docs) and judges the PR against them.
 
 ## Output
 
@@ -64,16 +67,33 @@ verdict is text, and approving a PR stays your call.
 - [archivo:línea] — qué decisión concreta está bien resuelta y por qué
 
 ## ⚠️ Debe corregirse
-- [BLOQUEANTE] [archivo:línea] — el defecto, su consecuencia, y el cambio que lo resuelve
-- [IMPORTANTE] [archivo:línea] — ídem
-- [MENOR] [archivo:línea] — ídem
+- **H1** [BLOQUEANTE] [archivo:línea] — el defecto, su consecuencia, y el cambio que lo resuelve. *Lo demuestra:* el test que falla mientras exista.
+- **H2** [IMPORTANTE] [archivo:línea] — ídem
+- **H3** [MENOR] [archivo:línea] — ídem
+
+## 📌 Seguimiento          (opcional)
+- [archivo:línea] — mejora real fuera del alcance de esta PR; no cuenta para el veredicto
 
 ## Veredicto
 APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
 ```
 
-With `--en`, the same three sections come back as *What's done well* /
-*Must be fixed* / *Verdict*.
+With `--en`, the same sections come back as *What's done well* / *Must be
+fixed* / *Follow-ups* / *Verdict*, with IDs `F1`, `F2`…
+
+**Finding IDs** stay stable across reviews, so "fix H2" means one thing and
+the next review can report H2 as resolved.
+
+### Re-review mode
+
+When the PR was already reviewed (earlier in the conversation, or in a
+previous review comment), the report opens with a **previous findings** table
+— each ID resolved, partial or dropped, with evidence — and then reviews
+only the commits added since. A fix that introduces a new problem gets a new
+ID. "Resolved" needs evidence, not the commit message's word for it.
+
+On large diffs (roughly 15+ files) the review goes layer by layer and ends
+with `Archivos revisados: N/N`, so a skipped file is visible.
 
 | `--es` | `--en` | Meaning | Verdict |
 |---|---|---|---|
@@ -99,6 +119,11 @@ With `--en`, the same three sections come back as *What's done well* /
 ## Files
 
 - [`SKILL.md`](./SKILL.md) — the full skill definition (the authoritative spec).
+- [`references/case-studies.md`](./references/case-studies.md) — finding
+  patterns learned from real reviews, independent of language.
+- [`references/language-idioms.md`](./references/language-idioms.md) —
+  pitfalls per language or framework (Go, Python, TypeScript/Next.js,
+  Java/Spring).
 
 ## Installation
 

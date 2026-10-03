@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Use when reviewing a pull request or a set of changes — your own or someone else's — against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
+description: Use when reviewing a pull request or a set of changes — your own or someone else's — against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
 ---
 
 # pr-review
@@ -43,6 +43,19 @@ The section headers and verdict values are fixed per language (see **Output
 format**); the flag switches which set is used, for both the terminal output
 and the posted comment.
 
+## Before reading the diff
+
+1. **Read the repository's own conventions** — `CLAUDE.md`, `AGENTS.md`,
+   `CONTRIBUTING.md`, and any QA/testing doc the repo points to. Judge the PR
+   against what this repo established (branch targets, test bar, commit
+   style, layering rules), not against a generic ideal. A PR that breaks a
+   documented repo rule is a finding; one that ignores a rule the repo never
+   adopted is not.
+2. **Check whether this is a re-review.** If this PR was already reviewed —
+   earlier in the conversation, or in a previous review comment on the PR
+   (`gh pr view <n> --comments`) — use **Re-review mode** (below) instead of
+   starting from zero.
+
 ## Getting the diff
 
 Ask which target if none was given. Never guess.
@@ -59,6 +72,32 @@ is ambiguous (a changed function whose callers are off-diff, a new abstraction
 whose purpose depends on existing code), open the surrounding file — a finding
 based on a misread of partial context is a false positive, and false positives
 cost more trust than a missed nitpick.
+
+**Large diffs** (roughly 15+ files): group the files by layer or module and
+review one group at a time, so no file is skimmed because it came late. End
+the report with one line listing how many files were reviewed out of how many
+changed — a file left unread must be visible, not silently skipped.
+
+## Re-review mode
+
+A second or third pass on the same PR, after its author applied fixes. The
+point is to close the loop, not to re-judge everything from scratch:
+
+1. **Previous findings first.** Open the report with a table of every finding
+   from the last review, by its ID: resolved, partially resolved, or not
+   resolved — each with the evidence (the commit, the `file:line`, the test
+   that now covers it). "Resolved" needs evidence; the author saying so is not
+   evidence.
+2. **Review the new commits** (`git log <last-reviewed-sha>..HEAD`, or the
+   commits since the previous review comment). A fix is new code: check it
+   against the four axes like any other change. A fix that introduces a new
+   defect — a misleading doc line, a weaker test, a regression elsewhere — is
+   a new finding with its own ID.
+3. **Don't repeat the previous "done well"** unless the new commits changed
+   it. Praise only what the new commits did well.
+4. Findings that were deliberately left out (the author argued against them,
+   or they moved to a follow-up) are listed as such in the table, with the
+   reason — not silently dropped and not re-reported as new.
 
 ## The evidence rule
 
@@ -122,6 +161,24 @@ replace, the four axes below:
 
 - Tests cover the change: new behavior has a test, fixed bugs have a
   regression test. Tests assert real outcomes, not that the mock was called.
+- **Tests discriminate.** Coverage is not enough: a test can run the new code
+  and still pass with it broken. Pick the one or two tests that guard the
+  riskiest part of the change (authorization, money, data integrity, the
+  bug being fixed) and name the production change that would make each one
+  fail. If you can't name one — the test asserts something the change doesn't
+  control, passes for an unrelated reason, or only checks that a call
+  happened — that is a finding. When you can run the tests, break the code
+  on purpose and watch the test go red instead of reasoning about it.
+- **Fakes, mocks and clients match the real contract.** When the diff adds or
+  changes a mock, a fake repository, an API client or a fixture, compare it
+  with the real thing it stands for (the endpoint, the schema, the sibling
+  PR that implements it): field names and casing, error codes, what is
+  persisted and what is not. A mock that accepts what the real service
+  rejects makes the tests green on a path that fails in production.
+- **Claims in the PR description and docs are verified.** Test counts,
+  "N/N mutations", "tested in Docker", "no behavior change" — cross-check
+  them against the reports, the test diff or the commands shown. A number
+  nobody can reproduce from the evidence is a finding.
 - No hardcoded values that belong in configuration — style values (colors,
   spacing, typography), URLs, timeouts, magic numbers.
 - **No secrets in the diff** — keys, tokens, connection strings, credentials.
@@ -144,38 +201,80 @@ An unverified but plausible finding is marked `[POSIBLE]` / `[POSSIBLE]`.
 
 ## Output format
 
-Always these three sections, in this order. Use the wording matching the
-language flag (`--es` is the default).
+Always the three core sections — done well, must be fixed, verdict — in this
+order. Two optional sections frame them: **previous findings** (only in
+re-review mode, first) and **follow-ups** (only when there is a real one,
+after the corrections). Use the wording matching the language flag (`--es` is
+the default).
+
+**Every finding gets an ID** (`H1`, `H2`… in Spanish, `F1`, `F2`… in English),
+numbered in report order and kept across re-reviews: the user asks to fix
+"H2", and the next review reports H2 as resolved. A new finding in a later
+pass takes the next free number, never a reused one.
+
+**Each finding says how to prove it**: the test (existing or to write) that
+fails while the defect is there. That gives the fix a red test to start from.
+If no automated test can show it (a misleading doc line, a naming issue), say
+what to check instead.
 
 **Spanish (`--es`):**
 
 ```
+## 🔁 Hallazgos anteriores          ← solo en re-revisión
+| ID | Estado | Evidencia |
+|---|---|---|
+| H1 | ✅ Resuelto | commit abc123, `archivo:línea`, test `nombreDelTest` |
+| H2 | ⚠️ Parcial | qué falta |
+| H3 | ➖ Descartado | por qué se dejó fuera (argumento del autor o pasó a seguimiento) |
+
 ## ✅ Lo que está bien
 - [archivo:línea] — qué decisión concreta del diff está bien resuelta y por qué
 
 ## ⚠️ Debe corregirse
-- [BLOQUEANTE] [archivo:línea] — el defecto, su consecuencia concreta, y el cambio que lo resuelve
-- [IMPORTANTE] [archivo:línea] — ídem
-- [MENOR] [archivo:línea] — ídem
+- **H1** [BLOQUEANTE] [archivo:línea] — el defecto, su consecuencia concreta, y el cambio que lo resuelve. *Lo demuestra:* el test que falla mientras exista.
+- **H2** [IMPORTANTE] [archivo:línea] — ídem
+- **H3** [MENOR] [archivo:línea] — ídem
+
+## 📌 Seguimiento                    ← opcional
+- [archivo:línea] — mejora real pero fuera del alcance de esta PR; no se corrige aquí y no cuenta para el veredicto.
 
 ## Veredicto
 APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
+Archivos revisados: N/N             ← en diffs grandes
 ```
 
 **English (`--en`):**
 
 ```
+## 🔁 Previous findings              ← re-review only
+| ID | Status | Evidence |
+|---|---|---|
+| F1 | ✅ Resolved | commit abc123, `file:line`, test `testName` |
+| F2 | ⚠️ Partial | what is still missing |
+| F3 | ➖ Dropped | why it was left out (author's argument, or moved to follow-up) |
+
 ## ✅ What's done well
 - [file:line] — which concrete decision in the diff is well resolved, and why
 
 ## ⚠️ Must be fixed
-- [BLOCKER] [file:line] — the defect, its concrete consequence, and the change that resolves it
-- [IMPORTANT] [file:line] — same
-- [MINOR] [file:line] — same
+- **F1** [BLOCKER] [file:line] — the defect, its concrete consequence, and the change that resolves it. *Proven by:* the test that fails while it exists.
+- **F2** [IMPORTANT] [file:line] — same
+- **F3** [MINOR] [file:line] — same
+
+## 📌 Follow-ups                     ← optional
+- [file:line] — a real improvement outside this PR's scope; not fixed here and not counted in the verdict.
 
 ## Verdict
 APPROVED | APPROVED WITH CHANGES | CHANGES REQUIRED
+Files reviewed: N/N                 ← on large diffs
 ```
+
+**Follow-ups are not a softer severity.** Use them for something worth doing
+that does not belong in this change — a refactor that needs a second
+consumer to justify it, an issue the PR exposes but doesn't cause. When the
+user says "fix the findings", follow-ups are not included. Uncertain findings
+still go in *must be fixed* marked `[POSIBLE]`; a follow-up is certain but
+out of scope.
 
 Verdict rules (identical in both languages):
 
@@ -204,7 +303,7 @@ and nothing is posted.
 5. If `gh` is unavailable or unauthenticated, say so and print the body for
    the user to paste manually. Never fail silently.
 
-The posted comment is the same three sections, prefixed with one line naming
+The posted comment is the same sections, prefixed with one line naming
 what was reviewed:
 
 ```
@@ -276,3 +375,12 @@ writing to them.
   the location, not the value.
 - **Opening a GitHub review with approve/request-changes** instead of a plain
   comment — the verdict is text, not a GitHub approval.
+- **Re-reviewing from scratch** — re-listing the whole PR as if new, instead
+  of closing the previous findings by ID and reviewing the new commits.
+- **Taking "resolved" on trust** — a previous finding is resolved when the
+  evidence shows it, not when the author or the commit message says so.
+- **Counting a test as protection because it runs the code** — ask what
+  change would make it fail; a test that stays green with the behavior
+  broken protects nothing.
+- **Parking a real defect in follow-ups** to keep the verdict clean — a
+  follow-up is out of scope, not less severe.

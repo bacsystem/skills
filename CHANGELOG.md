@@ -7,6 +7,42 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+## [0.2.9] - 2026-10-03
+
+### Añadido
+- `pr-review`: **modo re-revisión**. Cuando el PR ya se revisó (antes en la
+  conversación o en un comentario previo), el reporte abre con una tabla de
+  los hallazgos anteriores —resuelto, parcial o descartado, con evidencia— y
+  revisa solo los commits nuevos. Una corrección que introduce un problema
+  nuevo es un hallazgo nuevo; «resuelto» exige evidencia, no la palabra del
+  autor.
+- `pr-review`: **IDs estables por hallazgo** (`H1`, `H2`… en español; `F1`,
+  `F2`… en inglés), que se conservan entre revisiones, y en cada hallazgo el
+  test que lo demuestra (el que falla mientras el defecto exista).
+- `pr-review`: sección opcional **Seguimiento** / **Follow-ups** para mejoras
+  reales fuera del alcance del PR. No cuenta para el veredicto ni entra en
+  «corrige los hallazgos»; no es una severidad más baja.
+- `pr-review`, eje de buenas prácticas: **los tests discriminan** (nombrar el
+  cambio de producción que haría fallar los tests críticos), **los mocks y
+  fakes respetan el contrato real**, y **las cifras del PR se verifican**
+  (conteos de tests, mutaciones, «probado en X»).
+- `pr-review`: antes del diff, leer las convenciones del repo (`CLAUDE.md`,
+  `AGENTS.md`, `CONTRIBUTING.md`, documentos de QA); en diffs grandes, revisar
+  por capas y cerrar con «Archivos revisados: N/N».
+- `references/case-studies.md`: un test que pasa —o falla— por la razón
+  equivocada; la defensa en profundidad que oculta la regresión de una capa;
+  el mismo valor guardado con dos grafías según la ruta; un fake compartido en
+  el que un test escribe. El caso de comentarios no verificados se extiende a
+  las cifras del cuerpo del PR.
+- `references/language-idioms.md`: sección **Java / Spring** (`@Valid` en
+  objetos anidados, `@Size` desalineado con la columna, valores por defecto de
+  librerías como `RemoteIpValve`, `InetAddress.getByName` con texto no
+  confiable, barras invertidas en `@SpringBootTest(properties)`) y dos
+  entradas de Next.js (`next/headers` alcanzable desde un componente cliente;
+  un enlace publicado como `role="button"`).
+- Registro tardío: `references/case-studies.md` y `references/language-idioms.md`
+  existían desde el commit `a5134ff`, que entró sin entrada en este changelog.
+
 ## [0.2.8] - 2026-09-08
 
 ### Añadido
@@ -101,7 +137,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Añadido
 - Estructura inicial del repositorio: `README.md`, `CHANGELOG.md` y `.gitignore`.
 
-[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.8...HEAD
+[Sin publicar]: https://github.com/bacsystem/skills/compare/v0.2.9...HEAD
+[0.2.9]: https://github.com/bacsystem/skills/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/bacsystem/skills/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/bacsystem/skills/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/bacsystem/skills/compare/v0.2.5...v0.2.6

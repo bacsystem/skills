@@ -1,7 +1,8 @@
 # pr-review
 
 A Claude Code skill that reviews a pull request — **yours or someone else's** —
-against **Clean Code, SOLID, DRY and development best practices**, and reports
+for **correctness** (logic, edge cases, data types and validation) and against
+**Clean Code, SOLID, DRY and development best practices**, and reports
 what is done well and what must be fixed, ending in an explicit verdict.
 Optionally posts the review as a comment on the GitHub PR.
 
@@ -52,13 +53,19 @@ verdict is text, and approving a PR stays your call.
 
 | Axis | What it checks |
 |---|---|
-| **Clean Code** | Intent-revealing names, single-purpose functions, nesting, comments that explain *why*, explicit error handling, dead code |
+| **Correctness** (first) | Runs inputs through the change instead of judging whether it looks right: edge cases (empty, null, limits, off-by-one, odd text), duplicates, retries and concurrent requests, error paths that leave work half-done, logic errors, time zones and money, data types and validation that agree across layers |
+| **Clean Code** | Intent-revealing names, single-purpose functions, nesting and cognitive complexity, comments that explain *why*, explicit error handling, dead code, code smells (with a catalog of when each one is a finding) |
 | **SOLID** | One reason to change, extension over modification, contract-honoring implementations, cohesive interfaces, depending on abstractions across layers |
 | **DRY** | Real duplication that must be extracted — distinguished from coincidental similarity |
-| **Best practices** | Test coverage of the change — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with existing repo patterns |
+| **Best practices** | Test coverage — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with repo patterns, and what breaks after the merge: migrations, API and config compatibility, operability, performance, frontend states and accessibility, new dependencies |
 
 Before reading the diff it reads the repo's own conventions (`CLAUDE.md`,
-`AGENTS.md`, `CONTRIBUTING.md`, QA docs) and judges the PR against them.
+`AGENTS.md`, `CONTRIBUTING.md`, QA docs) and the **linked issue**, and checks
+each acceptance criterion against the change. A PR that says it closes an
+issue with a criterion still unmet gets a finding.
+
+Checklists say where to look, not what to report: every finding still needs
+`file:line` and a concrete consequence.
 
 ## Output
 
@@ -124,6 +131,11 @@ with `Archivos revisados: N/N`, so a skipped file is visible.
 - [`references/language-idioms.md`](./references/language-idioms.md) —
   pitfalls per language or framework (Go, Python, TypeScript/Next.js,
   Java/Spring).
+- [`references/code-smells.md`](./references/code-smells.md) — smells with
+  when each one is a finding and when it is only taste.
+- [`references/production-readiness.md`](./references/production-readiness.md)
+  — what breaks after the merge: migrations, compatibility, configuration,
+  operability, performance, frontend, dependencies.
 
 ## Installation
 

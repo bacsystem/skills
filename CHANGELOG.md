@@ -10,6 +10,31 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.2.9] - 2026-10-03
 
 ### Añadido
+- `pr-review`: **eje de corrección**, el primero de cinco. En vez de juzgar si
+  el cambio «se ve bien», pasa entradas por el código: casos borde (vacío,
+  nulo, límites, *off-by-one*, texto raro), duplicados, reintentos y
+  peticiones concurrentes, caminos de error que dejan trabajo a medias,
+  errores de lógica, zonas horarias y dinero, y tipos y validación de datos
+  coherentes entre capas (formulario, DTO, dominio, columna).
+- `pr-review`: **criterios del issue enlazado**. Lee el issue que el PR cierra
+  o referencia, contrasta cada criterio de aceptación con el diff y lo reporta
+  en una sección propia; un PR que dice cerrar un issue con un criterio
+  pendiente recibe un hallazgo. También señala cambios fuera de alcance.
+- `pr-review`, eje Clean Code: **complejidad cognitiva** con umbrales
+  orientativos (anidamiento, operadores por condición, largo de función,
+  parámetros, banderas booleanas) que indican dónde mirar, no qué reportar.
+- `pr-review`, eje de buenas prácticas: **lo que se rompe después del merge**
+  (migraciones, compatibilidad de API y datos, configuración, operabilidad,
+  rendimiento visible en un diff, estados y accesibilidad del frontend,
+  dependencias nuevas).
+- `references/code-smells.md`: catálogo de *code smells* (bloaters, couplers,
+  change preventers, dispensables, obfuscators), cada uno con cuándo **es** un
+  hallazgo y cuándo es solo estilo.
+- `references/production-readiness.md`: guía por tema de lo que se rompe en
+  producción, para revisar solo las secciones que el diff toca.
+- `pr-review`, errores comunes: revisar solo la forma del código, reportar una
+  métrica en vez de un costo, convertir las listas en hallazgos e ignorar el
+  issue enlazado.
 - `pr-review`: **modo re-revisión**. Cuando el PR ya se revisó (antes en la
   conversación o en un comentario previo), el reporte abre con una tabla de
   los hallazgos anteriores —resuelto, parcial o descartado, con evidencia— y

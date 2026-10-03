@@ -60,6 +60,41 @@ pattern in a real review, not preemptively.
   DropdownMenu, Tooltip) instead of a shared helper — see
   `case-studies.md` for the general "verify a comment's claim" pattern this
   was found alongside.
+- **`next/headers` (or another server-only module) reachable from a client
+  component** — a shared helper that imports `cookies()`/`headers()` and is
+  also imported, even indirectly, by a `'use client'` file. Vitest, `tsc`
+  and ESLint all stay green; only `next build` fails. When a diff adds such
+  an import to a widely-imported module, check its importers or ask whether
+  `next build` was run, and prefer passing the value in as a parameter.
+- **A link rendered as a button** — a design-system `Button` with a
+  `render={<Link …/>}` / `asChild` prop can emit `<a role="button">`. A
+  control that navigates should be announced as a link; screen readers and
+  `getByRole("link")` queries both depend on it.
+
+## Java / Spring
+
+- **`@Valid` missing on a nested object** — a request record with a nested
+  record (`@NotNull Address address`) only validates the nested fields when
+  the field itself carries `@Valid`. Without it, `@NotBlank`/`@Pattern` on the
+  inner fields never run and invalid input reaches the domain.
+- **Validation limits that don't match the column** — a `VARCHAR(150)` column
+  behind a request field with no `@Size(max = 150)`: an over-long value is a
+  500 from the database instead of a 422 with a message. Compare each new
+  string field with its column length.
+- **Library defaults that do more than the PR intends** — a component
+  configured for one job may enable others by default (e.g. Tomcat's
+  `RemoteIpValve` also rewrites the scheme from `X-Forwarded-Proto`, and
+  trusts private address ranges as proxies unless `internalProxies` is set).
+  When a diff installs such a component, check what it enables beyond the
+  setting the PR is about.
+- **`InetAddress.getByName` on untrusted text** — given something that isn't
+  a literal IP it performs a DNS lookup, on the request path. Parsing or
+  normalizing an address that came from a header should not touch the
+  network.
+- **Backslashes in `@SpringBootTest(properties = …)`** — the values are read
+  as `.properties`, so `\.` in a regex loses its backslash and the test runs
+  a different pattern than production. Use character classes (`[.]`) or a
+  test properties file.
 
 ---
 

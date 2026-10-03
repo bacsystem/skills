@@ -1,7 +1,7 @@
 # Case studies
 
 Concrete finding patterns learned from real reviews, kept separate from
-`SKILL.md` so the main skill stays short. These supplement the four axes —
+`SKILL.md` so the main skill stays short. These supplement the five axes —
 they don't replace them. Check new PRs against these in addition to the
 checklist in `SKILL.md`.
 

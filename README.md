@@ -21,7 +21,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 | Skill | Descripción |
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
-| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros) contra Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
+| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, tipos y validación), Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
 
 ## Estructura
 
@@ -47,7 +47,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
-| [`v0.2.9`](https://github.com/bacsystem/skills/releases/tag/v0.2.9) | 2026-10-03 | `pr-review`: re-revisión con IDs estables, tests que discriminan, contratos de mocks, sección de seguimiento, referencias de Java/Spring |
+| [`v0.2.9`](https://github.com/bacsystem/skills/releases/tag/v0.2.9) | 2026-10-03 | `pr-review`: eje de corrección, criterios del issue, re-revisión con IDs estables, tests que discriminan, complejidad cognitiva, catálogo de code smells y referencia de producción |
 | [`v0.2.8`](https://github.com/bacsystem/skills/releases/tag/v0.2.8) | 2026-09-08 | Skill `pr-review` (Clean Code, SOLID, DRY y buenas prácticas) con `--es`/`--en` y `--comment` |
 | [`v0.2.7`](https://github.com/bacsystem/skills/releases/tag/v0.2.7) | 2026-07-04 | Base del PR según exista `develop`; tag solo en merges a `main` |
 | [`v0.2.6`](https://github.com/bacsystem/skills/releases/tag/v0.2.6) | 2026-06-05 | Tabla de Skills sin columna «Versión» |

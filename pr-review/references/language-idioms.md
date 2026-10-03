@@ -1,7 +1,7 @@
 # Language-specific idioms
 
 Known pitfalls and good-vs-bad patterns per language/framework, checked in
-addition to the four axes in `SKILL.md`. Not exhaustive — grows every time a
+addition to the five axes in `SKILL.md`. Not exhaustive — grows every time a
 PR in a language gets reviewed and something idiomatic to that language was
 the actual defect. **A language missing here is not "skip it"** — apply the
 general axes and judgment; add the entry once you've actually seen the

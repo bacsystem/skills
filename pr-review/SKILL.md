@@ -1,13 +1,13 @@
 ---
 name: pr-review
-description: Use when reviewing a pull request or a set of changes — your own or someone else's — against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
+description: Use when reviewing a pull request or a set of changes — your own or someone else's — for correctness (logic, edge cases, data types and validation) and against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
 ---
 
 # pr-review
 
 ## Overview
 
-A code review that evaluates a pull request against four axes — Clean Code,
+A code review that evaluates a pull request against five axes — correctness, Clean Code,
 SOLID, DRY, and development best practices — and reports **what is done well**
 and **what must be fixed**, ending in an explicit verdict.
 
@@ -55,6 +55,13 @@ and the posted comment.
    earlier in the conversation, or in a previous review comment on the PR
    (`gh pr view <n> --comments`) — use **Re-review mode** (below) instead of
    starting from zero.
+3. **Read the linked issue, if there is one** — `gh pr view <n> --json
+   closingIssuesReferences,body` for "Closes/Cierra/Fixes #N" or a plain
+   "Refs #N", then `gh issue view <N>`. Its acceptance criteria are the
+   definition of done for this PR. Check each one against the diff (met, not
+   met, or not applicable) and report them in the **Issue criteria** section.
+   Also flag scope creep: changes the issue never asked for that make the PR
+   harder to review or revert.
 
 ## Getting the diff
 
@@ -90,7 +97,7 @@ point is to close the loop, not to re-judge everything from scratch:
    evidence.
 2. **Review the new commits** (`git log <last-reviewed-sha>..HEAD`, or the
    commits since the previous review comment). A fix is new code: check it
-   against the four axes like any other change. A fix that introduces a new
+   against the five axes like any other change. A fix that introduces a new
    defect — a misleading doc line, a weaker test, a regression elsewhere — is
    a new finding with its own ID.
 3. **Don't repeat the previous "done well"** unless the new commits changed
@@ -112,22 +119,76 @@ what you could not verify. Never present a guess as a confirmed defect.
 
 ## Evaluation axes
 
-Review against all four. Judge the code as changed by this PR, not the whole
-repository. Also check these two references — they supplement, never
-replace, the four axes below:
+Review against all five, correctness first — clean code that does the wrong
+thing is still wrong. Judge the code as changed by this PR, not the whole
+repository. Also check these references — they supplement, never replace,
+the five axes below:
 
 - `references/case-studies.md` — cross-cutting finding patterns learned
   from real reviews (how to catch a defect shape, regardless of language).
 - `references/language-idioms.md` — known pitfalls specific to a language
   or framework. Check the section for the language actually in the diff, if
   one exists.
+- `references/code-smells.md` — a catalog of smells, each with when it *is*
+  a finding and when it is only taste.
+- `references/production-readiness.md` — what breaks after the merge:
+  migrations, API/config compatibility, operability, performance, frontend
+  states and accessibility, new dependencies.
 
-### 1. Clean Code
+A checklist is where to look, not what to report. Every finding from any
+axis or reference still needs `file:line` and a concrete consequence.
+
+### 1. Correctness
+
+The axis that catches bugs. Don't read the change and judge whether it
+"looks right" — run inputs through it.
+
+- **Trace the edge cases.** For each changed function or endpoint, follow
+  these inputs through the code: empty / null / missing; zero, negative, the
+  maximum and one past it (off-by-one); text with separators, quotes,
+  newlines, unicode or leading/trailing spaces; a duplicate of something that
+  already exists; the same request twice (retry after a timeout); two
+  requests at the same time. Report the first input that produces a wrong
+  result, a crash or corrupted data.
+- **Error paths, not just the happy path.** What happens when the second of
+  three writes fails — is anything left half-done? Is a failure swallowed,
+  turned into a misleading success, or reported with a code the caller can't
+  act on? Does a retry duplicate the effect?
+- **Concurrency and ordering.** Shared state, read-then-write without a lock
+  or a unique constraint, check-then-act races, caches that outlive what they
+  cache, assumptions about the order of events or async callbacks.
+- **Logic.** Inverted or incomplete conditions, a branch that can't be
+  reached, a `switch`/`match` without the new enum value, boolean expressions
+  that mean something other than their name, a loop that skips or repeats an
+  element, a value used before it's set.
+- **Time, money and units.** Time zones and DST, date-only vs instant,
+  inclusive vs exclusive ranges; floating point for money, rounding mode and
+  scale; mixed units. These are wrong silently, not loudly.
+- **Data types and validation.** The type says what the value can be: a
+  money amount in a decimal type, a closed set of values in an enum rather
+  than a magic string, nullability explicit, IDs of different entities not
+  interchangeable. Untrusted input is parsed once at the boundary into a
+  validated value, and the inner layers trust it. The same rule (length,
+  format, range) agrees across every layer it lives in — form, request DTO,
+  domain, database column; a limit that exists in one layer and not the next
+  turns a validation error into a 500 or a silent truncation.
+
+### 2. Clean Code
 
 - Names reveal intent — a reader should not need the implementation to know
   what a symbol does.
 - Functions do one thing, at one level of abstraction.
 - Nesting depth stays readable; guard clauses over nested conditionals.
+- **Cognitive complexity.** Signals that a unit is harder to understand than
+  it needs to be: more than 3 levels of nesting, a condition with more than 3
+  operators, a function longer than ~40 lines, more than 4 parameters, a
+  boolean parameter that switches behavior, the same variable reassigned
+  across distant branches. These numbers tell you where to look; the finding
+  is the concrete cost (a branch nobody can tell is reachable, a change that
+  needs reading 80 lines first), never the number alone.
+- **Code smells** (primitive obsession, feature envy, shotgun surgery,
+  temporal coupling, god class, flag arguments…) — see
+  `references/code-smells.md` for when each one is a finding.
 - Comments explain **why**, not **what**. A comment restating the code is
   noise; a comment explaining a non-obvious decision is valuable.
 - A comment's claim about what the code does or fixes must be verified, not
@@ -136,7 +197,7 @@ replace, the four axes below:
 - Errors are handled explicitly — no silent catch, no ignored return value.
 - No dead code, commented-out blocks, or leftover debug output.
 
-### 2. SOLID
+### 3. SOLID
 
 - **S** — one reason to change per unit. A module doing HTTP, parsing, and
   formatting has three.
@@ -149,7 +210,7 @@ replace, the four axes below:
 - **D** — code crossing a layer boundary depends on an abstraction, not a
   concrete implementation.
 
-### 3. DRY
+### 4. DRY
 
 - Duplicated logic or markup that should be extracted.
 - **Distinguish real duplication from coincidental similarity.** Two pieces of
@@ -157,7 +218,7 @@ replace, the four axes below:
   merging them couples what should stay independent. Only report duplication
   where a single future change would have to be made in both places.
 
-### 4. Development best practices
+### 5. Development best practices
 
 - Tests cover the change: new behavior has a test, fixed bugs have a
   regression test. Tests assert real outcomes, not that the mock was called.
@@ -188,6 +249,22 @@ replace, the four axes below:
   bypassable, no injection-prone string building.
 - Consistency with the repository's existing patterns — a PR that invents a
   parallel convention alongside an established one adds cost.
+- **What breaks after the merge** — check the parts of
+  `references/production-readiness.md` that the diff touches:
+  - *Migrations*: safe to run on a live table (locks, `NOT NULL` without a
+    default, backfills inside one transaction), and what happens on rollback.
+  - *Compatibility*: a renamed field, changed error code or changed default
+    breaks existing clients, integrators or stored data.
+  - *Configuration*: new environment variables documented, with a safe
+    default and a clear failure when they are missing or invalid.
+  - *Operability*: a failure leaves enough trace to diagnose it; no swallowed
+    error without a log, metric or user-visible signal.
+  - *Performance visible in a diff*: N+1 queries, unbounded result sets,
+    missing index for a new filter, slow work while holding a lock.
+  - *Frontend*: loading, empty and error states, double submit, accessibility
+    (roles, labels, focus), sensitive data reaching the browser or a cache.
+  - *Dependencies*: a new one is justified, maintained, license-compatible and
+    pinned.
 
 ## Severity
 
@@ -202,10 +279,15 @@ An unverified but plausible finding is marked `[POSIBLE]` / `[POSSIBLE]`.
 ## Output format
 
 Always the three core sections — done well, must be fixed, verdict — in this
-order. Two optional sections frame them: **previous findings** (only in
-re-review mode, first) and **follow-ups** (only when there is a real one,
-after the corrections). Use the wording matching the language flag (`--es` is
-the default).
+order. Optional sections frame them: **previous findings** (only in re-review
+mode, first), **issue criteria** (only when the PR links an issue, next) and
+**follow-ups** (only when there is a real one, after the corrections). Use the
+wording matching the language flag (`--es` is the default).
+
+**Issue criteria and the verdict.** A PR that says it *closes* an issue while
+a criterion is not met gets a finding (`IMPORTANTE` / `IMPORTANT`): either
+meet the criterion or change "Closes" to "Refs" and say what is left. A PR
+that only references the issue can leave criteria open, as long as it says so.
 
 **Every finding gets an ID** (`H1`, `H2`… in Spanish, `F1`, `F2`… in English),
 numbered in report order and kept across re-reviews: the user asks to fix
@@ -226,6 +308,11 @@ what to check instead.
 | H1 | ✅ Resuelto | commit abc123, `archivo:línea`, test `nombreDelTest` |
 | H2 | ⚠️ Parcial | qué falta |
 | H3 | ➖ Descartado | por qué se dejó fuera (argumento del autor o pasó a seguimiento) |
+
+## 🎯 Criterios del issue #N          ← solo si la PR enlaza un issue
+| Criterio | Estado | Dónde |
+|---|---|---|
+| texto del criterio | ✅ Cumplido / ❌ No cumplido / ➖ No aplica | `archivo:línea` o test |
 
 ## ✅ Lo que está bien
 - [archivo:línea] — qué decisión concreta del diff está bien resuelta y por qué
@@ -252,6 +339,11 @@ Archivos revisados: N/N             ← en diffs grandes
 | F1 | ✅ Resolved | commit abc123, `file:line`, test `testName` |
 | F2 | ⚠️ Partial | what is still missing |
 | F3 | ➖ Dropped | why it was left out (author's argument, or moved to follow-up) |
+
+## 🎯 Issue #N criteria               ← only when the PR links an issue
+| Criterion | Status | Where |
+|---|---|---|
+| the criterion's text | ✅ Met / ❌ Not met / ➖ N/A | `file:line` or test |
 
 ## ✅ What's done well
 - [file:line] — which concrete decision in the diff is well resolved, and why
@@ -307,7 +399,7 @@ The posted comment is the same sections, prefixed with one line naming
 what was reviewed:
 
 ```
-Code review de `<base>...<head>` — Clean Code, SOLID, DRY y buenas prácticas.
+Code review de `<base>...<head>` — corrección, Clean Code, SOLID, DRY y buenas prácticas.
 ```
 
 Post **one** comment per review. Never open a GitHub *review* with
@@ -352,9 +444,13 @@ one-off, or already covered by an existing entry or axis bullet:
   language's heading (add the heading if it's the first entry for that
   language). Short bullet: pattern name, what to look for, the concrete
   consequence.
+- **A smell that turned out to be a real defect** → `references/code-smells.md`,
+  with the signal that separated it from taste.
+- **Something that broke after a merge** (a migration, a config default, a
+  client that depended on a field) → `references/production-readiness.md`.
 
-Both files grow over time — skim them during every review, not just after
-writing to them.
+The reference files grow over time — skim them during every review, not just
+after writing to them.
 
 ## Common Mistakes
 
@@ -365,6 +461,15 @@ writing to them.
 - **Judging on a partial diff** — read the surrounding file when the change's
   correctness depends on off-diff context.
 - **Findings without `file:line`** or without a concrete consequence.
+- **Reviewing only the shape of the code** — names, SOLID and DRY on a change
+  that returns the wrong result for an empty list. Correctness comes first.
+- **Reporting a metric instead of a cost** — "this function has 6 parameters"
+  is a signal to look; the finding is what it makes hard or wrong.
+- **Turning the checklists into findings** — walking every bullet of every
+  reference and reporting each one that "could apply". A reference is where
+  to look; only what the diff actually gets wrong is reported.
+- **Ignoring the linked issue** — approving a PR that says it closes an issue
+  while one of its acceptance criteria is not met.
 - **Applying fixes mid-review** — this skill reports only.
 - **Reviewing the whole repository** instead of the change.
 - **Posting without `--comment`**, or posting on a bare "yes" that only

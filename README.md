@@ -22,6 +22,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
 | [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, tipos y validación), Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
+| [`ui-ux-scout`](./ui-ux-scout) | Crea y mejora componentes de khipu-design-system a partir de un estilo de Refero Styles (UUID): plan con tokens y contraste WCAG, aprobación, implementación con criterio de UI/UX, React/Next, DRY, SOLID y validación por tipo de dato, y verificación del build |
 
 ## Estructura
 

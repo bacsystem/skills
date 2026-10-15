@@ -5,7 +5,24 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.2.10] - 2026-10-15
+
+### Añadido
+- Skill `ui-ux-scout`: crea y mejora componentes en khipu-design-system a
+  partir de un estilo de Refero Styles indicado por UUID. Muestra un plan
+  (componentes nuevos, ajustes, tokens con contraste WCAG calculado y
+  conflictos con las convenciones de khipu), espera la aprobación, lo aplica
+  en una rama y verifica `typecheck`, `lint` y `build`. Nunca commitea.
+- `ui-ux-scout/scripts/refero-fetch.mjs`: extrae los valores exactos del
+  estilo del payload de Next.js de la página, con caché de 7 días y códigos de
+  salida `0`–`4`; tests sin red con fixtures sintéticos.
+- `ui-ux-scout/scripts/contraste.mjs`: ratio de contraste WCAG para tokens en
+  hex (3, 4, 6 y 8 dígitos) y `rgb()`/`rgba()`, componiendo el alfa sobre la
+  superficie base; rechaza colores mal formados. Con tests.
+- `ui-ux-scout/references/`: principios de UI/UX, React 19 y Next.js 15, DRY
+  y SOLID para componentes, validación por tipo de dato (incluido RUC con
+  dígito verificador), checklist de alta en khipu, plantilla del plan y
+  formato de la página de Refero.
 
 ## [0.2.9] - 2026-10-03
 

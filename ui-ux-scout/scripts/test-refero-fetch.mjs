@@ -12,6 +12,7 @@ import {
   BASE,
   SALIDA,
   CACHE_TTL_MS,
+  TIMEOUT_MS,
   ErrorRefero,
   extraerUuid,
   extraerNombre,
@@ -155,8 +156,10 @@ test("extraerNombre limpia el sufijo de Refero y decodifica entidades", () => {
 // fetch falso: devuelve las respuestas en orden; un Error simula falta de red.
 function fetchFalso(...respuestas) {
   const llamadas = [];
-  const impl = async (url) => {
+  const opciones = [];
+  const impl = async (url, opts) => {
     llamadas.push(url);
+    opciones.push(opts);
     const r = respuestas.shift();
     if (r instanceof Error) throw r;
     const status = r.status ?? 200;
@@ -169,7 +172,7 @@ function fetchFalso(...respuestas) {
       },
     };
   };
-  return { impl, llamadas };
+  return { impl, llamadas, opciones };
 }
 
 const dirTemporal = () => mkdtemp(join(tmpdir(), "ui-ux-scout-test-"));
@@ -292,4 +295,27 @@ test("obtenerEstilo usa la caché vencida si el corte ocurre al leer el cuerpo",
   const { estilo, aviso } = await obtenerEstilo(UUID, { fetchImpl: cortada.impl, cacheDir, ahora: CACHE_TTL_MS + 1 });
   assert.equal(estilo.theme, "dark");
   assert.match(aviso, /caché del 1970-01-01/);
+});
+
+test("obtenerEstilo pasa una señal de timeout a fetch", async () => {
+  const cacheDir = await dirTemporal();
+  const red = fetchFalso({ html: paginaConEstilo(ESTILO) });
+  await obtenerEstilo(UUID, { fetchImpl: red.impl, cacheDir, ahora: 0 });
+  assert.equal(TIMEOUT_MS, 30_000);
+  assert.ok(red.opciones[0].signal instanceof AbortSignal, "fetch debe recibir un AbortSignal");
+});
+
+test("obtenerEstilo trata un timeout como error de red", async () => {
+  const cacheDir = await dirTemporal();
+  const timeout = new Error("The operation was aborted due to timeout");
+  timeout.name = "TimeoutError";
+  const lento = fetchFalso(timeout);
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: lento.impl, cacheDir })), SALIDA.RED);
+});
+
+test("main devuelve 3 con un mensaje si el error es inesperado, no 1", async () => {
+  const stderr = salidaFalsa();
+  const codigo = await main([UUID], { stdout: salidaFalsa(), stderr, fetchImpl: async () => null, cacheDir: await dirTemporal() });
+  assert.equal(codigo, SALIDA.FORMATO);
+  assert.match(stderr.texto, /Error inesperado en refero-fetch/);
 });

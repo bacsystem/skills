@@ -159,6 +159,7 @@ export function parsearPagina(html, uuid) {
 
 export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const CACHE_DIR = join(tmpdir(), "ui-ux-scout");
+export const TIMEOUT_MS = 30_000; // un servidor colgado cuenta como fallo de red, no como espera infinita
 const AGENTE = "ui-ux-scout (+https://github.com/bacsystem/skills)";
 
 async function leerCache(ruta) {
@@ -196,7 +197,7 @@ export async function obtenerEstilo(entrada, { fetchImpl = globalThis.fetch, cac
 
   let respuesta;
   try {
-    respuesta = await fetchImpl(BASE + uuid, { headers: { "user-agent": AGENTE } });
+    respuesta = await fetchImpl(BASE + uuid, { headers: { "user-agent": AGENTE }, signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch (error) {
     return falloDeRed(`No se pudo conectar con Refero Styles (${error.message})`);
   }
@@ -233,7 +234,12 @@ export async function main(args, { stdout = process.stdout, stderr = process.std
     stdout.write(`${JSON.stringify(estilo, null, 2)}\n`);
     return SALIDA.OK;
   } catch (error) {
-    if (!(error instanceof ErrorRefero)) throw error;
+    // Un error que no es de la skill no es «entrada inválida» (1): se informa como formato
+    // inesperado (3) para que la skill pase al plan B en vez de detenerse.
+    if (!(error instanceof ErrorRefero)) {
+      stderr.write(`Error inesperado en refero-fetch: ${error?.message ?? error}\n`);
+      return SALIDA.FORMATO;
+    }
     stderr.write(`${error.message}\n`);
     return error.codigo;
   }

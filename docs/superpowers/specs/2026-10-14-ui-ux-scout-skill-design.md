@@ -87,7 +87,7 @@ Además: fila en la tabla **Skills** del `README.md` raíz y entrada en
 
 2. **Leer el contexto de khipu**
    - `CLAUDE.md`, `README.md` y `docs/design-system.md` (principios, tokens,
-     escala de alturas, inventario §19, kit reutilizable §20).
+     escala de alturas, kit reutilizable §20).
    - `src/app/globals.css` (`@theme`, `:root`, `.dark`).
    - `registry/registry.json`, para saber qué componentes existen.
    - `src/lib/estilos.ts`, que tiene las recetas compartidas.
@@ -138,8 +138,8 @@ Además: fila en la tabla **Skills** del `README.md` raíz y entrada en
    componente nuevo:
    1. Crear el archivo en su carpeta, con imports por alias `@/`.
    2. Agregarlo a la galería de `src/app/ejemplo/galeria.tsx`.
-   3. Documentarlo en `docs/design-system.md`: su sección y una fila en el
-      inventario §19.
+   3. Documentarlo en `docs/design-system.md` §20 «Kit reutilizable»: en la
+      fila de su grupo y en un párrafo de lote.
    4. Agregarlo a `docs/guia-visual.html`.
    5. Agregarlo a la lista de **Estructura** del `README.md`.
 
@@ -286,33 +286,37 @@ punto aparte.
 - Node ≥ 18 (`fetch` nativo). Sin dependencias.
 - Entrada: `node refero-fetch.mjs <uuid|url>`.
 - Descarga `https://styles.refero.design/style/<uuid>` y parsea el payload de
-  Next.js (`self.__next_f.push(...)`), que contiene el objeto del estilo con,
-  entre otros, `theme` y `colors: [{hex, name, role, group}]`.
+  Next.js (`self.__next_f.push(...)`). La página **no trae un DESIGN.md como
+  texto**: lo arma a partir de un objeto estructurado, que es lo que se
+  extrae (ver `references/refero-format.md`).
 - Salida (stdout, JSON):
 
   ```json
   {
     "source": "https://styles.refero.design/style/<uuid>",
+    "uuid": "<uuid>",
     "name": "Raycast",
     "theme": "dark",
+    "description": "", "northStar": "", "layout": "", "elevationPhilosophy": "",
     "colors": [{ "name": "", "hex": "", "role": "", "group": "" }],
-    "typography": [{ "family": "", "role": "", "weights": [], "sizes": [], "lineHeight": "", "letterSpacing": "" }],
-    "spacing": { "base": 8, "scale": [] },
-    "radii": [{ "name": "", "value": "" }],
-    "shadows": [{ "name": "", "value": "" }],
-    "components": [{ "name": "", "description": "" }],
+    "surfaces": [{ "name": "", "hex": "", "level": 0, "purpose": "" }],
+    "typography": [{ "family": "", "role": "", "weight": "", "sizes": "", "lineHeight": "", "letterSpacing": "", "substitute": "", "fontFeatureSettings": "" }],
+    "typeScale": [{ "role": "", "size": 16, "lineHeight": 1.5, "letterSpacing": 0 }],
+    "spacing": { "radius": { "buttons": "8px" }, "cardPadding": "24px" },
+    "elevation": [{ "element": "", "style": "" }],
+    "components": [{ "name": "", "role": "", "description": "" }],
     "dos": [],
-    "donts": [],
-    "designMd": "<texto completo del DESIGN.md, si viene en el payload>"
+    "donts": []
   }
   ```
 
   Los campos ausentes van como `[]` o `null`, nunca se inventan.
-- Códigos de salida: `0` OK; `1` entrada inválida; `2` estilo no encontrado
-  (404); `3` payload no reconocible (formato cambiado); `4` error de red.
+- Códigos de salida: `0` OK; `1` entrada inválida; `2` estilo no encontrado;
+  `3` payload no reconocible (formato cambiado); `4` error de red.
   Mensaje en stderr.
-- Los nombres exactos de las claves del payload se documentan en
-  `references/refero-format.md` al implementar, a partir de una página real.
+- **Un UUID inexistente responde HTTP 200** (verificado el 2026-10-14): el
+  «no encontrado» se detecta por la marca `NEXT_HTTP_ERROR_FALLBACK;404` o el
+  título `Style not found`, no por el código HTTP.
 
 ## Por qué solo UUID
 
@@ -346,7 +350,7 @@ de páginas o depender de detalles internos del sitio.
   (`3b6a17f0-3bdf-418c-a95e-0b89e5a8b2f8`). Criterios:
   - los hex del plan coinciden con la página de Refero;
   - se crea al menos un componente nuevo y aparece en `registry/registry.json`;
-  - el componente nuevo aparece en `/ejemplo`, `docs/design-system.md` (§19)
+  - el componente nuevo aparece en `/ejemplo`, `docs/design-system.md` (§20)
     y `docs/guia-visual.html`;
   - `npm run typecheck`, `npm run lint` y `npm run build` pasan;
   - ningún componente, prop, export ni token existente fue borrado o

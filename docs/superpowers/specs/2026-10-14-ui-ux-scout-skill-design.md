@@ -37,13 +37,13 @@ Además: fila en la tabla **Skills** del `README.md` raíz y entrada en
 ## Invocación
 
 ```
-/ui-ux-scout [<estilo|URL|uuid> ...] [--es|--en] [--focus <eje>] [--save]
+/ui-ux-scout [<uuid|URL> ...] [--es|--en] [--focus <eje>] [--save]
 ```
 
 | Argumento | Efecto |
 |---|---|
-| `<estilo>` | Nombre (`Raycast`), URL `https://styles.refero.design/style/<uuid>` o UUID. Hasta **3** por corrida; más se rechaza con un mensaje. |
-| *(sin estilo)* | Sugiere 3–5 candidatos afines al perfil del proyecto y **espera** a que el usuario elija. No audita nada por su cuenta. |
+| `<uuid>` | UUID del estilo en Refero (p. ej. `3b6a17f0-3bdf-418c-a95e-0b89e5a8b2f8`). También se acepta la URL `https://styles.refero.design/style/<uuid>`, de la que se toma el UUID. Hasta **3** por corrida; más se rechaza con un mensaje. **No hay búsqueda por nombre.** |
+| *(sin argumento)* | No audita. Explica cómo obtener el UUID: elegir un estilo en <https://styles.refero.design/> y copiar su URL. |
 | `--es` / `--en` | Idioma del informe. Por defecto `--es`. |
 | `--focus <eje>` | Limita la auditoría: `tokens` (color, tipografía, espaciado y forma, modo oscuro), `componentes` (componentes, layout y densidad) o `a11y` (accesibilidad y contraste). Sin él, se auditan todos los ejes. |
 | `--save` | Además de mostrarlo, guarda el informe en `docs/ui-ux-scout/<AAAA-MM-DD>-<estilo>.md` del proyecto auditado. |
@@ -64,12 +64,10 @@ Sin `--save` el informe queda solo en la terminal.
      no hallazgos.
    - Si no se encuentran tokens, detenerse y decir qué se buscó y dónde.
 
-2. **Resolver la referencia**
-   - URL o UUID: se usa directamente.
-   - Nombre: resolver a UUID (ver **Resolución de nombres**). Si hay varios
-     candidatos (p. ej. «Apple» tiene varias entradas), listarlos y preguntar.
-   - Sin argumento: proponer 3–5 estilos afines según el perfil (tipo de
-     producto, tema claro/oscuro, densidad), con una línea de por qué cada uno.
+2. **Validar la referencia**
+   - Extraer el UUID del argumento (UUID suelto o URL `/style/<uuid>`) y
+     validar su formato (36 caracteres, hexadecimal con guiones). Un argumento
+     que no sea UUID ni URL válida se rechaza explicando el formato esperado.
 
 3. **Extraer**
    - Ejecutar `node scripts/refero-fetch.mjs <uuid>` (ruta relativa a la
@@ -144,9 +142,8 @@ Encabezados fijos por idioma (`--es` / `--en`):
 ## Contrato del script `refero-fetch.mjs`
 
 - Node ≥ 18 (usa `fetch` nativo). Sin dependencias.
-- Entrada: `node refero-fetch.mjs <uuid|url>`. Con `--resolve <nombre>` busca
-  UUIDs por nombre (ver **Resolución de nombres**) e imprime
-  `[{uuid, name, url}]`.
+- Entrada: `node refero-fetch.mjs <uuid|url>`. Una entrada sin UUID válido
+  sale con código `1`.
 - Descarga `https://styles.refero.design/style/<uuid>` y parsea el payload de
   Next.js (`self.__next_f.push(...)`), que contiene el objeto del estilo
   con, entre otros, `theme` y `colors: [{hex, name, role, group}]`.
@@ -170,28 +167,25 @@ Encabezados fijos por idioma (`--es` / `--en`):
   ```
 
   Los campos ausentes en el payload van como `[]` o `null`, nunca se inventan.
-- Códigos de salida: `0` OK; `2` estilo no encontrado (404); `3` payload no
+- Códigos de salida: `0` OK; `1` entrada inválida; `2` estilo no encontrado (404); `3` payload no
   reconocible (formato cambiado); `4` error de red. Mensaje en stderr.
 - Los nombres exactos de las claves del payload se documentan en
   `references/refero-format.md` al implementar, a partir de una página real.
 
-## Resolución de nombres
+## Por qué solo UUID
 
-**A confirmar al implementar.** `sitemaps/styles.xml` lista las URLs de los
-estilos; no se ha verificado si incluye nombres o solo UUID.
-
-- Si incluye nombres (o se pueden obtener de forma barata), `--resolve` filtra
-  por coincidencia aproximada sobre esa lista.
-- Si solo trae UUID, resolver con la búsqueda o la galería del sitio, y si
-  tampoco es viable, pedir al usuario la URL del estilo.
-
-La decisión y su motivo quedan escritos en `references/refero-format.md`.
+Decidido el 2026-10-14. `sitemaps/styles.xml` lista solo URLs `/style/<uuid>`,
+sin nombres. Además, la búsqueda del sitio (`/?q=`) no devuelve enlaces a
+estilos que se puedan parsear de forma fiable. Resolver nombres exigiría
+descargar cientos de páginas o depender de detalles internos del sitio, así que
+la skill trabaja solo con el UUID (o la URL que lo contiene).
 
 ## Errores
 
 | Situación | Comportamiento |
 |---|---|
-| Estilo no encontrado | Decirlo y sugerir candidatos parecidos, si los hay. |
+| Argumento sin UUID válido | Rechazar y explicar cómo copiar la URL del estilo. |
+| Estilo no encontrado (404) | Decirlo, mostrando el UUID recibido. |
 | Payload no reconocible | Aviso de formato cambiado → plan B con WebFetch. |
 | Sin red | Detenerse con mensaje claro; usar caché si existe y avisarlo. |
 | Node ausente o < 18 | Plan B con WebFetch y aviso de precisión. |
@@ -204,7 +198,8 @@ La decisión y su motivo quedan escritos en `references/refero-format.md`.
   - un **fixture sintético** que imita la estructura del payload, sin
     contenido real de Refero;
   - casos: parseo correcto, campos ausentes → `[]`/`null`, payload sin el
-    objeto del estilo → código `3`, entrada URL frente a UUID.
+    objeto del estilo → código `3`, entrada URL frente a UUID, entrada
+    inválida → código `1`.
 - Prueba de punta a punta (manual): auditar `khipu-design-system` contra
   Raycast. Criterios:
   - los hex del informe coinciden con la página de Refero;
@@ -220,3 +215,4 @@ La decisión y su motivo quedan escritos en `references/refero-format.md`.
 - Descargar o mirrorear la biblioteca de Refero.
 - Integración con el MCP de Refero (posible versión futura).
 - Auditar más de 3 referencias por corrida.
+- Buscar estilos por nombre o sugerir referencias.

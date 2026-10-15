@@ -205,7 +205,13 @@ export async function obtenerEstilo(entrada, { fetchImpl = globalThis.fetch, cac
   }
   if (!respuesta.ok) return falloDeRed(`Refero Styles respondió HTTP ${respuesta.status}`);
 
-  const estilo = parsearPagina(await respuesta.text(), uuid);
+  let html;
+  try {
+    html = await respuesta.text();
+  } catch (error) {
+    return falloDeRed(`No se pudo leer la respuesta de Refero Styles (${error.message})`);
+  }
+  const estilo = parsearPagina(html, uuid);
   await guardarCache(cacheDir, rutaCache, { guardado: ahora, estilo });
   return { estilo, aviso: null };
 }

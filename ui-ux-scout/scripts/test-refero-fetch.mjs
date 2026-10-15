@@ -160,7 +160,14 @@ function fetchFalso(...respuestas) {
     const r = respuestas.shift();
     if (r instanceof Error) throw r;
     const status = r.status ?? 200;
-    return { status, ok: status >= 200 && status < 300, text: async () => r.html ?? "" };
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      text: async () => {
+        if (r.textError) throw r.textError;
+        return r.html ?? "";
+      },
+    };
   };
   return { impl, llamadas };
 }
@@ -269,4 +276,20 @@ test("el CLI sale con código 1 ante una entrada inválida, sin tocar la red", (
   assert.equal(r.status, SALIDA.ENTRADA_INVALIDA);
   assert.match(r.stderr, /no es un UUID/);
   assert.equal(r.stdout, "");
+});
+
+test("obtenerEstilo trata un corte al leer el cuerpo como error de red", async () => {
+  const cacheDir = await dirTemporal();
+  const corte = () => new Error("socket hang up");
+  const sinCache = fetchFalso({ textError: corte() });
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: sinCache.impl, cacheDir })), SALIDA.RED);
+});
+
+test("obtenerEstilo usa la caché vencida si el corte ocurre al leer el cuerpo", async () => {
+  const cacheDir = await dirTemporal();
+  await obtenerEstilo(UUID, { fetchImpl: fetchFalso({ html: paginaConEstilo(ESTILO) }).impl, cacheDir, ahora: 0 });
+  const cortada = fetchFalso({ textError: new Error("socket hang up") });
+  const { estilo, aviso } = await obtenerEstilo(UUID, { fetchImpl: cortada.impl, cacheDir, ahora: CACHE_TTL_MS + 1 });
+  assert.equal(estilo.theme, "dark");
+  assert.match(aviso, /caché del 1970-01-01/);
 });

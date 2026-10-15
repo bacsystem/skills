@@ -13,6 +13,8 @@ headings exactly: Spanish by default, English with `--en`.
 | `## Archivos que se tocarán` | `## Files to touch` |
 | `## Para aprobar` | `## To approve` |
 
+The examples below are in Spanish. With `--en`, write the whole plan in English: headings from the table above, and field labels and the approval sentence translated the same way (for example `Qué es` → `What it is`, `Por qué nuevo y no extender` → `Why new instead of extending`, `Reutiliza` → `Reuses`, `Claro` / `Oscuro` → `Light` / `Dark`, `Contraste` → `Contrast`). Component names, file paths, token names and plan IDs (`N1`, `A1`, `T1`, `C1`) never change.
+
 ## Content of each section
 
 **Estilo de referencia**: name, source URL, theme, extraction method

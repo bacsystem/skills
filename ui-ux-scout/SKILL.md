@@ -84,7 +84,7 @@ by props.
 | `0` | OK; JSON on stdout (a stderr line may say it came from an old cache) | Continue. Mention the cache warning in the plan. |
 | `1` | Invalid input | Explain the expected format and stop. |
 | `2` | Style not found | Say so with the UUID received and stop. |
-| `3` | Page format changed | Plan B. |
+| `3` | Page format changed | Plan B; if WebFetch also fails, stop. |
 | `4` | Network error, no cache | Plan B; if WebFetch also fails, stop. |
 
 **Plan B** is in `references/refero-format.md`. Values from WebFetch carry
@@ -93,6 +93,7 @@ the precision warning in the plan, always.
 ### 4. Write the plan
 
 Use `references/plan-template.md`. Ground it in the references:
+- folder and names for each new component: `khipu-checklist.md` section A;
 - what to take from the style: `ui-ux-principles.md` («Take the system, not
   the brand»);
 - for each new component, why it is not an extension of an existing one, and
@@ -104,7 +105,7 @@ Use `references/plan-template.md`. Ground it in the references:
   `ui-ux-principles.md`, in light and dark;
 - every clash with a khipu convention goes to «Conflictos con convenciones»,
   resolved in khipu's favor;
-- any color value from the extraction that is not `#rgb` or `#rrggbb` (Refero data has carried truncated values like `#1b1c1`) is listed in the plan as unusable and never used.
+- any color value from the extraction that is not `#rgb` or `#rrggbb` (Refero data has carried truncated values like `#1b1c1`) is listed under «Estilo de referencia» as unusable and never used.
 
 Show the plan and **stop**.
 
@@ -112,7 +113,9 @@ Show the plan and **stop**.
 
 Apply nothing without an explicit "sí" / "yes". The user may drop or change
 items by ID (`N1`, `A2`, `T3`, `C1`). Token items are approved one by one,
-because a token change reaches every khipu consumer. If the user changes the
+because a token change reaches every khipu consumer: a general "sí" approves
+the N, A and C items only, and each T item needs its own explicit "sí T<n>".
+If the user changes the
 plan, show the updated plan and wait again.
 
 ### 6. Apply
@@ -120,8 +123,9 @@ plan, show the updated plan and wait again.
 1. Create the branch from an up-to-date `main`, one command per call:
    `git fetch origin`, then
    `git switch -c feat/estilo-<style-name-kebab> origin/main`.
-2. Follow `references/khipu-checklist.md` sections B, D and E for each
-   approved item.
+2. Follow `references/khipu-checklist.md` by item type: new components (N) →
+   sections B, C and D; adjustments (A) → section E, plus B for any new code;
+   tokens (T) → section B.4.
 3. Keep every item of the checklist's quality list (section C) true.
 4. Run `npm run registry:build` after all changes.
 
@@ -131,7 +135,9 @@ Run, one per call: `npm run typecheck`, `npm run lint`, `npm run build`.
 If one fails, fix and run it again. If it cannot be fixed, report the exact
 error and **do not** say the work is done.
 
-Then run `npm run dev` and review `/ejemplo` in light and dark.
+Then start `npm run dev` in the background and review `/ejemplo` in light and
+dark with a browser tool if one is available; if none is, say that the visual
+check was not done. Stop the dev server when finished.
 
 End with a summary:
 - what was created, adjusted and changed, by plan ID;

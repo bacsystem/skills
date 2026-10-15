@@ -53,5 +53,6 @@ khipu rule it hits, and the resolution (khipu wins).
 **Archivos que se tocarán**: the full list, grouped by create / modify.
 
 **Para aprobar**: one line asking for approval by ID, for example:
-«Responde "sí" para aplicar todo, o indica qué IDs quitar o cambiar (p. ej.
-"sin T2, N3 con otro nombre").»
+«Responde "sí" para aplicar los componentes (N, A), o indica qué IDs quitar o
+cambiar (p. ej. "sin N2, N3 con otro nombre"). Cada token se aprueba aparte:
+"sí T1", "sí T2"…»

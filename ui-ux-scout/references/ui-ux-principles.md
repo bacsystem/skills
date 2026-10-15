@@ -34,16 +34,25 @@ into a role: "accent surfaces need a desaturated tint step" is.
 | UI component boundaries, icons, focus indicators vs adjacent colors | 3:1 |
 | Disabled controls | exempt, but must still read as disabled |
 
-Compute contrast; never estimate it. Run with Node (works for `#rgb` and
-`#rrggbb`):
+Compute contrast; never estimate it. Run the script that ships with the skill
+(zero dependencies, Node 18+):
 
 ```bash
-node -e "const L=h=>{h=h.replace('#','');if(h.length===3)h=[...h].map(c=>c+c).join('');const [r,g,b]=[0,2,4].map(i=>{const c=parseInt(h.slice(i,i+2),16)/255;return c<=0.04045?c/12.92:((c+0.055)/1.055)**2.4});return 0.2126*r+0.7152*g+0.0722*b};const [a,b]=process.argv.slice(1).map(L).sort((x,y)=>y-x);console.log(((a+0.05)/(b+0.05)).toFixed(2))" "#6a6b6c" "#040506"
+node <skill dir>/scripts/contraste.mjs <texto> <fondo> [base]
+# node <skill dir>/scripts/contraste.mjs "#94a3b8" "#111827"
 ```
 
-khipu tokens live in `globals.css` as `oklch(...)` or hex. For `oklch`, convert
-first (for example with the browser devtools color picker or a known
-conversion), and say in the plan which value you converted.
+It prints the ratio with two decimals and exits `1` with a message on a color
+it cannot read.
+
+- **Accepted colors:** `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` and
+  `rgba()` (commas, or the space/slash form `rgb(10 20 30 / 0.5)`).
+- **Transparency:** a color with alpha (`rgba`, 8-digit hex) is composited over
+  `base`, the opaque surface beneath it. `base` defaults to white. For dark
+  tokens pass the dark surface, for example `--card`:
+  `contraste.mjs "rgba(226,232,240,0.12)" "#111827" "#111827"`.
+- **khipu tokens** in `globals.css` are hex or rgba, so they go in as they are;
+  nothing needs converting.
 
 ## Density
 

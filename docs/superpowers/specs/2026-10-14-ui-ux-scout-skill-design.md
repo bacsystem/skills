@@ -138,8 +138,9 @@ Además: fila en la tabla **Skills** del `README.md` raíz y entrada en
    componente nuevo:
    1. Crear el archivo en su carpeta, con imports por alias `@/`.
    2. Agregarlo a la galería de `src/app/ejemplo/galeria.tsx`.
-   3. Documentarlo en `docs/design-system.md` §20 «Kit reutilizable»: en la
-      fila de su grupo y en un párrafo de lote.
+   3. Documentarlo en `docs/design-system.md` §20 «Kit reutilizable» (o §19
+      «Inventario de componentes» para `ui/`, `nav/` y `lib`): en la fila de su
+      grupo y en un párrafo de lote.
    4. Agregarlo a `docs/guia-visual.html`.
    5. Agregarlo a la lista de **Estructura** del `README.md`.
 
@@ -350,7 +351,7 @@ de páginas o depender de detalles internos del sitio.
   (`3b6a17f0-3bdf-418c-a95e-0b89e5a8b2f8`). Criterios:
   - los hex del plan coinciden con la página de Refero;
   - se crea al menos un componente nuevo y aparece en `registry/registry.json`;
-  - el componente nuevo aparece en `/ejemplo`, `docs/design-system.md` (§20)
+  - el componente nuevo aparece en `/ejemplo`, `docs/design-system.md` (§20, o §19 para `ui/`, `nav/` y `lib`)
     y `docs/guia-visual.html`;
   - `npm run typecheck`, `npm run lint` y `npm run build` pasan;
   - ningún componente, prop, export ni token existente fue borrado o

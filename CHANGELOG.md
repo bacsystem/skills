@@ -16,6 +16,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - `ui-ux-scout/scripts/refero-fetch.mjs`: extrae los valores exactos del
   estilo del payload de Next.js de la página, con caché de 7 días y códigos de
   salida `0`–`4`; tests sin red con fixtures sintéticos.
+- `ui-ux-scout/scripts/contraste.mjs`: ratio de contraste WCAG para tokens en
+  hex (3, 4, 6 y 8 dígitos) y `rgb()`/`rgba()`, componiendo el alfa sobre la
+  superficie base; rechaza colores mal formados. Con tests.
 - `ui-ux-scout/references/`: principios de UI/UX, React 19 y Next.js 15, DRY
   y SOLID para componentes, validación por tipo de dato (incluido RUC con
   dígito verificador), checklist de alta en khipu, plantilla del plan y

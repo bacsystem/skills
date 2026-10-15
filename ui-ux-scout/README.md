@@ -37,7 +37,8 @@ There is no search by name.
    (falls back to WebFetch with a precision warning).
 4. Shows a plan: new components (`N1`…), adjustments (`A1`…), tokens (`T1`…,
    with computed WCAG contrast) and convention conflicts (`C1`…).
-5. Waits for your approval; tokens are approved one by one (`sí T1`), never by a general "sí".
+5. Waits for your approval; a plain `sí` approves components, adjustments and
+   conflicts (N, A, C), and tokens are approved only by naming them (`sí T1`).
 6. Applies it on a `feat/estilo-<name>` branch: component, gallery entry,
    docs, visual guide, README and registry.
 7. Runs `typecheck`, `lint` and `build`, reviews `/ejemplo`, and leaves the
@@ -55,8 +56,13 @@ There is no search by name.
 
 - [`SKILL.md`](./SKILL.md): the full skill definition.
 - [`scripts/refero-fetch.mjs`](./scripts/refero-fetch.mjs): UUID → exact JSON;
-  exit codes `0` OK, `1` invalid input, `2` not found, `3` format changed,
-  `4` network. Cache in the system temp dir for 7 days.
+  exit codes `0` OK, `1` invalid input, `2` not found, `3` format changed or
+  unexpected script error, `4` network (30 s timeout). Cache in the system temp
+  dir for 7 days; an expired copy is still used, with a warning, when there is
+  no network.
+- [`scripts/contraste.mjs`](./scripts/contraste.mjs): WCAG contrast ratio of
+  two colors (`node contraste.mjs <texto> <fondo> [base]`); accepts hex
+  (3, 4, 6 and 8 digits) and `rgb()`/`rgba()`, compositing alpha over `base`.
 - [`references/`](./references): UI/UX principles, React/Next, DRY and SOLID,
   field validation, khipu checklist, plan template, Refero page format.
 
@@ -64,6 +70,7 @@ There is no search by name.
 
 ```bash
 node --test ui-ux-scout/scripts/test-refero-fetch.mjs
+node --test ui-ux-scout/scripts/test-contraste.mjs
 ```
 
 No network: pages are synthetic fixtures.

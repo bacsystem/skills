@@ -43,7 +43,7 @@ Read each one at the step that names it. Do not work from memory.
 | File | Use it for |
 |---|---|
 | `references/refero-format.md` | How the style data is extracted; plan B with WebFetch |
-| `references/ui-ux-principles.md` | Taking the system and not the brand; contrast (with the command to compute it); density; states; focus; dark mode |
+| `references/ui-ux-principles.md` | Taking the system and not the brand; contrast (how to compute it with `scripts/contraste.mjs`); density; states; focus; dark mode |
 | `references/react-nextjs.md` | Server vs Client Components, serializable props, refs, `cva`, controlled/uncontrolled, accessibility with base-ui |
 | `references/clean-design.md` | DRY and SOLID adapted to components |
 | `references/field-validation.md` | Validation by data type, `lib/validacion.ts`, messages |
@@ -63,7 +63,7 @@ Follow these steps in order. Steps 1–4 never modify a file.
 
 ### 2. Read khipu's context
 
-Read `CLAUDE.md`, `README.md`, `docs/design-system.md` (principles, tokens,
+Read `CLAUDE.md` (if present), `README.md`, `docs/design-system.md` (principles, tokens,
 §4 height scale, §20 reusable kit), `src/app/globals.css` (`@theme inline`,
 `:root`, `.dark`), `src/lib/estilos.ts` and `registry/registry.json`.
 
@@ -75,7 +75,8 @@ by props.
 ### 3. Extract the style
 
 1. Check Node: `node --version` must be ≥ 18. If not, go to plan B.
-2. Run the script that ships next to this file:
+2. Run the script that ships next to this file, passing only the UUID or URL
+   (strip `--es` / `--en` first):
    `node <this skill's directory>/scripts/refero-fetch.mjs <uuid-or-url>`
 3. Act on the exit code:
 
@@ -84,7 +85,7 @@ by props.
 | `0` | OK; JSON on stdout (a stderr line may say it came from an old cache) | Continue. Mention the cache warning in the plan. |
 | `1` | Invalid input | Explain the expected format and stop. |
 | `2` | Style not found | Say so with the UUID received and stop. |
-| `3` | Page format changed | Plan B; if WebFetch also fails, stop. |
+| `3` | Page format changed or unexpected script error | Plan B; if WebFetch also fails, stop. |
 | `4` | Network error, no cache | Plan B; if WebFetch also fails, stop. |
 
 **Plan B** is in `references/refero-format.md`. Values from WebFetch carry
@@ -101,38 +102,51 @@ Use `references/plan-template.md`. Ground it in the references:
 - Server or Client, props and variants: `react-nextjs.md`;
 - for each form field, its data type, rules and messages:
   `field-validation.md`;
-- for each token change, the contrast ratio **computed** with the command in
-  `ui-ux-principles.md`, in light and dark;
+- for each token change, the contrast ratio **computed** with
+  `scripts/contraste.mjs` (usage in `ui-ux-principles.md`), in light and dark;
 - every clash with a khipu convention goes to «Conflictos con convenciones»,
   resolved in khipu's favor;
-- any color value from the extraction that is not `#rgb` or `#rrggbb` (Refero data has carried truncated values like `#1b1c1`) is listed under «Estilo de referencia» as unusable and never used.
+- a color value that `contraste.mjs` rejects (malformed, like the truncated
+  `#1b1c1` Refero data has carried) is listed under «Estilo de referencia» as
+  unusable and never used; `rgba` and 8-digit hex values are valid.
 
 Show the plan and **stop**.
 
 ### 5. Wait for approval
 
 Apply nothing without an explicit "sí" / "yes". The user may drop or change
-items by ID (`N1`, `A2`, `T3`, `C1`). Token items are approved one by one,
-because a token change reaches every khipu consumer: a general "sí" approves
-the N, A and C items only, and each T item needs its own explicit "sí T<n>".
-If the user changes the
-plan, show the updated plan and wait again.
+items by ID (`N1`, `A2`, `T3`, `C1`). A token change reaches every khipu
+consumer, so tokens have their own rule:
+
+- A reply of `sí` approves every N, A and C item in the plan. It never
+  approves a T item.
+- A token is approved only by naming it: `sí T1`, `sí T1 T3`. A reply may
+  combine both (`sí, sí T1`). A reply that is only `sí T1` approves T1 and
+  nothing else.
+- Every N/A block lists the tokens it depends on (`Depende de: T2`). If a T
+  item is not approved, re-plan the items that depend on it, show the updated
+  plan, and wait again. Never add a token that was not approved.
+
+If the user changes the plan, show the updated plan and wait again.
 
 ### 6. Apply
 
 1. Create the branch from an up-to-date `main`, one command per call:
    `git fetch origin`, then
-   `git switch -c feat/estilo-<style-name-kebab> origin/main`.
+   `git switch -c feat/estilo-<style-name-kebab> origin/main`. If the
+   extracted `name` is `null`, use `feat/estilo-<first 8 chars of the uuid>`.
 2. Follow `references/khipu-checklist.md` by item type: new components (N) →
    sections B, C and D; adjustments (A) → section E, plus B for any new code;
-   tokens (T) → section B.4.
+   tokens (T) → sections B.4 and B.5.
 3. Keep every item of the checklist's quality list (section C) true.
 4. Run `npm run registry:build` after all changes.
 
 ### 7. Verify
 
 Run, one per call: `npm run typecheck`, `npm run lint`, `npm run build`.
-If one fails, fix and run it again. If it cannot be fixed, report the exact
+If one fails, fix and run it again. The fix stays within the approved files
+and items; a fix that would change an existing API or touch unapproved files
+goes back to the user as a question. If it cannot be fixed, report the exact
 error and **do not** say the work is done.
 
 Then start `npm run dev` in the background and review `/ejemplo` in light and
@@ -168,7 +182,7 @@ End with a summary:
 |---|---|
 | Creating a component that an existing one covers with a variant | Propose the variant (`clean-design.md`) |
 | Copying the reference's 40px button height | Keep `h-9`; record it under conflicts |
-| Estimating contrast by eye | Run the command in `ui-ux-principles.md` |
+| Estimating contrast by eye | Run `scripts/contraste.mjs` |
 | Adding `"use client"` to every new file | Server by default; justify each client one |
 | Writing validation inside the component | Pure function in `lib/validacion.ts`, shown with `Campo` |
 | Forgetting gallery, docs, guide, README or registry | Checklist section D, every item |

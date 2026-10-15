@@ -33,6 +33,9 @@ relative to the khipu-design-system root.
    `border-border`…). No hex, no Tailwind palette colors (`bg-gray-100`).
 4. New tokens, if approved, go in `src/app/globals.css` in all three places:
    `:root`, `.dark` and the `@theme inline` mapping.
+5. When a token value changes (a T item), also update its row in
+   `docs/design-system.md` §2 «Tokens de color» (light and dark values) and
+   the matching swatches and values in `docs/guia-visual.html`.
 
 ## C. Quality list (all must hold; report each in the final summary)
 
@@ -59,10 +62,15 @@ relative to the khipu-design-system root.
    `CabeceraSeccion` whose `subtitulo` lists the group's components). Show
    every variant and state. Import it at the top with the other imports of
    its folder, keeping alphabetical order.
-2. **Docs:** in `docs/design-system.md` §20 «Kit reutilizable», add it to its
-   group's row and write a short lote paragraph like the existing ones
-   (what it is, what base-ui primitive it uses, how it differs from the
-   nearest existing component).
+2. **Docs:** in `docs/design-system.md`, by where the file lives:
+   - `feedback/`, `formularios/`, `navegacion/` or `datos/` → add it to its
+     row in §20 «Kit reutilizable»;
+   - `ui/`, `nav/`, or a new `lib/` file (for example `validacion.ts`) → add it
+     to its row in §19 «Inventario de componentes»;
+   - `patrones/` → no table row; the lote paragraph is the record;
+   - in every case, write a short lote paragraph in §20 like the existing ones
+     (what it is, what base-ui primitive it uses, how it differs from the
+     nearest existing component).
 3. **Visual guide:** add a `<section>` with a `section-head` (`<h2>` + `<p>`
    with `<span class="src">carpeta/archivo.tsx</span>`) to
    `docs/guia-visual.html`, near the related sections, with static HTML that

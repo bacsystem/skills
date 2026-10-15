@@ -5,7 +5,7 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.2.10] - 2026-10-15
 
 ### Añadido
 - Skill `ui-ux-scout`: crea y mejora componentes en khipu-design-system a

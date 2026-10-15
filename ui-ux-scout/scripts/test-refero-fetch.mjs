@@ -3,13 +3,21 @@
 // Ejecutar: node --test ui-ux-scout/scripts/test-refero-fetch.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import {
   BASE,
   SALIDA,
+  CACHE_TTL_MS,
   ErrorRefero,
   extraerUuid,
   extraerNombre,
   parsearPagina,
+  obtenerEstilo,
+  main,
 } from "./refero-fetch.mjs";
 
 const UUID = "3b6a17f0-3bdf-418c-a95e-0b89e5a8b2f8";
@@ -142,4 +150,123 @@ test("extraerNombre limpia el sufijo de Refero y decodifica entidades", () => {
   assert.equal(extraerNombre("<title>Ben &amp; Jerry design system | Refero Styles</title>"), "Ben & Jerry");
   assert.equal(extraerNombre("<title>Solo | Refero Styles</title>"), "Solo");
   assert.equal(extraerNombre("<html></html>"), null);
+});
+
+// fetch falso: devuelve las respuestas en orden; un Error simula falta de red.
+function fetchFalso(...respuestas) {
+  const llamadas = [];
+  const impl = async (url) => {
+    llamadas.push(url);
+    const r = respuestas.shift();
+    if (r instanceof Error) throw r;
+    const status = r.status ?? 200;
+    return { status, ok: status >= 200 && status < 300, text: async () => r.html ?? "" };
+  };
+  return { impl, llamadas };
+}
+
+const dirTemporal = () => mkdtemp(join(tmpdir(), "ui-ux-scout-test-"));
+
+async function codigoAsync(promesa) {
+  try {
+    await promesa;
+  } catch (error) {
+    assert.ok(error instanceof ErrorRefero, `se esperaba ErrorRefero, llegó ${error}`);
+    return error.codigo;
+  }
+  assert.fail("se esperaba un ErrorRefero");
+}
+
+test("obtenerEstilo descarga, guarda en caché y la reutiliza sin volver a pedir", async () => {
+  const cacheDir = await dirTemporal();
+  const red = fetchFalso({ html: paginaConEstilo(ESTILO) });
+  const primera = await obtenerEstilo(UUID, { fetchImpl: red.impl, cacheDir, ahora: 1_000 });
+  assert.equal(primera.estilo.colors[0].hex, "#101010");
+  assert.equal(primera.aviso, null);
+  assert.deepEqual(red.llamadas, [`${BASE}${UUID}`]);
+
+  const segunda = await obtenerEstilo(UUID.toUpperCase(), { fetchImpl: red.impl, cacheDir, ahora: 2_000 });
+  assert.deepEqual(segunda.estilo, primera.estilo);
+  assert.equal(red.llamadas.length, 1, "la segunda llamada debe salir de la caché");
+});
+
+test("obtenerEstilo renueva la caché vencida", async () => {
+  const cacheDir = await dirTemporal();
+  const red = fetchFalso({ html: paginaConEstilo(ESTILO) }, { html: paginaConEstilo({ ...ESTILO, theme: "light" }) });
+  await obtenerEstilo(UUID, { fetchImpl: red.impl, cacheDir, ahora: 0 });
+  const renovada = await obtenerEstilo(UUID, { fetchImpl: red.impl, cacheDir, ahora: CACHE_TTL_MS + 1 });
+  assert.equal(renovada.estilo.theme, "light");
+  assert.equal(red.llamadas.length, 2);
+});
+
+test("obtenerEstilo usa la caché vencida con aviso si no hay red", async () => {
+  const cacheDir = await dirTemporal();
+  await obtenerEstilo(UUID, { fetchImpl: fetchFalso({ html: paginaConEstilo(ESTILO) }).impl, cacheDir, ahora: 0 });
+  const sinRed = fetchFalso(new Error("getaddrinfo ENOTFOUND"));
+  const { estilo, aviso } = await obtenerEstilo(UUID, { fetchImpl: sinRed.impl, cacheDir, ahora: CACHE_TTL_MS + 1 });
+  assert.equal(estilo.theme, "dark");
+  assert.match(aviso, /caché del 1970-01-01/);
+});
+
+test("obtenerEstilo sin red y sin caché sale con código de red", async () => {
+  const cacheDir = await dirTemporal();
+  const sinRed = fetchFalso(new Error("getaddrinfo ENOTFOUND"));
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: sinRed.impl, cacheDir })), SALIDA.RED);
+});
+
+test("obtenerEstilo distingue no encontrado (404 o página de 404 con 200) de error HTTP", async () => {
+  const cacheDir = await dirTemporal();
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: fetchFalso({ status: 404 }).impl, cacheDir })), SALIDA.NO_ENCONTRADO);
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: fetchFalso({ html: PAGINA_NO_ENCONTRADA }).impl, cacheDir })), SALIDA.NO_ENCONTRADO);
+  assert.equal(await codigoAsync(obtenerEstilo(UUID, { fetchImpl: fetchFalso({ status: 503 }).impl, cacheDir })), SALIDA.RED);
+});
+
+test("obtenerEstilo ignora una caché corrupta y vuelve a descargar", async () => {
+  const cacheDir = await dirTemporal();
+  await writeFile(join(cacheDir, `${UUID}.json`), "{no es json");
+  const red = fetchFalso({ html: paginaConEstilo(ESTILO) });
+  const { estilo } = await obtenerEstilo(UUID, { fetchImpl: red.impl, cacheDir, ahora: 0 });
+  assert.equal(estilo.name, "Acme");
+  assert.equal(red.llamadas.length, 1);
+  const guardada = JSON.parse(await readFile(join(cacheDir, `${UUID}.json`), "utf8"));
+  assert.equal(guardada.guardado, 0);
+});
+
+test("obtenerEstilo devuelve el estilo aunque no pueda escribir la caché", async () => {
+  const base = await dirTemporal();
+  const archivo = join(base, "no-es-directorio");
+  await writeFile(archivo, "x");
+  const { estilo } = await obtenerEstilo(UUID, { fetchImpl: fetchFalso({ html: paginaConEstilo(ESTILO) }).impl, cacheDir: archivo, ahora: 0 });
+  assert.equal(estilo.theme, "dark");
+});
+
+function salidaFalsa() {
+  let texto = "";
+  return { write: (s) => { texto += s; }, get texto() { return texto; } };
+}
+
+test("main imprime el JSON del estilo y devuelve 0", async () => {
+  const stdout = salidaFalsa();
+  const stderr = salidaFalsa();
+  const codigo = await main([UUID], { stdout, stderr, fetchImpl: fetchFalso({ html: paginaConEstilo(ESTILO) }).impl, cacheDir: await dirTemporal() });
+  assert.equal(codigo, SALIDA.OK);
+  assert.equal(JSON.parse(stdout.texto).name, "Acme");
+  assert.equal(stderr.texto, "");
+});
+
+test("main sin argumentos o con un nombre devuelve 1 con un mensaje", async () => {
+  const stderr = salidaFalsa();
+  assert.equal(await main([], { stdout: salidaFalsa(), stderr }), SALIDA.ENTRADA_INVALIDA);
+  assert.match(stderr.texto, /^Uso: /);
+  const stderr2 = salidaFalsa();
+  assert.equal(await main(["Raycast"], { stdout: salidaFalsa(), stderr: stderr2 }), SALIDA.ENTRADA_INVALIDA);
+  assert.match(stderr2.texto, /no es un UUID/);
+});
+
+test("el CLI sale con código 1 ante una entrada inválida, sin tocar la red", () => {
+  const script = join(dirname(fileURLToPath(import.meta.url)), "refero-fetch.mjs");
+  const r = spawnSync(process.execPath, [script, "no-es-uuid"], { encoding: "utf8" });
+  assert.equal(r.status, SALIDA.ENTRADA_INVALIDA);
+  assert.match(r.stderr, /no es un UUID/);
+  assert.equal(r.stdout, "");
 });

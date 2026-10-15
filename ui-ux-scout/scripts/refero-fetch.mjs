@@ -4,6 +4,11 @@
 // (self.__next_f.push) y de ahí se extraen tal cual, sin pasar por un modelo que resuma.
 // Formato documentado en ../references/refero-format.md.
 
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
 export const BASE = "https://styles.refero.design/style/";
 
 export const SALIDA = Object.freeze({ OK: 0, ENTRADA_INVALIDA: 1, NO_ENCONTRADO: 2, FORMATO: 3, RED: 4 });
@@ -150,4 +155,84 @@ export function parsearPagina(html, uuid) {
     throw new ErrorRefero(SALIDA.FORMATO, 'La página no trae el objeto del estilo (sin "colors"): el formato de Refero cambió. Usa el plan B con WebFetch.');
   }
   return normalizarEstilo(crudo, { uuid, nombre: extraerNombre(html) });
+}
+
+export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const CACHE_DIR = join(tmpdir(), "ui-ux-scout");
+const AGENTE = "ui-ux-scout (+https://github.com/bacsystem/skills)";
+
+async function leerCache(ruta) {
+  try {
+    const cache = JSON.parse(await readFile(ruta, "utf8"));
+    return typeof cache?.guardado === "number" && cache.estilo ? cache : null;
+  } catch {
+    return null; // ausente o corrupta: se trata igual
+  }
+}
+
+// La caché es una optimización: si no se puede escribir, el resultado se entrega igual.
+async function guardarCache(cacheDir, ruta, contenido) {
+  try {
+    await mkdir(cacheDir, { recursive: true });
+    await writeFile(ruta, JSON.stringify(contenido));
+  } catch {
+    // sin caché esta vez
+  }
+}
+
+export async function obtenerEstilo(entrada, { fetchImpl = globalThis.fetch, cacheDir = CACHE_DIR, ahora = Date.now() } = {}) {
+  const uuid = extraerUuid(entrada);
+  const rutaCache = join(cacheDir, `${uuid}.json`);
+  const cache = await leerCache(rutaCache);
+  if (cache && ahora - cache.guardado < CACHE_TTL_MS) return { estilo: cache.estilo, aviso: null };
+
+  const falloDeRed = (detalle) => {
+    if (cache) {
+      const fecha = new Date(cache.guardado).toISOString().slice(0, 10);
+      return { estilo: cache.estilo, aviso: `${detalle}; se usa la copia en caché del ${fecha}.` };
+    }
+    throw new ErrorRefero(SALIDA.RED, `${detalle}.`);
+  };
+
+  let respuesta;
+  try {
+    respuesta = await fetchImpl(BASE + uuid, { headers: { "user-agent": AGENTE } });
+  } catch (error) {
+    return falloDeRed(`No se pudo conectar con Refero Styles (${error.message})`);
+  }
+  if (respuesta.status === 404) {
+    throw new ErrorRefero(SALIDA.NO_ENCONTRADO, `No existe un estilo con UUID ${uuid} en Refero Styles.`);
+  }
+  if (!respuesta.ok) return falloDeRed(`Refero Styles respondió HTTP ${respuesta.status}`);
+
+  const estilo = parsearPagina(await respuesta.text(), uuid);
+  await guardarCache(cacheDir, rutaCache, { guardado: ahora, estilo });
+  return { estilo, aviso: null };
+}
+
+const USO = "Uso: node refero-fetch.mjs <uuid|https://styles.refero.design/style/<uuid>>";
+
+export async function main(args, { stdout = process.stdout, stderr = process.stderr, ...opciones } = {}) {
+  if (args.length !== 1) {
+    stderr.write(`${USO}\n`);
+    return SALIDA.ENTRADA_INVALIDA;
+  }
+  if (typeof (opciones.fetchImpl ?? globalThis.fetch) !== "function") {
+    stderr.write("Hace falta Node 18 o superior (fetch nativo).\n");
+    return SALIDA.RED;
+  }
+  try {
+    const { estilo, aviso } = await obtenerEstilo(args[0], opciones);
+    if (aviso) stderr.write(`${aviso}\n`);
+    stdout.write(`${JSON.stringify(estilo, null, 2)}\n`);
+    return SALIDA.OK;
+  } catch (error) {
+    if (!(error instanceof ErrorRefero)) throw error;
+    stderr.write(`${error.message}\n`);
+    return error.codigo;
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.exitCode = await main(process.argv.slice(2));
 }

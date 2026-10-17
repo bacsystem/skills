@@ -59,7 +59,7 @@ verdict is text, and approving a PR stays your call.
 | **Clean Code** | Intent-revealing names, single-purpose functions, nesting and cognitive complexity, comments that explain *why*, explicit error handling, dead code, code smells (with a catalog of when each one is a finding) |
 | **SOLID** | One reason to change, extension over modification, contract-honoring implementations, cohesive interfaces, depending on abstractions across layers |
 | **DRY** | Real duplication that must be extracted — distinguished from coincidental similarity |
-| **Best practices** | Test coverage — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with repo patterns, and what breaks after the merge: migrations, API and config compatibility, operability, performance, frontend states and accessibility, new dependencies |
+| **Best practices** | Test coverage — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, documents another system validates (a schema check is not acceptance; a sandbox run left pending is a finding), claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with repo patterns, and what breaks after the merge: migrations, API and config compatibility, operability, performance, frontend states and accessibility, new dependencies |
 
 Before reading the diff it reads the repo's own conventions (`CLAUDE.md`,
 `AGENTS.md`, `CONTRIBUTING.md`, QA docs) and the **linked issue**, and checks

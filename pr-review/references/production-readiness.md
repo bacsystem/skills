@@ -43,6 +43,22 @@ migration has nothing to report under migrations. Every finding still needs
   snake_case) or a documented schema that differs from what is actually
   serialized.
 
+## Documents another system validates
+
+- **Local validation is not acceptance.** A schema check or unit test shows
+  the shape; the receiver (tax authority, gateway, partner API) also applies
+  business rules the schema never sees. Run its sandbox, or read its rules,
+  for every field the diff changes.
+- **Unlisted fields.** If the receiver's rules do not mention a field, do not
+  assume it is tolerated: the amounts that depend on it may be checked as if
+  it were absent.
+- **Dated rules.** A change announced for a future date is not a reason to
+  switch early or late without checking what the sandbox and production
+  accept today; the notes in the repo may already say.
+- **A rejection after the number is taken.** If the document consumes a
+  sequence number or a quota before the receiver answers, a rejection leaves
+  a gap or a stuck record: say what happens next.
+
 ## Configuration
 
 - **New environment variables** are documented (README, `.env.example`,

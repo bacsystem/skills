@@ -203,6 +203,31 @@ a path none of the PR's tests exercised.
 
 ---
 
+### A schema-valid document is not an accepted one
+
+**Axis:** Best practices
+
+**Watch for:** A diff that changes what is sent to a system that validates it
+(an XML for a tax authority, a gateway payload, an import file) and proves it
+with a local schema check and unit tests, while its own plan leaves "try it in
+the receiver's sandbox" pending. Also a code or format chosen from a dated
+announcement when the repo's own notes on that system say otherwise.
+
+**Verify:** Open the receiver's rules for the fields the diff touches, and
+run the repo's sandbox harness if there is one. A field the rules never list
+is not "allowed by the schema": it is unspecified, and the receiver may
+reject the amounts that go with it.
+
+**Example:** Two merged changes reordered the elements of a credit and a debit
+note so they passed the local schema, and a third changed which code a daily
+summary uses for free items. The sandbox then rejected all three: the notes'
+rules contain no discount or charge field at all and require line value =
+unit value × quantity, and the summary's catalog accepted neither the old nor
+the new code (it accepted the summary with the item left out). Each PR had
+listed the sandbox run as pending and merged on green unit tests.
+
+---
+
 <!--
 Template for the next entry — copy this block, fill it in, generalize away
 project-specific names/paths, delete this comment's contents when adding

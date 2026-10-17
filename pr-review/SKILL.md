@@ -296,11 +296,17 @@ The axis that catches bugs. Don't read the change and judge whether it
      excerpt, a rules table, an earlier case). A contradiction is a finding
      even when the PR cites a source: the notes may be the newer reading.
   2. If the PR's own plan leaves "try it against the real or sandbox system"
-     pending, that is an `IMPORTANTE` finding whenever the change alters what
-     is sent — not a pending item to accept. Unit tests and a local schema
-     check cannot show the receiver accepts it. If the repo already has a
-     harness for that system (a sandbox suite, a script), run it or say why you
-     could not. Only a doc-only or purely internal change may leave it pending.
+     pending, that is an `IMPORTANTE` / `IMPORTANT` finding whenever the change
+     alters what is sent — not a pending item to accept. Unit tests and a local
+     schema check cannot show the receiver accepts it. If the repo already has
+     a harness for that system (a sandbox suite, a script), run it or say why
+     you could not. Only a doc-only or purely internal change may leave it
+     pending.
+  3. The finding closes in one of two ways: the run happens and its result is
+     in the PR (the sandbox's answer, the evidence files), or the owner decides
+     in writing to ship the change without it and the change stays dark — off
+     behind a flag, or not sent yet. A re-review marks it resolved only with
+     one of those two, never with "the author says it works".
 - **Claims in the PR description and docs are verified.** Test counts,
   "N/N mutations", "tested in Docker", "no behavior change" — cross-check
   them against the reports, the test diff or the commands shown. A number
@@ -325,6 +331,9 @@ The axis that catches bugs. Don't read the change and judge whether it
     that several services read reaches *each* of them in every environment
     definition; and when the feature stays dark until a flag or a data load
     is switched on, the PR says what the user sees in the meantime.
+  - *Documents another system validates*: the receiver's own rules, not only a
+    local schema, accept what the diff sends (see axis 5, *Contracts owned by
+    an external system*).
   - *Operability*: a failure leaves enough trace to diagnose it; no swallowed
     error without a log, metric or user-visible signal.
   - *Performance visible in a diff*: N+1 queries, unbounded result sets,

@@ -14,8 +14,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   que falla, luego el arreglo; corre las suites que el cambio puede afectar,
   rompe el código una vez a propósito para confirmar que la prueba nueva se
   pone roja, hace commit en la rama de la PR, corrige las cifras del cuerpo de
-  la PR e informa con una tabla de re-revisión. Nunca debilita una prueba para
-  que pase y nunca hace merge.
+  la PR e informa con una tabla de re-revisión. Solo empuja a una rama propia o
+  con permiso de su dueño (en una PR ajena deja los commits en local). Nunca
+  debilita una prueba para que pase y nunca hace merge.
 - `pr-review`: **revisar código propio**. Si la misma sesión escribió la PR, el
   informe lo dice y exige al menos una comprobación que el autor no hizo al
   implementar (reproducir un criterio contra el sistema real o repetir una

@@ -114,7 +114,8 @@ After a review, "fix H2" or "CORRIGE" applies the findings. It works by ID:
 for each one it writes (or runs) the test that fails while the defect exists,
 watches it fail, fixes it, runs the suites the change can affect, breaks the
 code once on purpose to confirm the new test goes red, commits on the PR's
-branch, updates the numbers in the PR body and reports a re-review table with
+branch (pushing only to a branch that is yours or whose owner allowed it),
+updates the numbers in the PR body and reports a re-review table with
 evidence. It never makes a finding go away by weakening a test, and it never
 merges. If your project's `CLAUDE.md` or memory already authorizes fixing
 findings before merge, it does not ask first.

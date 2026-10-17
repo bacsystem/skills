@@ -454,8 +454,13 @@ never start fixing on your own after a review.
    changed, break the code once on purpose and watch it go red (commit first;
    mutate committed files only).
 4. **Commit and update.** Commit on the PR's branch with the finding ID in the
-   message, push, and correct the PR body wherever a number or claim it states
-   changed (test counts, mutations, what was not run).
+   message and correct the PR body wherever a number or claim it states
+   changed (test counts, mutations, what was not run). **Push only to a branch
+   that is the user's own, or when its owner has said you may.** On someone
+   else's PR — or when you cannot tell — leave the commits local (or offer the
+   patch) and say so: a standing authorization to *correct* findings is not
+   permission to write to a third party's branch, which is public and can only
+   be undone with a force-push.
 5. **Report as a re-review table**: each ID resolved with its evidence
    (commit, `file:line`, test), and anything left out with the reason.
 
@@ -482,7 +487,8 @@ and nothing is posted.
    the user to paste manually. Never fail silently.
 
 The posted comment is the same sections, prefixed with one line naming
-what was reviewed:
+what was reviewed (it goes first, and the verdict line described under
+**Output format** comes right after it):
 
 ```
 Code review de `<base>...<head>` — corrección, Clean Code, SOLID, DRY y buenas prácticas.

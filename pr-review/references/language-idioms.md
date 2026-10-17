@@ -66,6 +66,17 @@ pattern in a real review, not preemptively.
   and ESLint all stay green; only `next build` fails. When a diff adds such
   an import to a widely-imported module, check its importers or ask whether
   `next build` was run, and prefer passing the value in as a parameter.
+- **Client types for an API that omits nulls** — a field typed `x: string | null`
+  against a backend whose serializer skips empty values (see Java / Spring
+  below): the real value is `undefined`, not `null`, so a check written as
+  `=== null` never matches. The type should be optional (`x?: string | null`)
+  and the mock should omit the key rather than send `null`.
+- **A page that reads `process.env` without opting into dynamic rendering** —
+  a statically prerendered page freezes the value present at build time, so a
+  flag set later in the deployment platform does nothing. Look for
+  `export const dynamic = "force-dynamic"` (or a runtime read such as
+  `cookies()`/`headers()`) wherever a page or a shared component decides
+  something from the environment.
 - **A link rendered as a button** — a design-system `Button` with a
   `render={<Link …/>}` / `asChild` prop can emit `<a role="button">`. A
   control that navigates should be announced as a link; screen readers and
@@ -91,6 +102,11 @@ pattern in a real review, not preemptively.
   a literal IP it performs a DNS lookup, on the request path. Parsing or
   normalizing an address that came from a header should not touch the
   network.
+- **Serializer settings that change the contract** — `default-property-inclusion:
+  non_null` (Jackson) omits empty fields from the JSON instead of sending
+  `null`, and a naming strategy changes the casing. Frontend types, mocks and
+  the OpenAPI document must follow what is actually serialized, not what the
+  Java record declares.
 - **Backslashes in `@SpringBootTest(properties = …)`** — the values are read
   as `.properties`, so `\.` in a regex loses its backslash and the test runs
   a different pattern than production. Use character classes (`[.]`) or a

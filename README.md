@@ -21,7 +21,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 | Skill | Descripción |
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
-| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, tipos y validación), Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
+| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, tipos y validación), Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito (también en la primera línea), modo corrección por ID y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
 | [`ui-ux-scout`](./ui-ux-scout) | Crea y mejora componentes de khipu-design-system a partir de un estilo de Refero Styles (UUID): plan con tokens y contraste WCAG, aprobación, implementación con criterio de UI/UX, React/Next, DRY, SOLID y validación por tipo de dato, y verificación del build |
 
 ## Estructura
@@ -48,6 +48,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.2.11`](https://github.com/bacsystem/skills/releases/tag/v0.2.11) | 2026-10-17 | `pr-review`: modo corrección por ID, revisión de código propio con una comprobación independiente, criterios «reproducido / según la PR», veredicto en la primera línea y nuevas referencias (tipo y mock con la misma suposición, ajuste que no llega a todos los servicios) |
 | [`v0.2.9`](https://github.com/bacsystem/skills/releases/tag/v0.2.9) | 2026-10-03 | `pr-review`: eje de corrección, criterios del issue, re-revisión con IDs estables, tests que discriminan, complejidad cognitiva, catálogo de code smells y referencia de producción |
 | [`v0.2.8`](https://github.com/bacsystem/skills/releases/tag/v0.2.8) | 2026-09-08 | Skill `pr-review` (Clean Code, SOLID, DRY y buenas prácticas) con `--es`/`--en` y `--comment` |
 | [`v0.2.7`](https://github.com/bacsystem/skills/releases/tag/v0.2.7) | 2026-07-04 | Base del PR según exista `develop`; tag solo en merges a `main` |

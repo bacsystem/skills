@@ -134,6 +134,75 @@ same batch, and two tests creating the same email get a duplicate error.
 
 ---
 
+### The type and the mock repeat the same wrong assumption
+
+**Axis:** Best practices (tests, contracts)
+
+**Watch for:** A client-side type declares a field as `T | null` (or as
+required) and the mock or fixture that feeds the tests produces exactly that,
+while the real service *omits the key* when the value is empty (a serializer
+configured to skip nulls). The type, the mock and the tests all agree with one
+another and none of them with the server, so the suite is green and the code
+that tests the field against `null` is wrong in production.
+
+**Verify:** Call the real service once, or read its serializer configuration,
+and compare the response with what the mock sends: is the key omitted or
+`null`, how is it cased, what status does the error path return? Reading the
+mock against the type proves nothing — they were written together.
+
+**Example:** A lookup endpoint returns an address only when the record has
+one. The client type says `address: string | null` and the mock always sends
+`address: null` for records without one; the real response has no `address`
+key at all. Code written as `address === null` passes every test and never
+matches in production. The fix is the optional type (`address?: string | null`)
+and a mock that omits the key.
+
+---
+
+### An acceptance criterion names a variant no test exercises
+
+**Axis:** Best practices (tests) / issue criteria
+
+**Watch for:** A criterion that lists kinds — "invoice, receipt or credit
+note", "web and mobile", "every user type" — while the tests exercise one or
+two of them because today they share a code path. The unexercised variants are
+guarded by the sharing, not by a test, and the day one of them is split off
+nothing fails.
+
+**Verify:** For each variant the criterion names, find the test that goes
+through *that variant's* entry point. If only the shared path is covered, it is
+a MINOR finding with the test to add; it is not a defect today, so say so.
+
+**Example:** A criterion says the notice must appear after issuing an invoice,
+a receipt or a note. The tests cover the invoice and the note form; the receipt
+form is the same component with a different prop. A later refactor that gives
+the receipt its own submit handler would drop the notice and keep the suite
+green.
+
+---
+
+### Reviewing your own work shares your blind spots
+
+**Axis:** Cross-cutting
+
+**Watch for:** A review of a PR that the same session implemented, where every
+piece of evidence — the tests, the mutation results, the numbers in the PR
+body — was produced by the author-reviewer. They agree with each other because
+they share one set of assumptions.
+
+**Verify:** Before approving, run one check that was not part of the
+implementation: reproduce an acceptance criterion against the real system, or
+repeat one mutation by hand. Disclose in the report that the reviewer is also
+the author.
+
+**Example:** An author-reviewer reads "the form opens when the setting is
+true" in its own PR. Starting the real container with the setting and
+requesting the page shows the page opens, but a request to the form's submit
+route is still refused by a second service that never received the setting —
+a path none of the PR's tests exercised.
+
+---
+
 <!--
 Template for the next entry — copy this block, fill it in, generalize away
 project-specific names/paths, delete this comment's contents when adding

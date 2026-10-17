@@ -48,6 +48,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.2.12`](https://github.com/bacsystem/skills/releases/tag/v0.2.12) | 2026-10-17 | `pr-review`: contratos que valida otro sistema (el esquema local no es la aceptación del receptor; una prueba en su sandbox pendiente es hallazgo) y criterios del issue abiertos a propósito |
 | [`v0.2.11`](https://github.com/bacsystem/skills/releases/tag/v0.2.11) | 2026-10-17 | `pr-review`: modo corrección por ID, revisión de código propio con una comprobación independiente, criterios «reproducido / según la PR», veredicto en la primera línea y nuevas referencias (tipo y mock con la misma suposición, ajuste que no llega a todos los servicios) |
 | [`v0.2.9`](https://github.com/bacsystem/skills/releases/tag/v0.2.9) | 2026-10-03 | `pr-review`: eje de corrección, criterios del issue, re-revisión con IDs estables, tests que discriminan, complejidad cognitiva, catálogo de code smells y referencia de producción |
 | [`v0.2.8`](https://github.com/bacsystem/skills/releases/tag/v0.2.8) | 2026-09-08 | Skill `pr-review` (Clean Code, SOLID, DRY y buenas prácticas) con `--es`/`--en` y `--comment` |

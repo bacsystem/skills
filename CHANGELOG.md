@@ -5,6 +5,25 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.2.12] - 2026-10-17
+
+### Añadido
+- `pr-review`: **contratos que valida otro sistema**. Un documento que pasa el
+  esquema local no es un documento aceptado por quien lo recibe (autoridad
+  tributaria, pasarela de pago, API de un tercero). El revisor contrasta la
+  decisión con las notas del repo sobre ese sistema y, si la PR deja pendiente
+  la prueba en su sandbox y el cambio altera lo que se envía, lo reporta como
+  hallazgo `IMPORTANTE`; si el repo ya tiene un arnés para ese sistema, lo
+  corre o dice por qué no pudo.
+- `pr-review`: un criterio del issue que la PR deja abierto a propósito (una
+  prueba en sandbox, una decisión del dueño) se lista como no cumplido con lo
+  que lo cierra; un issue con PR mergeada y un criterio abierto no se cierra a
+  mano.
+- `pr-review`: caso nuevo en `references/case-studies.md` (*un documento válido
+  para el esquema no es uno aceptado*), sección *Documents another system
+  validates* en `references/production-readiness.md` y tres errores comunes
+  nuevos.
+
 ## [0.2.11] - 2026-10-17
 
 ### Añadido

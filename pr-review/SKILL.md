@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Use when reviewing a pull request or a set of changes — your own or someone else's — for correctness (logic, edge cases, data types and validation) and against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
+description: Use when reviewing a pull request or a set of changes — your own or someone else's — for correctness (logic, edge cases, data types and validation) and against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID, and a fix mode that applies findings by ID when the user (or the project) authorizes it. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
 ---
 
 # pr-review
@@ -11,7 +11,8 @@ A code review that evaluates a pull request against five axes — correctness, C
 SOLID, DRY, and development best practices — and reports **what is done well**
 and **what must be fixed**, ending in an explicit verdict.
 
-It reviews and reports. It never edits files, commits, or merges.
+In review mode it reviews and reports: it never edits files, commits, or merges.
+Applying the findings is a separate, explicit step — see **Fix mode**.
 
 ## When to Use
 
@@ -19,8 +20,9 @@ It reviews and reports. It never edits files, commits, or merges.
 - The user asks "review this", "revisá el PR", "is this ready to merge?".
 - A branch is finished and its quality needs assessing.
 
-Skip when: the user wants the fixes *applied* — that is a separate task
-requiring their explicit go-ahead after this review.
+Skip when: the user wants the fixes *applied* — that is **Fix mode**, which
+needs their go-ahead (or a standing one written in the project's `CLAUDE.md`
+or memory).
 
 Works the same for the user's own PRs and for someone else's — authorship
 never softens or sharpens a finding.
@@ -42,6 +44,30 @@ Without `--comment` the report stays in the terminal — nothing is posted.
 The section headers and verdict values are fixed per language (see **Output
 format**); the flag switches which set is used, for both the terminal output
 and the posted comment.
+
+## When you wrote the code yourself
+
+If this session produced the PR — you implemented it, ran its tests, wrote its
+description — say so in one line at the top of the report. You are the least
+independent reviewer there is: your tests, your mutation counts and your PR
+body share your assumptions. Authorship still never softens a finding, but
+before putting APPROVED on your own work:
+
+- Run at least one check you did not run while implementing: reproduce an
+  acceptance criterion against the real thing (the endpoint, the container,
+  the page) or re-run one mutation by hand.
+- Re-read the diff as published (`gh pr diff`), not as you remember it.
+- Treat the PR body's numbers and claims like anyone else's.
+
+## Small, config-only changes
+
+When the diff is a handful of files and none carries executable logic
+(compose files, `.env.example`, CI config, docs), use the short form: issue
+criteria, "done well" in one to three bullets, must be fixed, verdict. Leave
+out the sections that have nothing to say (follow-ups, previous findings) and
+spend the effort running the change rather than describing it — start the
+container with the setting, call the endpoint — because for configuration
+the only reliable review is the one that executes it.
 
 ## Before reading the diff
 
@@ -113,6 +139,11 @@ input that produces the wrong output, or the specific maintenance cost. A
 finding you cannot ground that way is not reported. Verify before asserting:
 if a claim is checkable (run the test, read the caller, execute the snippet),
 check it rather than asserting from pattern-matching.
+
+**Prefer running over reading.** When a claim is cheap to execute — a `curl`
+against the running service, a container started with the setting, the tests
+of one file — execute it and cite what you saw. Reading the diff tells you
+what the code says; running it tells you what the system does.
 
 Uncertain but plausible findings are allowed — mark them `[POSIBLE]` and say
 what you could not verify. Never present a guess as a confirmed defect.
@@ -230,12 +261,25 @@ The axis that catches bugs. Don't read the change and judge whether it
   control, passes for an unrelated reason, or only checks that a call
   happened — that is a finding. When you can run the tests, break the code
   on purpose and watch the test go red instead of reasoning about it.
+  Mutate only files that are committed in git and restore each one with
+  `git checkout -- <file>`: a mutation script run over uncommitted work
+  corrupts it. Run each mutation against the tests that guard that line, not
+  the whole suite.
 - **Fakes, mocks and clients match the real contract.** When the diff adds or
   changes a mock, a fake repository, an API client or a fixture, compare it
   with the real thing it stands for (the endpoint, the schema, the sibling
   PR that implements it): field names and casing, error codes, what is
   persisted and what is not. A mock that accepts what the real service
-  rejects makes the tests green on a path that fails in production.
+  rejects makes the tests green on a path that fails in production. When the
+  real service is reachable (a dev container, a staging URL), call it once
+  and compare with what the mock returns — above all whether a key is
+  *omitted* or sent as `null`, the casing and the status codes. A client type
+  and a mock that share one wrong assumption keep every test green (see
+  `references/case-studies.md`).
+- **A criterion that names variants** (invoice and receipt, web and mobile,
+  every user type) has a test per variant, not one test plus a shared code
+  path. When only the shared path is guarded, report it as MINOR with the
+  test to add.
 - **Claims in the PR description and docs are verified.** Test counts,
   "N/N mutations", "tested in Docker", "no behavior change" — cross-check
   them against the reports, the test diff or the commands shown. A number
@@ -256,7 +300,10 @@ The axis that catches bugs. Don't read the change and judge whether it
   - *Compatibility*: a renamed field, changed error code or changed default
     breaks existing clients, integrators or stored data.
   - *Configuration*: new environment variables documented, with a safe
-    default and a clear failure when they are missing or invalid.
+    default and a clear failure when they are missing or invalid; a setting
+    that several services read reaches *each* of them in every environment
+    definition; and when the feature stays dark until a flag or a data load
+    is switched on, the PR says what the user sees in the meantime.
   - *Operability*: a failure leaves enough trace to diagnose it; no swallowed
     error without a log, metric or user-visible signal.
   - *Performance visible in a diff*: N+1 queries, unbounded result sets,
@@ -278,11 +325,21 @@ An unverified but plausible finding is marked `[POSIBLE]` / `[POSSIBLE]`.
 
 ## Output format
 
+Open the report with one line: the verdict and the count per severity
+(`**Veredicto: APROBADO** · 0 bloqueantes · 0 importantes · 1 menor`), so the
+reader does not have to scroll to the end for it. The full **Verdict**
+section still closes the report.
+
 Always the three core sections — done well, must be fixed, verdict — in this
 order. Optional sections frame them: **previous findings** (only in re-review
 mode, first), **issue criteria** (only when the PR links an issue, next) and
 **follow-ups** (only when there is a real one, after the corrections). Use the
 wording matching the language flag (`--es` is the default).
+
+**Issue criteria: say what you reproduced.** A criterion marked met cites its
+evidence and whether *you* reproduced it (ran the command, opened the page,
+ran the test) or only read it in the PR (a test, the PR body's claim). Met on
+the PR's word alone is a weaker statement and the report should look weaker.
 
 **Issue criteria and the verdict.** A PR that says it *closes* an issue while
 a criterion is not met gets a finding (`IMPORTANTE` / `IMPORTANT`): either
@@ -302,6 +359,8 @@ what to check instead.
 **Spanish (`--es`):**
 
 ```
+**Veredicto: APROBADO** · 0 bloqueantes · 0 importantes · 1 menor
+
 ## 🔁 Hallazgos anteriores          ← solo en re-revisión
 | ID | Estado | Evidencia |
 |---|---|---|
@@ -312,7 +371,7 @@ what to check instead.
 ## 🎯 Criterios del issue #N          ← solo si la PR enlaza un issue
 | Criterio | Estado | Dónde |
 |---|---|---|
-| texto del criterio | ✅ Cumplido / ❌ No cumplido / ➖ No aplica | `archivo:línea` o test |
+| texto del criterio | ✅ Cumplido / ❌ No cumplido / ➖ No aplica | `archivo:línea` o test; «reproducido» si lo ejecutaste tú, «según la PR» si solo lo leíste |
 
 ## ✅ Lo que está bien
 - [archivo:línea] — qué decisión concreta del diff está bien resuelta y por qué
@@ -333,6 +392,8 @@ Archivos revisados: N/N             ← en diffs grandes
 **English (`--en`):**
 
 ```
+**Verdict: APPROVED** · 0 blockers · 0 important · 1 minor
+
 ## 🔁 Previous findings              ← re-review only
 | ID | Status | Evidence |
 |---|---|---|
@@ -343,7 +404,7 @@ Archivos revisados: N/N             ← en diffs grandes
 ## 🎯 Issue #N criteria               ← only when the PR links an issue
 | Criterion | Status | Where |
 |---|---|---|
-| the criterion's text | ✅ Met / ❌ Not met / ➖ N/A | `file:line` or test |
+| the criterion's text | ✅ Met / ❌ Not met / ➖ N/A | `file:line` or test; "reproduced" if you ran it, "per the PR" if you only read it |
 
 ## ✅ What's done well
 - [file:line] — which concrete decision in the diff is well resolved, and why
@@ -375,6 +436,31 @@ Verdict rules (identical in both languages):
 - Only minor findings, or none → `APROBADO` / `APPROVED`.
 
 Order findings most severe first.
+
+## Fix mode
+
+Entered when the user asks to apply findings ("fix H2", "CORRIGE", "corrige
+todo") or when the project's `CLAUDE.md` or memory grants standing
+authorization to correct findings before merge. Without one of the two, ask;
+never start fixing on your own after a review.
+
+1. **Scope.** Only the findings named, by ID. "Fix everything" means every
+   finding under *must be fixed*; follow-ups are not included.
+2. **Red first.** For each finding, write or run the test that fails while the
+   defect exists (the report's "Proven by"), watch it fail, then fix. When no
+   automated test can show it (a misleading doc line, a name), say what you
+   checked instead.
+3. **Verify.** Run the suites the change can affect. For a test you added or
+   changed, break the code once on purpose and watch it go red (commit first;
+   mutate committed files only).
+4. **Commit and update.** Commit on the PR's branch with the finding ID in the
+   message, push, and correct the PR body wherever a number or claim it states
+   changed (test counts, mutations, what was not run).
+5. **Report as a re-review table**: each ID resolved with its evidence
+   (commit, `file:line`, test), and anything left out with the reason.
+
+Never make a finding go away by weakening a test or widening an allowance.
+Merging stays the user's call, and so does closing issues afterwards.
 
 ## Posting to the PR (`--comment`)
 
@@ -415,8 +501,9 @@ GitHub approval. Approving a PR is the human's call.
   nothing notable, say so in one line.
 - **Never invent findings to fill the corrections section.** Zero findings is a
   valid result and reporting it honestly is the point of the review.
-- **Never edit, commit, push, or merge.** If the user wants the fixes applied,
-  that is a new task and needs their explicit go-ahead.
+- **In review mode, never edit, commit, push, or merge.** Fix mode (above) is
+  the only way this skill changes files, it needs the user's go-ahead or a
+  standing one, and it never merges.
 - **Never post without `--comment` and an explicit confirmation.** Publishing
   to a PR is outward-facing and, on someone else's PR, public.
 - **Same standard regardless of authorship.** The user's own PR gets the same
@@ -470,7 +557,10 @@ after writing to them.
   to look; only what the diff actually gets wrong is reported.
 - **Ignoring the linked issue** — approving a PR that says it closes an issue
   while one of its acceptance criteria is not met.
-- **Applying fixes mid-review** — this skill reports only.
+- **Applying fixes mid-review** — review mode reports only; fixes come after
+  the report, in Fix mode, with the user's go-ahead or a standing one.
+- **Fixing a finding without seeing its test fail first** — a test written
+  after the fix may pass for the wrong reason.
 - **Reviewing the whole repository** instead of the change.
 - **Posting without `--comment`**, or posting on a bare "yes" that only
   approved the review, not its publication.
@@ -489,3 +579,9 @@ after writing to them.
   broken protects nothing.
 - **Parking a real defect in follow-ups** to keep the verdict clean — a
   follow-up is out of scope, not less severe.
+- **Approving your own work on your own numbers** — if you wrote the code,
+  run one check you did not run while writing it.
+- **Marking a criterion met from the PR's own wording** without saying
+  whether you reproduced it.
+- **Running a mutation script over uncommitted files** — it corrupts the work
+  it was meant to test.

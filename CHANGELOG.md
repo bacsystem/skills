@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.2.11] - 2026-10-17
+
+### Añadido
+- `pr-review`: **modo corrección** (*Fix mode*). Aplica los hallazgos por ID
+  cuando el usuario lo pide («corrige H2», «CORRIGE») o cuando el `CLAUDE.md`
+  o la memoria del proyecto ya lo autorizan antes del merge. Primero la prueba
+  que falla, luego el arreglo; corre las suites que el cambio puede afectar,
+  rompe el código una vez a propósito para confirmar que la prueba nueva se
+  pone roja, hace commit en la rama de la PR, corrige las cifras del cuerpo de
+  la PR e informa con una tabla de re-revisión. Nunca debilita una prueba para
+  que pase y nunca hace merge.
+- `pr-review`: **revisar código propio**. Si la misma sesión escribió la PR, el
+  informe lo dice y exige al menos una comprobación que el autor no hizo al
+  implementar (reproducir un criterio contra el sistema real o repetir una
+  mutación a mano); las cifras de la PR se tratan como afirmaciones ajenas.
+- `pr-review`: **cambios chicos y de configuración** (compose, `.env.example`,
+  CI, docs) usan un informe corto y el esfuerzo se va a ejecutar el cambio.
+- `pr-review`: **preferir ejecutar a leer** en la regla de evidencia (un
+  `curl`, un contenedor con el ajuste, un archivo de pruebas).
+- `pr-review`: los **criterios del issue** dicen si el revisor los
+  *reprodujo* o si son *según la PR*; un criterio que nombra variantes (factura
+  y boleta, web y móvil) pide una prueba por variante.
+- `pr-review`: el informe **abre con una línea de veredicto** y el conteo por
+  severidad, sin quitar la sección de veredicto del final.
+- `pr-review`, referencias: «el tipo y el mock repiten la misma suposición»
+  (clave omitida frente a `null`), «un criterio nombra una variante sin
+  prueba», «revisar tu propio trabajo comparte tus puntos ciegos»; en TypeScript,
+  tipos de cliente frente a un backend que omite nulos y páginas que congelan
+  una variable de entorno en el build; en Java/Spring, ajustes del serializador
+  que cambian el contrato; en producción, un ajuste que lee más de un servicio
+  y llega solo a uno, y funciones apagadas hasta encender un flag.
+
+### Cambiado
+- `pr-review`: la regla «nunca edita» pasa a valer **en modo revisión**; el
+  modo corrección es la única vía por la que el skill cambia archivos.
+- `pr-review`: las mutaciones se hacen solo sobre archivos con commit y se
+  restauran con `git checkout -- <archivo>`.
+
 ## [0.2.10] - 2026-10-15
 
 ### Añadido

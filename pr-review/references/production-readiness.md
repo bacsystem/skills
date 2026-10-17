@@ -50,6 +50,17 @@ migration has nothing to report under migrations. Every finding still needs
 - **Safe default.** Missing configuration must fail safe: closed, not open;
   disabled, not trusted. A security setting whose default trusts everything
   is a finding.
+- **A setting read by several services reaches all of them.** The same
+  variable (a registration switch, a feature flag, a base URL) is consumed by
+  the backend and the frontend; the orchestration file passes it to one and
+  forgets the other, which falls back to its own default — often the closed
+  one in a production image. List every consumer (`grep` for the name), check
+  each environment definition (compose, platform docs, CI), and confirm in the
+  running container's environment.
+- **Dark until switched on.** A feature that does nothing until a flag is
+  turned on or a data load finishes should say so in the PR: what the user
+  sees in the meantime (an error, an empty state, the old behavior), and which
+  must be deployed first.
 - **Fail loudly at startup** when a required value is missing or invalid,
   not on the first request that needs it.
 - **No production values in code**: URLs, credentials, feature flags that

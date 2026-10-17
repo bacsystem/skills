@@ -131,7 +131,9 @@ expensive, the reader it misleads.
   data.
 - **A finding when:** a change to the rule would have to be made in both and
   nothing fails if only one is changed. See the DRY axis for coincidental
-  similarity, which is not this.
+  similarity, which is not this. It includes a client type and the mock that
+  feeds the tests when both encode the same assumption about the server
+  (see `case-studies.md`): nothing fails because both are wrong together.
 
 ---
 

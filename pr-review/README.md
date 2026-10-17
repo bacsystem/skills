@@ -6,7 +6,9 @@ for **correctness** (logic, edge cases, data types and validation) and against
 what is done well and what must be fixed, ending in an explicit verdict.
 Optionally posts the review as a comment on the GitHub PR.
 
-It reviews and reports. It never edits files, commits, or merges.
+In review mode it reviews and reports: it never edits files, commits, or merges.
+A separate **fix mode** applies the findings by ID, only when you ask for it
+(or the project's `CLAUDE.md` or memory says to).
 
 ## How to use it
 
@@ -69,6 +71,10 @@ Checklists say where to look, not what to report: every finding still needs
 
 ## Output
 
+The report opens with one line, the verdict and the count per severity
+(`**Veredicto: APROBADO** · 0 bloqueantes · 0 importantes · 1 menor`), and
+the full verdict still closes it.
+
 ```
 ## ✅ Lo que está bien
 - [archivo:línea] — qué decisión concreta está bien resuelta y por qué
@@ -102,6 +108,28 @@ ID. "Resolved" needs evidence, not the commit message's word for it.
 On large diffs (roughly 15+ files) the review goes layer by layer and ends
 with `Archivos revisados: N/N`, so a skipped file is visible.
 
+### Fix mode
+
+After a review, "fix H2" or "CORRIGE" applies the findings. It works by ID:
+for each one it writes (or runs) the test that fails while the defect exists,
+watches it fail, fixes it, runs the suites the change can affect, breaks the
+code once on purpose to confirm the new test goes red, commits on the PR's
+branch, updates the numbers in the PR body and reports a re-review table with
+evidence. It never makes a finding go away by weakening a test, and it never
+merges. If your project's `CLAUDE.md` or memory already authorizes fixing
+findings before merge, it does not ask first.
+
+### Your own PRs, and small ones
+
+- **When the reviewer wrote the code** (same session), the report says so and
+  the review includes at least one check the author did not run while
+  implementing — reproduce a criterion against the real system, or repeat a
+  mutation by hand. The PR's own numbers are claims like anyone else's.
+- **Issue criteria** say whether each one was *reproduced* by the reviewer or
+  is *per the PR*.
+- **Small, config-only changes** (compose, `.env.example`, CI, docs) use a
+  short report, and the effort goes into running the change.
+
 | `--es` | `--en` | Meaning | Verdict |
 |---|---|---|---|
 | `BLOQUEANTE` | `BLOCKER` | Breaks correctness, security, or data integrity | `REQUIERE CORRECCIONES` / `CHANGES REQUIRED` |
@@ -122,6 +150,10 @@ with `Archivos revisados: N/N`, so a skipped file is visible.
   scrutiny as a stranger's, and a third party's gets the same fairness as
   yours. Comments address the change, never the person.
 - **Nothing is published without `--comment` and your explicit confirmation.**
+- **Review mode never changes files.** Fix mode does, on request, and never
+  merges.
+- **Prefer running over reading**: a claim that is cheap to execute (a `curl`,
+  a container with the setting, one test file) is executed, not inferred.
 
 ## Files
 
@@ -130,11 +162,13 @@ with `Archivos revisados: N/N`, so a skipped file is visible.
   patterns learned from real reviews, independent of language.
 - [`references/language-idioms.md`](./references/language-idioms.md) —
   pitfalls per language or framework (Go, Python, TypeScript/Next.js,
-  Java/Spring).
+  Java/Spring), including API types against a serializer that omits nulls
+  and pages that freeze an environment variable at build time.
 - [`references/code-smells.md`](./references/code-smells.md) — smells with
   when each one is a finding and when it is only taste.
 - [`references/production-readiness.md`](./references/production-readiness.md)
-  — what breaks after the merge: migrations, compatibility, configuration,
+  — what breaks after the merge: migrations, compatibility, configuration (a
+  setting that reaches only some of its readers, features dark until a flag),
   operability, performance, frontend, dependencies.
 
 ## Installation

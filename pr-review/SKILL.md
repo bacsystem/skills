@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Use when reviewing a pull request or a set of changes — your own or someone else's — for correctness (logic, edge cases, data types and validation) and against Clean Code, SOLID, DRY and development best practices, and you want an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID, and a fix mode that applies findings by ID when the user (or the project) authorizes it. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
+description: Use when reviewing a pull request or a set of changes — your own or someone else's — for correctness (logic, edge cases, concurrency, money and data types), security at trust boundaries, and Clean Code, SOLID, DRY and development best practices, with a strict bar — the reviewer runs the suites, mutates the key test, opens every file in the change's blast radius and reports what it verified — and an explicit verdict showing what is done well and what must be fixed. Supports --es/--en for the report language and --comment to post it on the GitHub PR. Also handles re-reviews after fixes, closing the previous findings by ID, and a fix mode that applies findings by ID when the user (or the project) authorizes it. Triggers include "review this PR", "revisá el PR", "code review", "what's wrong with these changes", or asking whether a branch is ready to merge.
 ---
 
 # pr-review
@@ -88,6 +88,18 @@ the only reliable review is the one that executes it.
    met, or not applicable) and report them in the **Issue criteria** section.
    Also flag scope creep: changes the issue never asked for that make the PR
    harder to review or revert.
+4. **Find out whether CI runs the test suite on pull requests.** Open
+   `.github/workflows/` (or the equivalent). If no workflow compiles and runs
+   the tests, lint and type checks for the files the PR touches, the review's
+   own run is the only gate before merge: run the suites that cover the
+   change and say in the report that you did, with the counts. A report that
+   relies on "CI is green" when there is no such CI is wrong twice.
+5. **Check whether the change reverses a decision an earlier issue recorded.**
+   When the PR changes a behavior that reads like a rule (a document type that
+   must not carry a field, a control that must be hidden, a status code), grep
+   the issues for it (`gh issue list --search "<term>" --state closed`). An
+   earlier issue may have fixed the opposite as an acceptance criterion; the
+   PR either argues the change explicitly or it is a finding.
 
 ## Getting the diff
 
@@ -179,6 +191,16 @@ the five axes below:
 A checklist is where to look, not what to report. Every finding from any
 axis or reference still needs `file:line` and a concrete consequence.
 
+**The blast radius is not the hunk.** "The code as changed by this PR"
+includes everything the change joins: every other writer of a table it
+writes (a narrow `UPDATE` elsewhere that a new upsert can undo), every
+sibling endpoint of a guard it adds or a credential it accepts, every caller
+of a method whose contract it alters, every place a value it widens or
+reformats passes through on its way to a document or a column. Open those
+files. The defects that survive several reviews live in the code the diff
+touches indirectly, where a reviewer who stayed inside the hunks never
+looked.
+
 ### 1. Correctness
 
 The axis that catches bugs. Don't read the change and judge whether it
@@ -194,17 +216,32 @@ The axis that catches bugs. Don't read the change and judge whether it
 - **Error paths, not just the happy path.** What happens when the second of
   three writes fails — is anything left half-done? Is a failure swallowed,
   turned into a misleading success, or reported with a code the caller can't
-  act on? Does a retry duplicate the effect?
+  act on? Does a retry duplicate the effect? When a call has an irreversible
+  external effect (money, a document registered elsewhere, a message sent),
+  list everything that can throw *between that call and the write that
+  persists its outcome*: an exception type the `catch` list misses leaves the
+  entity in its old state with the effect already done (see
+  `references/case-studies.md`, *An exception after the point of no return*).
 - **Concurrency and ordering.** Shared state, read-then-write without a lock
   or a unique constraint, check-then-act races, caches that outlive what they
-  cache, assumptions about the order of events or async callbacks.
+  cache, assumptions about the order of events or async callbacks. Two shapes
+  worth asking about explicitly: a state transition persisted without a guard
+  on the state it came from (so a late or duplicate caller can overwrite a
+  terminal state), and a whole-row save of an aggregate that was read outside
+  the transaction (so it reverts someone else's single-column update). Both
+  in `references/case-studies.md`.
 - **Logic.** Inverted or incomplete conditions, a branch that can't be
   reached, a `switch`/`match` without the new enum value, boolean expressions
   that mean something other than their name, a loop that skips or repeats an
   element, a value used before it's set.
 - **Time, money and units.** Time zones and DST, date-only vs instant,
   inclusive vs exclusive ranges; floating point for money, rounding mode and
-  scale; mixed units. These are wrong silently, not loudly.
+  scale; mixed units. These are wrong silently, not loudly. A value that is
+  signed, sent or printed keeps the same precision along its whole path —
+  DTO, domain, template, column, and the object rehydrated from the column;
+  a narrower step anywhere (a `NUMERIC(14,4)`, a `0.####` format, a total
+  recomputed from rounded parts) makes the system disagree with the document
+  it produced (see `references/case-studies.md`).
 - **Data types and validation.** The type says what the value can be: a
   money amount in a decimal type, a closed set of values in an enum rather
   than a magic string, nullability explicit, IDs of different entities not
@@ -269,8 +306,12 @@ The axis that catches bugs. Don't read the change and judge whether it
   bug being fixed) and name the production change that would make each one
   fail. If you can't name one — the test asserts something the change doesn't
   control, passes for an unrelated reason, or only checks that a call
-  happened — that is a finding. When you can run the tests, break the code
-  on purpose and watch the test go red instead of reasoning about it.
+  happened — that is a finding. Run the tests that guard the change and break
+  the code on purpose, watching the test go red, instead of reasoning about
+  it; reasoning is what the author already did, and it produced the defect.
+  Skip the run only when the environment genuinely cannot execute it (no
+  Docker for the containers, no credentials), and then the report says so
+  and the verdict is capped (see **Severity and the bar**).
   Mutate only files that are committed in git and restore each one with
   `git checkout -- <file>`: a mutation script run over uncommitted work
   corrupts it. Run each mutation against the tests that guard that line, not
@@ -316,8 +357,22 @@ The axis that catches bugs. Don't read the change and judge whether it
 - **No secrets in the diff** — keys, tokens, connection strings, credentials.
   This is always the blocking severity. Name the file and line, never quote
   the secret's value — the report may end up in a public PR comment.
-- Security: input validation at trust boundaries, authorization checks not
-  bypassable, no injection-prone string building.
+- **Security at trust boundaries.** Input validation where untrusted data
+  enters, authorization checks that cannot be bypassed, no injection-prone
+  string building — and the shapes a diff-sized review tends to miss, each
+  detailed in `references/production-readiness.md` (*Security boundaries*)
+  and `references/case-studies.md`:
+  - a guard (session-only, human-only, second factor) applied to one endpoint
+    and not to its siblings with the same blast radius;
+  - a static or automation credential that every new privileged endpoint
+    accepts by default through a shared filter;
+  - a revocation path (logout, revoke-all, rotate) that fails when the
+    short-lived credential has expired, or a token-reuse check that rejects
+    without revoking;
+  - a handler that writes an auth cookie without checking the request's
+    origin;
+  - a limit on bytes received with no limit on what they decode to;
+  - a dependency whose defaults send real credentials or data to the vendor.
 - Consistency with the repository's existing patterns — a PR that invents a
   parallel convention alongside an established one adds cost.
 - **What breaks after the merge** — check the parts of
@@ -343,7 +398,7 @@ The axis that catches bugs. Don't read the change and judge whether it
   - *Dependencies*: a new one is justified, maintained, license-compatible and
     pinned.
 
-## Severity
+## Severity and the bar
 
 | `--es` | `--en` | Meaning |
 |---|---|---|
@@ -353,6 +408,37 @@ The axis that catches bugs. Don't read the change and judge whether it
 
 An unverified but plausible finding is marked `[POSIBLE]` / `[POSSIBLE]`.
 
+This review is the last line before the merge, and in many repositories the
+only one: the author reviewed their own reasoning, CI may not run the suite,
+and the person merging trusts the verdict. The cost of a missed defect
+(money declared twice, a credential that outlives its revocation, a document
+that no longer matches what was signed) is far higher than the cost of a
+finding that turns out to be fine after the author answers it. So the bar
+leans one way:
+
+- **When in doubt between two severities on correctness, security or data
+  integrity, pick the higher.** A verified defect in those three is a
+  blocker by default, not important; "the window is small" or "it needs two
+  concurrent callers" lowers it only when the report shows why the window
+  cannot be hit in practice.
+- **A `[POSIBLE]` on money, authorization, sessions or persistence keeps the
+  verdict at `APROBADO CON CAMBIOS` at best** until it is resolved one way or
+  the other — by the reviewer reproducing it, or by the author showing why it
+  cannot happen. Uncertainty about a safe thing is not approval of it.
+- **`APROBADO` requires the verification to have happened**: the suites that
+  cover the change were run by the reviewer (with counts in the report), the
+  key test was mutated and went red, the edge inputs of axis 1 were traced
+  through the changed functions, and every file in the blast radius was
+  opened. If any of those did not happen, the report says which and why, and
+  the verdict is `APROBADO CON CAMBIOS` with a finding that names the missing
+  verification — never `APROBADO` on the strength of reading.
+- **Silence is a finding when it is deliberate.** A test that asserts the
+  rejection but not the side effect, a guard that names some states and not
+  others, a `catch` list that stops short of `RuntimeException` around an
+  irreversible call: these look complete and are not. Treat "what does this
+  code *not* say" as a question to answer for every guard, catch and
+  assertion in the diff.
+
 ## Output format
 
 Open the report with one line: the verdict and the count per severity
@@ -360,11 +446,21 @@ Open the report with one line: the verdict and the count per severity
 reader does not have to scroll to the end for it. The full **Verdict**
 section still closes the report.
 
-Always the three core sections — done well, must be fixed, verdict — in this
-order. Optional sections frame them: **previous findings** (only in re-review
-mode, first), **issue criteria** (only when the PR links an issue, next) and
-**follow-ups** (only when there is a real one, after the corrections). Use the
-wording matching the language flag (`--es` is the default).
+Always the four core sections — done well, must be fixed, verification,
+verdict — in this order. Optional sections frame them: **previous findings**
+(only in re-review mode, first), **issue criteria** (only when the PR links an
+issue, next) and **follow-ups** (only when there is a real one, after the
+corrections). Use the wording matching the language flag (`--es` is the
+default).
+
+**Verification is a section, not a footnote.** It lists what the reviewer
+actually executed: the test commands with their counts, which test was
+mutated and how it went red, which edge inputs were traced through which
+function, which reproductions were done against the real thing, and how many
+files of the blast radius were opened. An item that was not done is written
+as not done, with the reason. The reader can then tell a verdict built on
+execution from one built on reading — and the reviewer cannot approve
+without noticing what is missing.
 
 **Issue criteria: say what you reproduced.** A criterion marked met cites its
 evidence and whether *you* reproduced it (ran the command, opened the page,
@@ -420,9 +516,16 @@ what to check instead.
 ## 📌 Seguimiento                    ← opcional
 - [archivo:línea] — mejora real pero fuera del alcance de esta PR; no se corrige aquí y no cuenta para el veredicto.
 
+## 🔬 Verificación
+- Suites: `comando` → N pasan / M fallan (o «no ejecutada: motivo»)
+- Mutación: `archivo:línea` cambiado a X → test `nombre` en rojo (o «no hecha: motivo»)
+- Entradas trazadas: vacío, duplicado, dos a la vez, … en `función`
+- Reproducido contra el sistema real: qué, con qué resultado (o «ninguno»)
+- Radio de acción: N archivos del diff + M archivos relacionados abiertos (escritores de la tabla, endpoints hermanos, llamadores)
+
 ## Veredicto
 APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
-Archivos revisados: N/N             ← en diffs grandes
+Archivos revisados: N/N
 ```
 
 **English (`--en`):**
@@ -453,9 +556,16 @@ Archivos revisados: N/N             ← en diffs grandes
 ## 📌 Follow-ups                     ← optional
 - [file:line] — a real improvement outside this PR's scope; not fixed here and not counted in the verdict.
 
+## 🔬 Verification
+- Suites: `command` → N passed / M failed (or "not run: reason")
+- Mutation: `file:line` changed to X → test `name` went red (or "not done: reason")
+- Inputs traced: empty, duplicate, two at once, … through `function`
+- Reproduced against the real system: what, with what result (or "none")
+- Blast radius: N diff files + M related files opened (table writers, sibling endpoints, callers)
+
 ## Verdict
 APPROVED | APPROVED WITH CHANGES | CHANGES REQUIRED
-Files reviewed: N/N                 ← on large diffs
+Files reviewed: N/N
 ```
 
 **Follow-ups are not a softer severity.** Use them for something worth doing
@@ -469,7 +579,12 @@ Verdict rules (identical in both languages):
 
 - Any blocker → `REQUIERE CORRECCIONES` / `CHANGES REQUIRED`.
 - Any important, no blockers → `APROBADO CON CAMBIOS` / `APPROVED WITH CHANGES`.
-- Only minor findings, or none → `APROBADO` / `APPROVED`.
+- Only minor findings, or none, **and the verification section shows the
+  suites run, a mutation gone red and the blast radius opened** → `APROBADO`
+  / `APPROVED`. Without that, `APROBADO CON CAMBIOS` with a finding naming
+  the missing verification (see **Severity and the bar**).
+- A `[POSIBLE]` on money, authorization, sessions or persistence caps the
+  verdict at `APROBADO CON CAMBIOS`.
 
 Order findings most severe first.
 
@@ -542,7 +657,14 @@ GitHub approval. Approving a PR is the human's call.
   structure") is worse than saying there is nothing notable. If there is
   nothing notable, say so in one line.
 - **Never invent findings to fill the corrections section.** Zero findings is a
-  valid result and reporting it honestly is the point of the review.
+  valid result and reporting it honestly is the point of the review — but zero
+  findings on a diff that touches money, auth, state or persistence is rare
+  enough that it should prompt a second pass over the blast radius before it
+  is reported, not a quick approval.
+- **Strict is not the same as noisy.** The bar is high on *verification* and
+  on *severity when verified*, not on volume: a finding still needs
+  `file:line`, a concrete consequence and a way to prove it. Ten vague
+  findings hide the one that matters.
 - **In review mode, never edit, commit, push, or merge.** Fix mode (above) is
   the only way this skill changes files, it needs the user's go-ahead or a
   standing one, and it never merges.
@@ -631,5 +753,21 @@ after writing to them.
   run one check you did not run while writing it.
 - **Marking a criterion met from the PR's own wording** without saying
   whether you reproduced it.
+- **Judging a state transition by the states the guard names** — the
+  question is which origin states the transition assumes and whether the SQL
+  checks them; the terminal states the guard omits are where the overwrite
+  happens.
+- **Stopping the error-path trace at the `catch` list** — what the `try` does
+  not catch is what orphans the entity after an irreversible external call.
+- **Checking a decimal's scale in one layer** — the domain, the template, the
+  column and the rehydration each have their own; the finding is the step
+  where the signed value changes.
+- **Taking a guard's presence on one endpoint as coverage of the resource** —
+  list the sibling endpoints that lack it.
+- **Proving a dependency's network behavior from a local run** — vendors
+  exempt `localhost`; read the installed bundle's defaults instead.
+- **Trusting "CI is green" without checking that CI runs the tests** — a repo
+  whose only workflows are load or sandbox runs has no automated gate; the
+  reviewer's run is the gate, and the report says so.
 - **Running a mutation script over uncommitted files** — it corrupts the work
   it was meant to test.

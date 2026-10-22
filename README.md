@@ -21,7 +21,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 | Skill | Descripción |
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
-| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, tipos y validación), Clean Code, SOLID, DRY y buenas prácticas, con veredicto explícito (también en la primera línea), modo corrección por ID y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
+| [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, concurrencia, dinero y tipos), seguridad en los límites de confianza, Clean Code, SOLID, DRY y buenas prácticas, con listón estricto (corre las suites, muta el test clave, abre el radio de acción del cambio y lo deja escrito en una sección de verificación), veredicto explícito (también en la primera línea), modo corrección por ID y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
 | [`ui-ux-scout`](./ui-ux-scout) | Crea y mejora componentes de khipu-design-system a partir de un estilo de Refero Styles (UUID): plan con tokens y contraste WCAG, aprobación, implementación con criterio de UI/UX, React/Next, DRY, SOLID y validación por tipo de dato, y verificación del build |
 
 ## Estructura
@@ -48,6 +48,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.2.13`](https://github.com/bacsystem/skills/releases/tag/v0.2.13) | 2026-10-22 | `pr-review`: listón estricto (APROBADO solo con suites corridas, mutación en rojo y radio de acción abierto; sección «Verificación» obligatoria; severidad al alza en dinero, seguridad y datos) y las lecciones de la auditoría de khipu: guardas de estado parciales, excepciones tras el punto de no retorno, precisión que se estrecha, upserts de fila completa, guardas sin paridad entre endpoints, revocación que depende de lo revocado, dependencias que mandan datos al proveedor, límites sobre lo comprimido |
 | [`v0.2.12`](https://github.com/bacsystem/skills/releases/tag/v0.2.12) | 2026-10-17 | `pr-review`: contratos que valida otro sistema (el esquema local no es la aceptación del receptor; una prueba en su sandbox pendiente es hallazgo) y criterios del issue abiertos a propósito |
 | [`v0.2.11`](https://github.com/bacsystem/skills/releases/tag/v0.2.11) | 2026-10-17 | `pr-review`: modo corrección por ID, revisión de código propio con una comprobación independiente, criterios «reproducido / según la PR», veredicto en la primera línea y nuevas referencias (tipo y mock con la misma suposición, ajuste que no llega a todos los servicios) |
 | [`v0.2.9`](https://github.com/bacsystem/skills/releases/tag/v0.2.9) | 2026-10-03 | `pr-review`: eje de corrección, criterios del issue, re-revisión con IDs estables, tests que discriminan, complejidad cognitiva, catálogo de code smells y referencia de producción |

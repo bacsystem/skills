@@ -5,6 +5,52 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.2.13] - 2026-10-22
+
+### Añadido
+- `pr-review`: **listón estricto**. `APROBADO` exige que el revisor haya corrido
+  las suites que cubren el cambio (con sus conteos), mutado el test clave hasta
+  verlo en rojo, trazado las entradas límite y abierto el *radio de acción*
+  del cambio (los demás escritores de la tabla, los endpoints hermanos, los
+  llamadores); si falta algo, el veredicto baja a `APROBADO CON CAMBIOS` con un
+  hallazgo que nombra la verificación ausente. En corrección, seguridad o datos,
+  un defecto verificado es `BLOQUEANTE` por defecto y la duda entre dos
+  severidades se resuelve hacia arriba; un `[POSIBLE]` en dinero, autorización,
+  sesiones o persistencia también limita el veredicto.
+- `pr-review`: sección obligatoria **🔬 Verificación** en el informe (ES y EN),
+  antes del veredicto: suites ejecutadas, mutación, entradas trazadas,
+  reproducciones y archivos del radio de acción abiertos, o «no hecho: motivo».
+- `pr-review`: dos pasos previos nuevos: comprobar si el CI ejecuta las
+  pruebas en las PR (si no, la corrida del revisor es la única puerta y el
+  informe lo dice) y buscar si el cambio revierte un criterio de un issue ya
+  cerrado.
+- `pr-review`: ocho casos nuevos en `references/case-studies.md`, aprendidos de
+  una auditoría completa de khipu: la guarda de estado que solo cubre los
+  estados que el autor pensó; la excepción después del punto de no retorno; la
+  precisión que se estrecha en la columna, la plantilla o la rehidratación; el
+  upsert de fila completa que pisa actualizaciones de una columna; la regla
+  aplicada a un endpoint y no a sus hermanos; la revocación que depende de la
+  credencial que revoca; la dependencia que manda datos al proveedor por
+  defecto; el límite sobre lo comprimido y no sobre lo decodificado.
+- `pr-review`: idiomas nuevos en `references/language-idioms.md`. Java/Spring/
+  PostgreSQL: `NUMERIC` más estrecho que el dominio, `?string["0.####"]` de
+  FreeMarker, `ON CONFLICT … EXCLUDED` de toda la fila, `S3Exception` frente a
+  `SdkClientException`, `HttpRequest.timeout` solo hasta las cabeceras,
+  `@Scheduled` con varias réplicas, Tomcat atado a la línea de Boot. Next.js:
+  login CSRF en route handlers que escriben cookies, segmento `[id]`
+  interpolado en la URL al backend, `next.config.ts` sin `headers()`.
+- `pr-review`: sección *Security boundaries* en
+  `references/production-readiness.md` (paridad de guardas, claves estáticas
+  que heredan cada endpoint nuevo, revocación, origen en handlers con cookies,
+  límites sobre lo decodificado, cabeceras de seguridad), más adaptadores de
+  desarrollo que registran enlaces de un solo uso, topes de reintento que un
+  `catch` genérico salta, egreso por defecto de dependencias, ventana de
+  soporte de un framework fijado y dependencias git con build en la
+  instalación.
+- `pr-review`: siete errores comunes nuevos y una regla: estricto no es
+  ruidoso (cada hallazgo sigue exigiendo `archivo:línea`, consecuencia y forma
+  de probarlo).
+
 ## [0.2.12] - 2026-10-17
 
 ### Añadido

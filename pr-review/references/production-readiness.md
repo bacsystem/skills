@@ -82,6 +82,31 @@ migration has nothing to report under migrations. Every finding still needs
 - **No production values in code**: URLs, credentials, feature flags that
   only make sense in one environment.
 
+## Security boundaries
+
+- **Guard parity across siblings.** A credential-strength rule (session
+  only, human only, second factor) applied to one endpoint of a resource and
+  not to its siblings with the same blast radius (see `case-studies.md`, *A
+  rule the code states for one endpoint*).
+- **Static keys inherit every new admin endpoint.** When a shared filter
+  accepts an operations key alongside human admin sessions, each new
+  privileged endpoint should say whether the key may call it; creating
+  administrators, suspending accounts or editing outbound mail templates with
+  an identity-less key leaves no one in the audit trail.
+- **Revocation must not depend on what it revokes.** Logout, "revoke all",
+  rotate: callable with the short-lived credential expired. Reuse of a
+  rotated refresh token revokes its family, with a test on the side effect.
+- **Cookie-writing handlers check the request's origin** (`Sec-Fetch-Site`,
+  `Origin`, strict `Content-Type`); `SameSite=Lax` alone does not prevent
+  login CSRF.
+- **Limits on decoded size, not only on bytes received** — images, archives,
+  JSON arrays — before the decode happens (see `case-studies.md`, *A limit on
+  the compressed form*).
+- **Security headers exist at all.** A diff that adds a page with a token in
+  the URL, an embedded third-party widget or an admin screen depends on
+  `Referrer-Policy`, CSP/`frame-ancestors` and HSTS being set somewhere; if
+  the app sets none, that is the finding, not the page.
+
 ## Operability
 
 - **Swallowed errors.** A `catch` that turns a failure into `false`, `null`
@@ -89,7 +114,15 @@ migration has nothing to report under migrations. Every finding still needs
   metric or a signal the user can act on — or a comment explaining why
   silence is correct.
 - **Logs that leak.** Tokens, passwords, API keys, full card numbers or
-  personal data in log lines or error messages returned to clients.
+  personal data in log lines or error messages returned to clients. The
+  quiet variant is a *development or no-op adapter* that logs the whole
+  message the real adapter would have sent (an email body with a one-time
+  reset or invitation link): the link is a credential, and the adapter is the
+  default when the real one is not configured.
+- **Retry caps that a catch-all bypasses.** A worker whose typed failures go
+  through `retryOrGiveUp` but whose `catch (Exception)` reschedules directly
+  retries an unexpected failure forever — and repeats the external call with
+  it.
 - **Enough context to diagnose.** An error log without the identifier of the
   thing that failed (request, entity, tenant) can't be traced.
 - **Retries and timeouts.** Calls to external services have a timeout;
@@ -138,6 +171,21 @@ micro-optimizations.
   updated in the same PR.
 - **Size** for frontend dependencies: what it adds to the bundle of the pages
   that import it.
+- **Default egress.** What the dependency sends where, before any
+  configuration: a vendor proxy for "try it" requests, fonts or scripts from
+  the vendor's CDN, telemetry. Read the defaults in the installed bundle, not
+  the README; `localhost` is often exempted, so a local run proves nothing
+  (see `case-studies.md`, *A dependency whose default sends your data to the
+  vendor*).
+- **Support window of a pinned framework line.** A PR that pins or bumps the
+  framework (Spring Boot, Next.js, Django…) states when that line's security
+  support ends; a line past its end does not receive fixes for the embedded
+  server or the components it bundles, and the repo should have a way to
+  notice (Dependabot/Renovate, an audit step in CI).
+- **A git dependency with an install-time build.** `github:org/repo#tag`
+  pinned by commit in the lockfile but without `integrity`, whose `prepare`
+  script installs its own devDependencies with scripts enabled on every
+  `npm ci`, widens the build's trust boundary beyond the lockfile.
 
 ---
 

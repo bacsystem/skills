@@ -81,6 +81,23 @@ pattern in a real review, not preemptively.
   `render={<Link …/>}` / `asChild` prop can emit `<a role="button">`. A
   control that navigates should be announced as a link; screen readers and
   `getByRole("link")` queries both depend on it.
+- **A route handler that sets cookies from any POST** — `SameSite=Lax` stops
+  the browser from *sending* cookies cross-site; it does not stop a top-level
+  cross-site `<form method=POST>` from *receiving* `Set-Cookie` in the
+  response. A login/registration handler that does `await req.json()` and
+  writes the session cookie, without checking `Sec-Fetch-Site`/`Origin` or
+  requiring `Content-Type: application/json` (`Request.json()` parses a
+  `text/plain` form body happily), is a login-CSRF: the victim ends up inside
+  the attacker's account. Every handler that writes an auth cookie needs the
+  origin check.
+- **A dynamic segment interpolated into a backend URL** — `` `/v1/things/${id}` ``
+  from `params.id` without validating the shape (`isUuid`) or
+  `encodeURIComponent`: an encoded slash or `..` changes which backend path
+  the server-side fetch hits, with the user's own credentials attached.
+- **No `headers()` in `next.config.ts`** — a page that puts a one-time token
+  in the URL (`/reset/<token>`) depends on `Referrer-Policy`; an admin panel
+  depends on `frame-ancestors`/`X-Frame-Options`. When a diff adds such a page
+  and the config sets no security headers at all, say so.
 
 ## Java / Spring
 
@@ -111,6 +128,40 @@ pattern in a real review, not preemptively.
   as `.properties`, so `\.` in a regex loses its backslash and the test runs
   a different pattern than production. Use character classes (`[.]`) or a
   test properties file.
+- **`NUMERIC(p,s)` narrower than the `BigDecimal` the domain allows** —
+  PostgreSQL rounds the extra decimals silently on insert and raises
+  `numeric field overflow` for too many integer digits. The first corrupts
+  the stored value relative to the document that was signed; the second
+  fails *after* the sequence number and the signature were produced. Compare
+  every new or widened decimal field with its column, in both directions.
+- **`?string["0.####"]` on an amount or a quantity in FreeMarker** — it goes
+  through `java.text.DecimalFormat` (HALF_EVEN, and fewer decimals than the
+  domain keeps). A quantity of `0.00004` prints as `0`; a line value computed
+  from the full quantity no longer equals printed quantity × unit price. Use
+  `toPlainString()` or a format with as many decimals as the domain.
+- **`ON CONFLICT (id) DO UPDATE SET col = EXCLUDED.col, …` for every column**
+  — a whole-row upsert of an aggregate read outside the transaction overwrites
+  concurrent single-column updates (an environment switch, a rotated
+  credential) with stale values. Prefer per-section updates, or lock and
+  re-read inside the unit of work. See `case-studies.md`.
+- **Catching `S3Exception` (or any SDK's *service* exception) only** — the AWS
+  SDK v2 raises `SdkClientException` for timeouts and connection failures; it
+  is a sibling of `S3Exception`, not a parent. A `catch (S3Exception)` that is
+  meant to turn storage failures into a retryable state lets the common
+  failure mode escape. Catch `SdkException` (the parent) when the intent is
+  "any storage failure".
+- **`HttpRequest.timeout` of the JDK `HttpClient` covers only the headers** —
+  a server that answers headers and then stalls the body holds the thread
+  indefinitely. Reads of the body need their own bound (a bounded stream,
+  `orTimeout` on the future) when the peer is a third party.
+- **`@Scheduled` with several replicas** — a `fixedDelay` job runs once per
+  JVM; without `SELECT … FOR UPDATE SKIP LOCKED`, an advisory lock or a
+  marker column, two replicas process the same rows (double delivery, double
+  send). An `AtomicBoolean` guard is per process and does not count.
+- **Embedded Tomcat follows the Spring Boot line** — a pinned Boot version
+  pins the servlet container with it. When a diff pins or bumps Boot, state
+  the line's OSS support end date; when a diff adds a multipart endpoint,
+  check whether the container version is past the multipart CVE fixes.
 
 ---
 

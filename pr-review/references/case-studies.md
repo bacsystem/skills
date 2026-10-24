@@ -228,6 +228,221 @@ listed the sandbox run as pending and merged on green unit tests.
 
 ---
 
+### A state save that is conditional only for the states the author thought of
+
+**Axis:** Correctness (concurrency, state machines)
+
+**Watch for:** A `save`/`update` of an entity with a lifecycle where the
+`WHERE estado IN (…)` guard exists for *some* target states (the ones a past
+bug taught) and is absent for the others — typically the terminal ones
+(`ACCEPTED`, `REJECTED`, `EXPIRED`). Also the step before it: an operation that
+calls an external system (a tax authority, a payment gateway) without first
+*reserving* the entity (`UPDATE … SET estado = 'SENDING' WHERE estado IN
+('READY','FAILED')`), so two callers — an API request and a background worker,
+or two retries — can both make the call.
+
+**Verify:** List every transition the diff can persist and ask, for each one,
+"what is the origin state this transition assumes, and does the SQL check it?"
+Then play the race: caller A gets the external system's acceptance, caller B
+gets its "already registered" error — whichever writes last wins. If a sibling
+flow in the same repo already reserves (a second document type that sets
+`SENDING` first), the asymmetry itself is the finding: the safe pattern exists
+and the diff didn't use it.
+
+**Example:** A document is sent to an external registry by a manual endpoint
+and by a retry worker. The save guards `ERROR` and `SENT` against overwriting a
+terminal state, but `REJECTED` is saved unconditionally. The worker's second
+call gets "duplicate" from the registry, maps it to `REJECTED`, and overwrites
+the `ACCEPTED` the first call had just persisted. The user re-issues the
+document, which the registry now holds twice.
+
+---
+
+### An exception after the point of no return
+
+**Axis:** Correctness (error paths)
+
+**Watch for:** A `try` around a call with an irreversible external effect
+(money moved, a document registered, an email sent) that catches a *list* of
+expected exception types, with the persistence of the resulting state placed
+*after* the `try` block. Anything not on the list — a client-side exception of
+the storage SDK, a parser that throws on an unexpected response, a `Base64`
+decoding error — escapes before the state is written. The mirror in workers:
+a `catch (Exception)` that reschedules without going through the retry cap.
+
+**Verify:** Walk the lines between the external call and the persisting
+write and list what each can throw. For each exception type not caught, ask
+"what does the database say after this?" If the answer is "the state from
+before the call", the entity is orphaned (nobody retries it, or everybody
+retries it forever). Check the SDK's exception hierarchy: catching the
+server-side exception often misses its client-side sibling.
+
+**Example:** The registry accepts the document; uploading the receipt to object
+storage times out with the SDK's client exception, which the `try` does not
+catch. The request returns 500 with the document still `READY` in the
+database and no retry row. A client without an idempotency key sends it
+again: two registered documents.
+
+---
+
+### A precision that narrows somewhere along the path of a signed value
+
+**Axis:** Correctness (money, units)
+
+**Watch for:** A diff that widens what the domain accepts (10 decimals on a
+quantity, 1 500 characters on a name) or that formats a value for an outbound
+document, without following the value through every place it passes: the
+request DTO, the domain type, the template that renders it, the database
+column, and the code that rehydrates it. Each place can have its own scale,
+format or length. Two shapes are especially silent: a column narrower than the
+domain (the engine rounds or truncates on insert, or fails *after* a sequence
+number was consumed), and a rehydration that *recomputes* totals from the
+rounded parts instead of reading the totals that were persisted.
+
+**Verify:** Pick the widest value the domain allows and trace it: what does
+the template print (`?string["0.####"]`-style formats round), what does the
+column store, what does the object look like after reading it back, and what
+does a document derived from the stored object (a copy, a credit note, a
+report) compute. Any step where the value changes is a finding, because the
+document that was signed or sent no longer matches what the system shows.
+
+**Example:** The domain accepts a unit price with ten decimals and the signed
+XML carries the exact line total. The column is `NUMERIC(14,4)`, so the price
+is rounded on insert; reading the invoice back recalculates its totals from
+the rounded items. The detail view, the export and the credit note that copies
+the lines all show a total that differs from the signed one by a few cents,
+and the credit note is rejected for exceeding the original.
+
+---
+
+### A whole-row save of a partially edited aggregate
+
+**Axis:** Correctness (concurrency)
+
+**Watch for:** `INSERT … ON CONFLICT DO UPDATE SET every_column = EXCLUDED…`
+(or an ORM `save(entity)`) fed by an object that was read *outside* the
+transaction, in a service that only meant to change one section (the
+address, the logo, one credential). Every other column travels along with the
+stale values the object was read with. The lost update is invisible: no error,
+no log, the row just reverts.
+
+**Verify:** List every writer of the table. If any of them is a narrow,
+conditional `UPDATE` of a single column (an environment switch, a credential
+rotation, a deactivation) and another is a whole-row upsert, the wide one can
+undo the narrow one. The fix is per-section writes (the narrow pattern the
+repo already has) or a `SELECT … FOR UPDATE` plus re-read inside the
+transaction, or optimistic versioning.
+
+**Example:** An operator switches a company from sandbox to production with a
+one-column `UPDATE`. In the same seconds a user saves the company's fiscal
+address; that service read the company before the switch and upserts the
+whole row, environment included. The company is back in sandbox with no
+audit entry, and its real invoices go to the test endpoint.
+
+---
+
+### A rule the code states for one endpoint and omits for its siblings
+
+**Axis:** Best practices (security, authorization)
+
+**Watch for:** A comment or a guard that explains a security rule ("a leaked
+API key must not be able to create other keys", "only a human session may do
+this") applied to one or two handlers of a controller, while siblings in the
+same file with the same or higher blast radius (replace the signing
+certificate, change credentials, change the fiscal address) accept the
+weaker credential. The rule is right; its coverage was decided by which bug
+came first.
+
+**Verify:** `grep` the guard (`requireSession`, `requireRole`, `isHuman`) and
+list every mutating endpoint of the same resource that lacks it. For each,
+ask what the weaker credential could do if leaked, in the terms the existing
+comment uses. The same shape applies to a static operations key accepted by a
+shared filter: every *new* admin endpoint inherits that acceptance by
+default, so each one should decide explicitly whether an identity-less key
+may perform it (creating administrators, mass mailing, suspending accounts).
+
+**Example:** Key management requires a portal session, with a comment saying
+why. Uploading the signing certificate and the SOL credentials, on the same
+controller, accept an API key. A leaked key cannot mint keys but can replace
+the certificate with a self-signed one and stop every emission of the tenant.
+
+---
+
+### A revocation path that depends on the credential being revoked
+
+**Axis:** Correctness (sessions) / Best practices (security)
+
+**Watch for:** A logout, "revoke all sessions", "disable account" or "rotate
+secret" flow that is gated by a short-lived credential (the access token)
+while the thing it revokes is long-lived (the refresh token, the session
+family). When the short-lived one has expired, the gate rejects the request
+and the long-lived one survives — exactly when the user most needs the
+revocation to work. The sibling shape: a refresh-token rotation that rejects
+a reused token with 401 but does not revoke its family, with a test that
+asserts the 401 and nothing else.
+
+**Verify:** Call the revocation with the short-lived credential expired (or
+absent) and read the database: is the long-lived one revoked? For reuse
+detection, replay a rotated refresh token past the grace period and check the
+sibling tokens, not just the response code. A test that only asserts the
+rejection does not protect the side effect.
+
+**Example:** The browser-side logout clears its cookies and calls the API's
+logout with the access token it has. Fifteen minutes into a page the access
+token is expired, the API answers 401, the BFF swallows it, and the 30-day
+refresh token stays valid in the sessions table for anyone who copied it.
+
+---
+
+### A dependency whose default sends your data to the vendor
+
+**Axis:** Best practices (dependencies, data protection)
+
+**Watch for:** An embedded third-party UI component or SDK (an interactive API
+reference, a chat widget, analytics, an error reporter, a font loader)
+configured with a *real* credential or real user data, without reading what
+the component does by default with the network: many route "try it" requests
+through the vendor's proxy, load fonts or scripts from the vendor's CDN, or
+phone home. The option that disables it (`proxyUrl`, `telemetry`,
+`withDefaultFonts`) is usually one line, and nobody set it.
+
+**Verify:** `grep` the installed bundle (`node_modules/<pkg>/dist`) for
+external hostnames and read the config defaults near them; then check whether
+the diff passes anything sensitive into the component (a key, a token, a
+customer record). The development environment often exempts `localhost`, so
+the behavior only shows in production — do not conclude from a local run.
+
+**Example:** An API reference page generates a real API key for the tenant
+and passes it to the embedded reference widget so "Test request" works. The
+widget's default, when `proxyUrl` is undefined, is to send every test request
+through the vendor's public proxy — key, headers and body included.
+
+---
+
+### A limit on the compressed form
+
+**Axis:** Correctness (input validation) / Best practices (availability)
+
+**Watch for:** An upload or inbound payload validated by byte size and magic
+number and then decoded in full: an image whose decoded raster is width ×
+height × 4 bytes, an archive expanded with `readAllBytes`, a JSON array
+materialized before the domain counts its elements. The limit protects the
+transport, not the memory the decode needs.
+
+**Verify:** Compute the decoded size for the largest input the limit allows
+(a uniform 8 000 × 8 000 PNG compresses to under 200 KB and decodes to
+256 MB). If the decode happens per request or per preview, two or three
+concurrent requests exhaust the process for every tenant. Look for a
+pre-check that reads dimensions or entry counts *before* decoding, or a
+bounded stream.
+
+**Example:** A 200 KB cap and a PNG header check guard a logo upload; the PDF
+generator then decodes the full image to measure it and the preview endpoint
+decodes it again on every call. A crafted logo under the cap takes the
+instance down with authenticated requests.
+
+---
+
 <!--
 Template for the next entry — copy this block, fill it in, generalize away
 project-specific names/paths, delete this comment's contents when adding

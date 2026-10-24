@@ -59,12 +59,14 @@ verdict is text, and approving a PR stays your call.
 | **Clean Code** | Intent-revealing names, single-purpose functions, nesting and cognitive complexity, comments that explain *why*, explicit error handling, dead code, code smells (with a catalog of when each one is a finding) |
 | **SOLID** | One reason to change, extension over modification, contract-honoring implementations, cohesive interfaces, depending on abstractions across layers |
 | **DRY** | Real duplication that must be extracted — distinguished from coincidental similarity |
-| **Best practices** | Test coverage — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, documents another system validates (a schema check is not acceptance; a sandbox run left pending is a finding), claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries, consistency with repo patterns, and what breaks after the merge: migrations, API and config compatibility, operability, performance, frontend states and accessibility, new dependencies |
+| **Best practices** | Test coverage — and whether the key tests would actually fail with the behavior broken —, mocks and fakes that match the real contract, documents another system validates (a schema check is not acceptance; a sandbox run left pending is a finding), claims in the PR description backed by evidence, hardcoded values, secrets, security at trust boundaries (guard parity across sibling endpoints, static keys accepted by shared filters, revocation paths that outlive the credential, cookie-writing handlers without an origin check, limits on decoded size, dependencies whose defaults send data to the vendor), consistency with repo patterns, and what breaks after the merge: migrations, API and config compatibility, operability, performance, frontend states and accessibility, new dependencies and the support window of a pinned framework |
 
 Before reading the diff it reads the repo's own conventions (`CLAUDE.md`,
 `AGENTS.md`, `CONTRIBUTING.md`, QA docs) and the **linked issue**, and checks
 each acceptance criterion against the change. A PR that says it closes an
-issue with a criterion still unmet gets a finding.
+issue with a criterion still unmet gets a finding. It also checks whether CI
+actually runs the test suite on PRs (if not, the review runs it and says so)
+and whether the change reverses a rule an earlier, closed issue recorded.
 
 Checklists say where to look, not what to report: every finding still needs
 `file:line` and a concrete consequence.
@@ -86,6 +88,9 @@ the full verdict still closes it.
 
 ## 📌 Seguimiento          (opcional)
 - [archivo:línea] — mejora real fuera del alcance de esta PR; no cuenta para el veredicto
+
+## 🔬 Verificación
+- Suites ejecutadas y conteos, mutación hecha y test en rojo, entradas trazadas, reproducciones, archivos del radio de acción abiertos — o «no hecho: motivo»
 
 ## Veredicto
 APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
@@ -139,6 +144,13 @@ findings before merge, it does not ask first.
 
 ## Design rules
 
+- **The bar is strict.** A verified defect in correctness, security or data
+  integrity is a blocker by default; when in doubt between two severities in
+  those areas, the higher one wins. `APROBADO` requires the reviewer to have
+  run the suites, mutated the key test and opened every file in the change's
+  blast radius (table writers, sibling endpoints, callers) — the report has a
+  **Verificación** section that shows it, and a review built on reading
+  alone cannot approve.
 - **Every finding cites `file:line` and a concrete consequence.** A finding that
   cannot be grounded that way is not reported.
 - **Zero findings is a valid result** — the skill never invents defects to fill
@@ -160,17 +172,28 @@ findings before merge, it does not ask first.
 
 - [`SKILL.md`](./SKILL.md) — the full skill definition (the authoritative spec).
 - [`references/case-studies.md`](./references/case-studies.md) — finding
-  patterns learned from real reviews, independent of language.
+  patterns learned from real reviews, independent of language: state saves
+  guarded only for some states, exceptions after the point of no return,
+  precision that narrows along a signed value's path, whole-row saves,
+  guards applied to one endpoint but not its siblings, revocation paths that
+  depend on the credential being revoked, dependencies whose defaults phone
+  the vendor, limits on the compressed form, and more.
 - [`references/language-idioms.md`](./references/language-idioms.md) —
   pitfalls per language or framework (Go, Python, TypeScript/Next.js,
-  Java/Spring), including API types against a serializer that omits nulls
-  and pages that freeze an environment variable at build time.
+  Java/Spring/PostgreSQL), including API types against a serializer that
+  omits nulls, pages that freeze an environment variable at build time,
+  login CSRF in cookie-writing route handlers, `NUMERIC` columns narrower
+  than the domain, FreeMarker number formats, whole-row upserts and SDK
+  exception hierarchies.
 - [`references/code-smells.md`](./references/code-smells.md) — smells with
   when each one is a finding and when it is only taste.
 - [`references/production-readiness.md`](./references/production-readiness.md)
   — what breaks after the merge: migrations, compatibility, configuration (a
   setting that reaches only some of its readers, features dark until a flag),
-  operability, performance, frontend, dependencies.
+  security boundaries, operability (including dev adapters that log one-time
+  links and retry caps a catch-all bypasses), performance, frontend,
+  dependencies (default egress, support window of a pinned framework line,
+  git dependencies with install-time builds).
 
 ## Installation
 

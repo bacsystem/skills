@@ -5,6 +5,21 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.0] - 2026-11-13
+
+### Añadido
+- Carpeta `agents/` con un equipo de agentes genéricos para Claude Code:
+  `tech-lead`, `architect`, `po`, `qa` y `devops` (roles de proceso) y
+  `java-dev`, `go-dev` y `nextjs-dev` (desarrolladores por tecnología, que se
+  lanzan en varias instancias con nombres distintos). Cada uno abre leyendo el
+  `CLAUDE.md` del proyecto, que manda sobre el agente, y trae las reglas de
+  decisión, verificación, definición de terminado, errores típicos y límites de
+  su rol, más el ciclo de PR con `/pr-review` y el protocolo de comunicación.
+- `agents/README.md`: el contrato que el `CLAUDE.md` de un proyecto debe cumplir
+  (stack y comandos, arquitectura, propiedad de archivos, ramas, migraciones,
+  docs, secretos, publicación y memoria), cómo personalizar un agente por
+  proyecto y cómo enlazar la carpeta a `~/.claude/agents`.
+
 ## [0.2.13] - 2026-10-22
 
 ### Añadido

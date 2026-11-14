@@ -5,6 +5,31 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.1] - 2026-11-13
+
+### Cambiado
+- `pr-review`:
+  - Paso 0: comprobar que el PR se puede revisar. Con conflictos o con un check
+    de tests, lint o build en rojo, se devuelve al autor sin revisar.
+    `BLOCKED` por falta de aprobación no detiene la revisión.
+  - Un mismo defecto en varios lugares es un solo hallazgo con todas sus
+    ubicaciones.
+  - Cada BLOQUEANTE o IMPORTANTE explica por qué no lo atrapan las guardas que
+    ya existen (tipo, validación, framework, llamador).
+  - `references/code-smells.md`: sección *Often mis-flagged* con los falsos
+    positivos habituales, adaptada de affaan-m/ECC (MIT).
+- `git-flow`:
+  - Archivos que nunca entran a un commit (`.env*`, claves y certificados,
+    credenciales) y valores con pinta de secreto: detienen el paso 8. Un
+    secreto ya publicado se rota.
+  - Un `!` exige el footer `BREAKING CHANGE:` con la guía de migración, también
+    en el PR (nueva sección en `references/pr-template.md`).
+  - El paso 5 juzga por el código de salida y la línea de éxito en la salida
+    completa: nada de `| tail` sin `set -o pipefail`. Lo que depende del
+    entorno real se reporta como «pasa en local».
+  - El paso 9 comprueba con `git merge-tree` que la rama no tenga conflictos con
+    la base antes de abrir el PR.
+
 ## [0.3.0] - 2026-11-13
 
 ### Añadido

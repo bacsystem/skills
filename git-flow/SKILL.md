@@ -52,6 +52,22 @@ Skip when: the user only wants a quick local commit with no review/PR.
   If no source records a version, start from `0.1.0` and create `CHANGELOG.md`.
 - **Staging:** only stage the reviewed files plus the docs you updated. Never
   `git add -A` / `git add .` blindly.
+- **Files that never go in a commit:** `.env` and `.env.*` (except
+  `.env.example`), private keys and certificates (`*.pem`, `*.key`, `*.p12`,
+  `*.pfx`, `*.jks`), `credentials*.json`, `.claude/settings.local.json`, and any
+  file the project's `CLAUDE.md` lists as secret. If one is in the changes,
+  stop: leave it unstaged and tell the user (add it to `.gitignore` if it
+  belongs there). A value that looks like a secret inside a tracked file
+  (a token, a password, a connection string with credentials) also stops the
+  run. Name the file and line, never the value. A secret that already reached
+  a pushed commit is public even after it is deleted: it must be rotated, and
+  saying so is part of the stop.
+- **Breaking changes say how to migrate.** A change that breaks a public
+  contract (an API field removed or renamed, a changed error code or default,
+  a config variable renamed, a migration consumers must run) takes `!` after
+  the type (`feat!:`) **and** a `BREAKING CHANGE:` footer that says what broke
+  and what a consumer has to do. The same text goes in the PR body. A `!`
+  without the migration note is not done.
 - **Remote:** never hardcode `origin`. Resolve the push remote from
   `git remote -v` — prefer the current branch's upstream if one is set, else the
   sole remote, else ask which to use. Some repos push through an SSH-alias remote
@@ -80,8 +96,14 @@ Run in order. Stop and report if a precondition fails.
 5. **Verify** — detect the project's test/lint command and run it (see
    `references/verify-commands.md` for the per-ecosystem mapping). Prefer a
    command the repo already defines (scripts, `Makefile` targets, CI) over a
-   generic guess. **Stop and report if it fails;** continue once green. If the
-   project has no test/lint setup, say so and move on — don't fabricate a command.
+   generic guess. **Stop and report if it fails;** continue once green. Judge it
+   by its exit code and its own success line (`BUILD SUCCESSFUL`, `ok`, `0
+   failed`), read in the full output: never pipe it through `| tail` or `| grep`
+   without `set -o pipefail`, which hides a failing exit code behind the
+   filter's success. A check that passes locally but depends on the real
+   environment (a staging service, an external API, a deploy) is reported as
+   "passes locally", not as verified. If the project has no test/lint setup,
+   say so and move on — don't fabricate a command.
 6. **Compute version** — read current version per precedence, then apply the
    bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
    implementation of the SemVer table, including the `0.x` rule). The
@@ -94,8 +116,15 @@ Run in order. Stop and report if a precondition fails.
    - `README.md` only if the change affects documented behavior.
    Apply after confirmation.
 8. **Stage & commit** — `git add` the relevant files; Conventional Commit message
-   in English. Scope optional (derive from path only if obvious).
-9. **Push & PR (ask first)** — `git push -u <remote> <branch>` (the remote
+   in English. Scope optional (derive from path only if obvious). Before
+   committing, check `git diff --cached --name-only` against *Files that never
+   go in a commit* and stop if one is there.
+9. **Push & PR (ask first)** — first `git fetch <remote> <base>` and check that
+   the branch merges cleanly into it (`git merge-tree --write-tree
+   <remote>/<base> HEAD` exits non-zero on a conflict). On a conflict, stop and
+   tell the user: rebase or merge the base and verify again before the PR, so
+   the reviewer is not handed a diff that is about to change. Then
+   `git push -u <remote> <branch>` (the remote
    resolved in step 1). Build the PR body from `references/pr-template.md` (if
    missing, use a minimal Summary/Changes/Version body). PR base is the branch
    resolved in step 1 (`develop` if it exists, else `main`), title = commit
@@ -121,6 +150,14 @@ Run in order. Stop and report if a precondition fails.
 - **Hardcoding `origin`** — resolve the real remote (step 1); some repos use an SSH-alias remote.
 - **Over-bumping a `0.x` project** — pre-1.0, `feat` is a patch and a breaking change is a minor.
 - **Skipping tests** — run the project's test/lint command (step 5) before committing.
+- **Trusting a filtered output** — `./gradlew test | tail` exits 0 even when the
+  build failed; read the success line or use `set -o pipefail`.
+- **Committing a secret** — check the staged names (step 8); deleting it in a
+  later commit does not unpublish it.
+- **`!` without a migration note** — a breaking change needs the
+  `BREAKING CHANGE:` footer saying what consumers must do.
+- **Opening a PR that conflicts with its base** — check with `git merge-tree`
+  first (step 9).
 - **`git add -A`** — stage only reviewed + updated files.
 - **Spanish commit/PR text** — commits and PR are English; only the chat is Spanish.
 - **Staging before showing doc updates** — show changes in step 7 before `git add`.

@@ -71,6 +71,18 @@ the only reliable review is the one that executes it.
 
 ## Before reading the diff
 
+0. **Check that the PR is reviewable.** `gh pr view <n> --json
+   mergeable,mergeStateStatus,statusCheckRollup`. If it has merge conflicts
+   with its base (`mergeable: CONFLICTING`, `mergeStateStatus: DIRTY`), or a
+   check that runs the tests, lint or build is failing,
+   stop and hand it back to the author with the conflict or the failing check:
+   the fix will change the diff, and a review of a diff that is about to change
+   is work done twice. A check still running, or one that does not run the
+   project's tests (a bot reviewer, a label check), does not block — note it in
+   the report and go on. `mergeStateStatus: BLOCKED` on its own usually means a
+   required approval is missing, which is what this review is for: not a reason
+   to stop. A local branch or uncommitted work has no checks: skip
+   this step.
 1. **Read the repository's own conventions** — `CLAUDE.md`, `AGENTS.md`,
    `CONTRIBUTING.md`, and any QA/testing doc the repo points to. Judge the PR
    against what this repo established (branch targets, test bar, commit
@@ -488,6 +500,18 @@ fails while the defect is there. That gives the fix a red test to start from.
 If no automated test can show it (a misleading doc line, a naming issue), say
 what to check instead.
 
+**A blocker or an important finding also says why the existing guards miss
+it**: the type, the validation at the boundary, the framework default, the
+caller's check or the constraint that a reader would expect to catch it, and
+why it does not here. Most false positives die on this question — the case is
+already handled one frame up — and a real defect becomes easier to accept
+when the report shows the guard was looked at.
+
+**One defect, one finding.** The same mistake in several places (five
+handlers that swallow the same error, three forms missing the same label) is
+a single finding listing every `file:line`, not one finding per place: the
+fix is one decision, and five IDs for it bury the other findings.
+
 **Spanish (`--es`):**
 
 ```
@@ -664,7 +688,9 @@ GitHub approval. Approving a PR is the human's call.
 - **Strict is not the same as noisy.** The bar is high on *verification* and
   on *severity when verified*, not on volume: a finding still needs
   `file:line`, a concrete consequence and a way to prove it. Ten vague
-  findings hide the one that matters.
+  findings hide the one that matters. Before reporting a smell or a
+  "consider…", check it against *Often mis-flagged* in
+  `references/code-smells.md`.
 - **In review mode, never edit, commit, push, or merge.** Fix mode (above) is
   the only way this skill changes files, it needs the user's go-ahead or a
   standing one, and it never merges.
@@ -706,6 +732,10 @@ after writing to them.
 ## Common Mistakes
 
 - **Padding "lo que está bien"** with generic praise so the section is not empty.
+- **Reviewing a PR with conflicts or a red test check** — hand it back first;
+  the fix changes the diff you would be reviewing.
+- **Reporting the same defect once per location** — one finding, every
+  `file:line` listed.
 - **Reporting style preferences as defects** — if a linter or formatter would not
   flag it and it does not affect readability, it is not a finding.
 - **Flagging duplication that is coincidental** — see the DRY axis.

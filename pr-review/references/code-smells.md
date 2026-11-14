@@ -162,6 +162,40 @@ expensive, the reader it misleads.
 
 ---
 
+## Often mis-flagged
+
+Patterns a reviewer — above all an automated one — reports out of habit. Each
+is a finding only with evidence from this diff; without it, drop it. The
+question to ask: would a senior engineer on this team change it in review?
+
+- **"Add error handling"** on a call whose error is already handled by the
+  caller, a top-level handler or the framework (an exception mapper, an error
+  boundary, a `.catch` upstream). Open the caller first.
+- **"Missing input validation"** in an internal function whose callers
+  validate at the boundary. Trace at least one caller before reporting it.
+- **"Magic number"** for well-known values (HTTP codes, `60`, `24`, `1024`,
+  index `0` or `-1`) or a single-use constant whose name says what it is.
+- **"Function too long"** for an exhaustive `switch`, a configuration object,
+  a test table or generated code: length is not complexity.
+- **"Possible null"** when a guard in scope or the type already narrows it.
+  Follow the type, don't pattern-match on `?.` or `Optional`.
+- **"N+1 query"** on a loop of fixed, small cardinality (the values of an
+  enum) or on a path that already batches.
+- **"Missing await"** on a call detached on purpose (logging, metrics, a
+  queue push) that says so with a comment or a `void`.
+- **"Hardcoded value"** in a test fixture, an example or a doc snippet: tests
+  should hard-code their expectations.
+- **Security theater:** non-cryptographic randomness used for jitter,
+  sampling or animation; dynamic loading in a component whose whole job is
+  to load code.
+- **"Should use another language, library or pattern"** that the repo has not
+  adopted: match what the project uses.
+
+Adapted from the *Common False Positives* list of the `code-reviewer` agent in
+[affaan-m/ECC](https://github.com/affaan-m/ECC) (MIT License).
+
+---
+
 <!--
 Template for the next entry — copy, fill in, keep it generalized.
 

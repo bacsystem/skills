@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.2] - 2026-11-13
+
+### Cambiado
+- `architect`: secciones «Modelo de datos bajo carga» (índices, paginación por
+  cursor, `SKIP LOCKED`, orden de locks, filas calientes, limpieza de tablas que
+  crecen) y «Escalabilidad y resiliencia»: carga objetivo con números y ley de
+  Little, capa sin estado tras un balanceador, tareas programadas con lock,
+  liveness y readiness, apagado ordenado, timeouts alineados con el proxy,
+  reintentos con jitter en una sola capa, circuit breaker, bulkhead, plan B por
+  dependencia, backpressure con 503 y `Retry-After`, rate limit, pool de
+  conexiones explícito, asincronía con outbox e idempotencia, observabilidad de
+  saturación y prueba de carga y de fallos como criterio. Revisa si el issue
+  está listo antes de repartirlo.
+- `po`: invariantes aparte, criterios no funcionales con números, comportamiento
+  ante fallos de dependencias, comportamiento previo citado con su test,
+  variantes con nombre y una lista de «issue listo».
+- `qa`: aserciones sobre el resultado, invariantes, concurrencia real, tests
+  intermitentes, método de prueba de carga y prueba de fallos.
+- `java-dev`, `go-dev`, `nextjs-dev`: sección «Cuando algo falla» (reproducir,
+  hipótesis, arreglo en la causa sin silenciar, escalar al segundo intento
+  fallido) y reglas de concurrencia y resiliencia de su stack (guardas de
+  estado, idempotencia, ejecutores acotados, pools explícitos, jitter; `defer`
+  en bucles y rutas externas en Go; doble envío, cancelación y 429/503 en el
+  frontend).
+- `devops`: secretos ya publicados, archivos que nunca entran al repo ni a la
+  imagen, capacidad y resiliencia en el entorno (réplicas, health checks,
+  drenaje, timeouts encadenados, límites, rate limit en el borde) y método de
+  pruebas de carga.
+- `tech-lead`: no revisar con conflictos o CI en rojo, capas de pila que
+  funcionan solas y criterio de carga medido antes del release.
+- `agents/README.md`: el contrato del `CLAUDE.md` pide la carga objetivo, la
+  topología de despliegue y la herramienta de pruebas de carga.
+- El `architect` separa lo que siempre aplica (timeouts, reintentos acotados,
+  backpressure, health checks, prueba de carga) de lo que aplica cuando la carga
+  lo pide (réplicas, circuit breaker, bulkhead, lock distribuido, caché), para
+  no recetarlo a un servicio de una sola instancia.
+- Parte de estas reglas está adaptada de los agentes de affaan-m/ECC (MIT).
+
 ## [0.3.1] - 2026-11-13
 
 ### Cambiado

@@ -17,8 +17,12 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   su rol, más el ciclo de PR con `/pr-review` y el protocolo de comunicación.
 - `agents/README.md`: el contrato que el `CLAUDE.md` de un proyecto debe cumplir
   (stack y comandos, arquitectura, propiedad de archivos, ramas, migraciones,
-  docs, secretos, publicación y memoria), cómo personalizar un agente por
-  proyecto y cómo enlazar la carpeta a `~/.claude/agents`.
+  docs, secretos, publicación y memoria) y cómo personalizar un agente por
+  proyecto.
+- `scripts/instalar-agentes.sh` (macOS y Linux) y `scripts/instalar-agentes.ps1`
+  (Windows, con junction): enlazan `agents/` a `~/.claude/agents` desde
+  cualquier carpeta, respaldan un `~/.claude/agents` previo en vez de pisarlo y
+  no hacen nada si el enlace ya existe.
 
 ## [0.2.13] - 2026-10-22
 

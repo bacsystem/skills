@@ -57,20 +57,32 @@ proyecto.
 ## Instalación
 
 Los agentes de usuario viven en `~/.claude/agents/`. Para que sigan a este
-repositorio sin copiarlos, enlaza la carpeta (como las skills):
+repositorio sin copiarlos, el script de instalación enlaza la carpeta. Se
+ejecuta desde cualquier carpeta; si `~/.claude/agents` ya existe y no es este
+enlace, la renombra a `agents.respaldo-<fecha>` antes de enlazar (no borra
+nada), y si ya está enlazada no hace nada.
+
+**macOS / Linux** (enlace simbólico):
 
 ```bash
-# macOS / Linux
-ln -s "$PWD/agents" ~/.claude/agents
+/ruta/al/repo/skills/scripts/instalar-agentes.sh
 ```
 
-```bat
-:: Windows (cmd), junction; no requiere permisos de administrador
-mklink /J "%USERPROFILE%\.claude\agents" "<ruta-al-repo>\skills\agents"
+**Windows** (junction; no requiere administrador ni modo desarrollador), desde
+PowerShell o cmd:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\ruta\al\repo\skills\scripts\instalar-agentes.ps1
 ```
 
-Abre una sesión nueva de Claude Code después de enlazar: los agentes se cargan al
-iniciar.
+En Git Bash no uses `ln -s`: sin el modo desarrollador copia la carpeta en vez
+de enlazarla, y la copia deja de seguir al repositorio. Por eso el script de
+Bash se niega a correr ahí y remite al de PowerShell.
+
+Ambos aceptan un destino distinto (`instalar-agentes.sh <destino>`,
+`instalar-agentes.ps1 -Destino <ruta>`). Abre una sesión nueva de Claude Code
+después de enlazar: los agentes se cargan al iniciar. Para actualizar, basta
+`git pull` en el repositorio.
 
 ## Requisitos
 

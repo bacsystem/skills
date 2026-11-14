@@ -43,8 +43,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
     PR al review que pida el `CLAUDE.md`.
   - Plantilla: secciones *Verification*, *Linked issue* y *Deploy & rollback*
     (migraciones, contratos y variables de entorno, detectados en el paso 1).
-  - Paso 10: se taggea el commit exacto de `<remote>/main`, en verde, y no se
-    taggea si un workflow ya lo hace.
+  - Paso 10: se taggea la referencia remota `<remote>/main` tras `fetch` y con
+    los checks en verde (un `main` local puede estar desactualizado o tomado por
+    otro worktree), y no se taggea si un workflow ya lo hace.
 - `pr-review` (segundo lote):
   - Revisa los commits: el tipo que publica una versión equivocada y el `!` sin
     `BREAKING CHANGE:` son IMPORTANTE.

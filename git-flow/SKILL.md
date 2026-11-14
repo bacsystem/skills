@@ -52,6 +52,36 @@ Skip when: the user only wants a quick local commit with no review/PR.
   If no source records a version, start from `0.1.0` and create `CHANGELOG.md`.
 - **Staging:** only stage the reviewed files plus the docs you updated. Never
   `git add -A` / `git add .` blindly.
+- **Files that never go in a commit:** `.env` and `.env.*` (except
+  `.env.example`), private keys and certificates (`*.pem`, `*.key`, `*.p12`,
+  `*.pfx`, `*.jks`), `credentials*.json`, `.claude/settings.local.json`, and any
+  file the project's `CLAUDE.md` lists as secret. If one is in the changes,
+  stop: leave it unstaged and tell the user (add it to `.gitignore` if it
+  belongs there). A value that looks like a secret inside a tracked file
+  (a token, a password, a connection string with credentials) also stops the
+  run. Name the file and line, never the value. A secret that already reached
+  a pushed commit is public even after it is deleted: it must be rotated, and
+  saying so is part of the stop.
+- **Linking issues.** The PR body names its issue: `Closes #N` only when every
+  acceptance criterion is met, `Refs #N` otherwise (saying which criteria stay
+  open). Closing keywords act only on the default branch: a PR merged into
+  `develop` closes nothing, so the issue is closed by hand once validated. And
+  because merge commits keep the feature commits, a `Closes #N` written in a
+  *commit message* closes the issue later, when the release reaches `main` —
+  prefer `Refs #N` in commits. In a release PR body (`develop` → `main`), any
+  closing keyword closes its issue on merge, even inside a quote or an
+  instruction: write one only if you mean it.
+- **After a review, add commits; don't rewrite.** Once a PR has been reviewed,
+  a rebase changes the SHAs the re-review starts from (`git log
+  <reviewed-sha>..HEAD`). Fix with new commits, and bring the base in with a
+  merge. When a rewrite is unavoidable (`gh stack sync` on a stack), push with
+  `--force-with-lease`, never `--force`.
+- **Breaking changes say how to migrate.** A change that breaks a public
+  contract (an API field removed or renamed, a changed error code or default,
+  a config variable renamed, a migration consumers must run) takes `!` after
+  the type (`feat!:`) **and** a `BREAKING CHANGE:` footer that says what broke
+  and what a consumer has to do. The same text goes in the PR body. A `!`
+  without the migration note is not done.
 - **Remote:** never hardcode `origin`. Resolve the push remote from
   `git remote -v` — prefer the current branch's upstream if one is set, else the
   sole remote, else ask which to use. Some repos push through an SSH-alias remote
@@ -70,18 +100,33 @@ Run in order. Stop and report if a precondition fails.
    whether a `develop` branch exists (`git show-ref --verify --quiet
    refs/heads/develop` or `refs/remotes/<remote>/develop`) — if so, it's the
    PR base for this run (GitFlow repo); otherwise the base is `main`. Check
-   `gh auth status`.
+   `gh auth status`. Sort the changed files into source, tests, docs, config,
+   and the three that change the deploy: **migrations, contract artifacts
+   (OpenAPI, schemas) and environment variables**. Any of those three makes
+   the PR body carry a *Deploy & rollback* section (step 9).
 2. **Classify** — pick the one Conventional Commit type and the SemVer bump
    (see Conventions + tie-breakers).
 3. **Create branch** — if on `main`/`master`, `git switch -c type/description`.
    If already on a work branch, keep it.
 4. **Code review** — review the diff for bugs, convention issues, and
-   simplifications. Show findings; continue after the user's OK.
+   simplifications. Show findings; continue after the user's OK. If the diff
+   holds changes that can be reviewed and reverted on their own (a refactor
+   plus a feature, a backend change plus an unrelated UI fix), propose
+   splitting them before committing: one branch each, stacked (`gh stack add`)
+   when one builds on the other. Size alone is not the reason; the reason is
+   that a reviewer cannot judge, or a revert cannot undo, one without the
+   other.
 5. **Verify** — detect the project's test/lint command and run it (see
    `references/verify-commands.md` for the per-ecosystem mapping). Prefer a
    command the repo already defines (scripts, `Makefile` targets, CI) over a
-   generic guess. **Stop and report if it fails;** continue once green. If the
-   project has no test/lint setup, say so and move on — don't fabricate a command.
+   generic guess. **Stop and report if it fails;** continue once green. Judge it
+   by its exit code and its own success line (`BUILD SUCCESSFUL`, `ok`, `0
+   failed`), read in the full output: never pipe it through `| tail` or `| grep`
+   without `set -o pipefail`, which hides a failing exit code behind the
+   filter's success. A check that passes locally but depends on the real
+   environment (a staging service, an external API, a deploy) is reported as
+   "passes locally", not as verified. If the project has no test/lint setup,
+   say so and move on — don't fabricate a command.
 6. **Compute version** — read current version per precedence, then apply the
    bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
    implementation of the SemVer table, including the `0.x` rule). The
@@ -94,17 +139,56 @@ Run in order. Stop and report if a precondition fails.
    - `README.md` only if the change affects documented behavior.
    Apply after confirmation.
 8. **Stage & commit** — `git add` the relevant files; Conventional Commit message
-   in English. Scope optional (derive from path only if obvious).
-9. **Push & PR (ask first)** — `git push -u <remote> <branch>` (the remote
-   resolved in step 1). Build the PR body from `references/pr-template.md` (if
-   missing, use a minimal Summary/Changes/Version body). PR base is the branch
-   resolved in step 1 (`develop` if it exists, else `main`), title = commit
-   subject. **Show the body and ask before creating.** On confirmation:
-   `gh pr create --base <resolved base>`. If `gh` is unavailable, output the
-   body and the compare URL instead.
+   in English. Before committing, check `git diff --cached --name-only` against
+   *Files that never go in a commit* and stop if one is there. Shape of the
+   message:
+   - Match the history first (`git log --no-merges --format=%s -30`): whether
+     it uses scopes, and its usual subject length. Scope optional (derive from
+     path only if obvious).
+   - Subject in the imperative, lowercase after the type, no trailing period.
+   - A body only when the diff does not explain itself (a workaround, a
+     trade-off, an alternative rejected): it says *why*, since the diff already
+     says what.
+   - Issue references in footers (`Refs #N`), never in the subject. See
+     *Linking issues* before writing a closing keyword in a commit.
+9. **Push & PR (ask first)** — first `git fetch <remote> <base>` and check that
+   the branch merges cleanly into it (`git merge-tree --write-tree
+   <remote>/<base> HEAD` exits non-zero on a conflict). On a conflict, stop and
+   tell the user: bring the base in (merge it if the PR was already reviewed,
+   see *After a review*) and verify again before the PR, so the reviewer is not
+   handed a diff that is about to change. Then:
+   - **A PR may already exist.** If `gh pr list --head <branch>` returns one,
+     do not create another: push, and update that PR's body wherever a number
+     or claim changed.
+   - **A branch in a stack** (`gh stack view` lists it) goes up with
+     `gh stack submit`, which pushes every layer and sets each base; don't
+     `gh pr create` it by hand. The rest of this step still applies: show the
+     body and ask before submitting, then set each new PR's body from the
+     template with `gh pr edit <n> --body-file <path>`.
+   - Otherwise `git push -u <remote> <branch>` (the remote resolved in step 1).
+   - **Body:** the repo's own template wins (`.github/PULL_REQUEST_TEMPLATE.md`,
+     `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/`);
+     else `references/pr-template.md`; else a minimal
+     Summary/Changes/Verification/Version body. Fill *Verification* with the
+     commands actually run and their counts, *Linked issue* per *Linking
+     issues*, and *Deploy & rollback* when step 1 found a migration, a contract
+     artifact or an environment variable.
+   - PR base is the branch resolved in step 1 (`develop` if it exists, else
+     `main`), title = commit subject. **Show the body and ask before
+     creating.** On confirmation: `gh pr create --base <resolved base>`. If
+     `gh` is unavailable, output the body and the compare URL instead.
+   - After creating it, report the URL and `gh pr checks`. If the project's
+     `CLAUDE.md` requires a review, hand the PR to it: never call it ready to
+     merge yourself.
 10. **Tag after merge** — once the PR is merged, tag **only if its base was
-    `main`**: `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push <remote> vX.Y.Z`.
-    Skip if the tag already exists. If the base was `develop`, don't tag here —
+    `main`**, and only the exact merge commit. Tag the remote ref, not a local
+    branch: `git fetch <remote> main --tags`, check that the checks on
+    `<remote>/main` are green (`gh pr checks` on the merged PR, or the commit's
+    status), then `git tag -a vX.Y.Z -m "vX.Y.Z" <remote>/main` and
+    `git push <remote> vX.Y.Z`. A local `main` may be stale or checked out in
+    another worktree (`git switch main` then fails); the remote ref is the
+    release. Skip if the tag already exists, or if a workflow in the repo
+    creates it on merge (an auto-tag action). If the base was `develop`, don't tag here —
     that merge is an integration step, not a release; the tag happens later
     when `develop` is promoted to `main` (release/hotfix branch), which is
     outside this skill's scope.
@@ -121,6 +205,22 @@ Run in order. Stop and report if a precondition fails.
 - **Hardcoding `origin`** — resolve the real remote (step 1); some repos use an SSH-alias remote.
 - **Over-bumping a `0.x` project** — pre-1.0, `feat` is a patch and a breaking change is a minor.
 - **Skipping tests** — run the project's test/lint command (step 5) before committing.
+- **Trusting a filtered output** — `./gradlew test | tail` exits 0 even when the
+  build failed; read the success line or use `set -o pipefail`.
+- **Committing a secret** — check the staged names (step 8); deleting it in a
+  later commit does not unpublish it.
+- **`!` without a migration note** — a breaking change needs the
+  `BREAKING CHANGE:` footer saying what consumers must do.
+- **Opening a PR that conflicts with its base** — check with `git merge-tree`
+  first (step 9).
+- **Rebasing a reviewed PR** — add commits and merge the base instead; the
+  re-review needs the SHAs it already saw.
+- **`Closes #N` on a PR into `develop`** — it closes nothing on merge; close the
+  issue by hand after validating it, and use `Refs #N` in commit messages.
+- **A second PR for the same branch** — check `gh pr list --head <branch>`
+  first and update the existing one.
+- **Tagging a local `main`** — it may be stale or held by another worktree; tag
+  `<remote>/main` after fetching.
 - **`git add -A`** — stage only reviewed + updated files.
 - **Spanish commit/PR text** — commits and PR are English; only the chat is Spanish.
 - **Staging before showing doc updates** — show changes in step 7 before `git add`.

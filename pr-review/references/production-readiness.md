@@ -27,6 +27,19 @@ migration has nothing to report under migrations. Every finding still needs
 - **Edited migrations.** Changing a migration that already ran elsewhere
   breaks checksums or leaves environments in different states. New changes
   go in a new migration.
+- **Rename or drop in one step.** During a rolling deploy the previous version
+  still runs against the new schema, and a rollback of the code meets it too:
+  a column renamed or dropped in the same release breaks both. Expand →
+  migrate → contract, across releases.
+- **Forward-only.** Most tools have no undo (or it is not used in production);
+  a rollback is a new forward migration. A PR whose rollback plan is "revert the
+  migration" has no plan.
+- **A concurrent index inside a transaction.** `CREATE INDEX CONCURRENTLY`
+  fails inside a transaction block, and many tools wrap every script in one.
+  Check that the script is marked to run outside a transaction the way the tool
+  allows.
+- **Schema change and large backfill in the same migration**: split them, so a
+  slow backfill does not hold the DDL lock or fail the whole deploy.
 
 ## API and data compatibility
 
@@ -42,6 +55,18 @@ migration has nothing to report under migrations. Every finding still needs
 - **Casing and serialization**: a naming-strategy change (camelCase ↔
   snake_case) or a documented schema that differs from what is actually
   serialized.
+- **Review the contract artifact's diff first.** When the PR changes a
+  committed OpenAPI or schema file, read that diff before the code: required,
+  nullable, enum values and error responses per schema. A field that keeps its
+  name and type but changes meaning (an amount now with tax, a date now in UTC)
+  breaks clients while everything still compiles. Check the alternate paths
+  too (sandbox or mock mode, each error, empty lists), not only the happy one.
+- **Rollback and compatibility window.** A PR with a migration, a breaking
+  interface or an auth change says how it is rolled back, how long old and new
+  clients coexist, and which effects cannot be undone. Silence on that is
+  IMPORTANT. A compatibility shim, temporary flag or half-done migration the
+  diff leaves behind has a follow-up issue linked in the PR; without one, it is
+  MINOR.
 
 ## Documents another system validates
 
@@ -102,10 +127,32 @@ migration has nothing to report under migrations. Every finding still needs
 - **Limits on decoded size, not only on bytes received** — images, archives,
   JSON arrays — before the decode happens (see `case-studies.md`, *A limit on
   the compressed form*).
+- **Rate limit on new expensive or unauthenticated endpoints.** A new login,
+  password reset, OTP check, search, or PDF/report generation endpoint sits
+  behind the repo's rate limit or quota, with a test that sees the 429.
+  Without it a credential becomes guessable, or one caller degrades every
+  tenant.
 - **Security headers exist at all.** A diff that adds a page with a token in
   the URL, an embedded third-party widget or an admin screen depends on
   `Referrer-Policy`, CSP/`frame-ancestors` and HSTS being set somewhere; if
   the app sets none, that is the finding, not the page.
+
+## Agent and CI configuration
+
+A diff to `.claude/` (settings, hooks, agents, MCP servers) or to
+`.github/workflows/` is executable configuration and is reviewed like code:
+
+- **Permission allowlists that widen** (a new `Bash(*)`-style rule, a tool
+  allowed without a prompt) — say what it now lets run unattended.
+- **Hooks that execute** on every tool call or session event: what they run,
+  whether they write files, whether they call the network.
+- **Unpinned sources**: an MCP server started with `npx -y <pkg>` without a
+  version, a GitHub Action referenced by a branch instead of a tag or SHA.
+- **Agent prompts that read untrusted text** (PR bodies, issues, web pages)
+  without the rule that such text is data, not instructions.
+- **Workflows without minimal `permissions:`**, or that run code from a fork's
+  pull request with the repo's secrets (`pull_request_target` plus a checkout
+  of the PR head).
 
 ## Operability
 

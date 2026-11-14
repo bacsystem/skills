@@ -162,7 +162,9 @@ Run in order. Stop and report if a precondition fails.
      or claim changed.
    - **A branch in a stack** (`gh stack view` lists it) goes up with
      `gh stack submit`, which pushes every layer and sets each base; don't
-     `gh pr create` it by hand.
+     `gh pr create` it by hand. The rest of this step still applies: show the
+     body and ask before submitting, then set each new PR's body from the
+     template with `gh pr edit <n> --body-file <path>`.
    - Otherwise `git push -u <remote> <branch>` (the remote resolved in step 1).
    - **Body:** the repo's own template wins (`.github/PULL_REQUEST_TEMPLATE.md`,
      `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/`);
@@ -179,13 +181,14 @@ Run in order. Stop and report if a precondition fails.
      `CLAUDE.md` requires a review, hand the PR to it: never call it ready to
      merge yourself.
 10. **Tag after merge** — once the PR is merged, tag **only if its base was
-    `main`**, and only the exact merge commit: `git fetch <remote> main
-    --tags`, `git switch main`, `git pull --ff-only`, then confirm `git
-    rev-parse HEAD` equals `git rev-parse <remote>/main`, the worktree is clean
-    and the checks on that commit are green. A stale local `main` tags a commit
-    that is not the release. Then `git tag -a vX.Y.Z -m "vX.Y.Z"` and
-    `git push <remote> vX.Y.Z`. Skip if the tag already exists, or if a
-    workflow in the repo creates it on merge (an auto-tag action). If the base was `develop`, don't tag here —
+    `main`**, and only the exact merge commit. Tag the remote ref, not a local
+    branch: `git fetch <remote> main --tags`, check that the checks on
+    `<remote>/main` are green (`gh pr checks` on the merged PR, or the commit's
+    status), then `git tag -a vX.Y.Z -m "vX.Y.Z" <remote>/main` and
+    `git push <remote> vX.Y.Z`. A local `main` may be stale or checked out in
+    another worktree (`git switch main` then fails); the remote ref is the
+    release. Skip if the tag already exists, or if a workflow in the repo
+    creates it on merge (an auto-tag action). If the base was `develop`, don't tag here —
     that merge is an integration step, not a release; the tag happens later
     when `develop` is promoted to `main` (release/hotfix branch), which is
     outside this skill's scope.
@@ -216,8 +219,8 @@ Run in order. Stop and report if a precondition fails.
   issue by hand after validating it, and use `Refs #N` in commit messages.
 - **A second PR for the same branch** — check `gh pr list --head <branch>`
   first and update the existing one.
-- **Tagging from a stale `main`** — pull and compare with `<remote>/main` before
-  tagging.
+- **Tagging a local `main`** — it may be stale or held by another worktree; tag
+  `<remote>/main` after fetching.
 - **`git add -A`** — stage only reviewed + updated files.
 - **Spanish commit/PR text** — commits and PR are English; only the chat is Spanish.
 - **Staging before showing doc updates** — show changes in step 7 before `git add`.

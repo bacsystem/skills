@@ -11,9 +11,9 @@ proyecto lo leen de su `CLAUDE.md`.
 |---|---|---|
 | [`tech-lead`](./tech-lead.md) | Sesión principal: descompone issues, reparte sin solapes, revisa todo PR con `/pr-review`, pide al usuario las aprobaciones de merge, tag y despliegue | opus |
 | [`architect`](./architect.md) | Revisión de impacto, modelo de datos, contrato de API, diseño para concurrencia, escalabilidad y tolerancia a fallos (capacidad, balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga), decisiones con trade-offs y ADR. No escribe código | opus |
-| [`po`](./po.md) | Issues con historia de usuario, criterios verificables, invariantes, criterios de carga con números e INVEST; prioriza y acepta entregas. No escribe código | sonnet |
-| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo (concurrencia real, carga, fallos) y reporta defectos reproducibles | sonnet |
-| [`devops`](./devops.md) | CI/CD, imágenes, entornos, despliegues reversibles, secretos, respaldos, observabilidad y carga | sonnet |
+| [`po`](./po.md) | Issues con historia de usuario, criterios verificables, invariantes, criterios de carga con números e INVEST; prioriza y acepta entregas. No escribe código | sonnet · esfuerzo medio |
+| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo (concurrencia real, carga, fallos) y reporta defectos reproducibles | sonnet · esfuerzo medio |
+| [`devops`](./devops.md) | CI/CD, imágenes, entornos, despliegues reversibles, secretos, respaldos, observabilidad y carga | sonnet · esfuerzo medio |
 | [`java-dev`](./java-dev.md) | Backend Java 21 + Spring Boot + PostgreSQL | sonnet |
 | [`go-dev`](./go-dev.md) | Backend Go (servicios HTTP, lotes, SQLite/PostgreSQL) | sonnet |
 | [`nextjs-dev`](./nextjs-dev.md) | Frontend Next.js (App Router) + React + TypeScript | sonnet |

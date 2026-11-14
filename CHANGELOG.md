@@ -5,6 +5,23 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.3] - 2026-11-14
+
+### Cambiado
+- Ahorro de tokens:
+  - Los 8 agentes ya no releen con Read el `CLAUDE.md` raíz, que Claude Code
+    carga solo en cada subagente y teammate.
+  - `po`, `qa` y `devops` corren con `effort: medium`; los desarrolladores, el
+    architect y el tech-lead mantienen el esfuerzo de la sesión.
+  - `tech-lead`: sección «Contexto y tokens» (lecturas amplias y reviews grandes
+    en subagentes que devuelven poco, subagente frente a teammate, salida de las
+    suites a un archivo, compactar en las fronteras, el asesor solo en
+    decisiones, no cambiar de modelo a mitad de sesión).
+  - `pr-review`: la plantilla en inglés, el modo de corrección y «Growing this
+    skill» pasan a `references/output-en.md`, `references/fix-mode.md` y
+    `references/growing.md`, y se leen solo cuando hacen falta. El `SKILL.md`
+    baja de 47 KB a 43 KB.
+
 ## [0.3.2] - 2026-11-13
 
 ### Cambiado

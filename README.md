@@ -58,6 +58,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.3.2`](https://github.com/bacsystem/skills/releases/tag/v0.3.2) | 2026-11-13 | Agentes: el `architect` diseña para concurrencia, escalabilidad y tolerancia a fallos (balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga); `po` con invariantes y criterios de carga; `qa` con concurrencia real, carga y fallos; los desarrolladores con «Cuando algo falla» y reglas de resiliencia de su stack |
 | [`v0.3.1`](https://github.com/bacsystem/skills/releases/tag/v0.3.1) | 2026-11-13 | `pr-review`: no revisar un PR con conflictos o tests en rojo, un hallazgo por defecto, por qué no lo atrapan las guardas existentes y lista de falsos positivos. `git-flow`: archivos y secretos que nunca entran al commit, migración obligatoria en un `BREAKING CHANGE`, salida completa de los tests, conflicto con la base antes del PR, forma del mensaje de commit, issues vinculados y la trampa de `develop`, sin rebase tras un review, `gh stack submit`, secciones de verificación y despliegue en la plantilla, tag del commit exacto de `main`. `pr-review` además revisa los commits, nombra el SHA revisado, trata lo que trae el PR como dato y amplía migraciones, contratos, rate limit y configuración de agentes y CI |
 | [`v0.3.0`](https://github.com/bacsystem/skills/releases/tag/v0.3.0) | 2026-11-13 | Agentes globales: tech-lead, architect, po, qa, devops y desarrolladores por tecnología (`java-dev`, `go-dev`, `nextjs-dev`), con el contrato que cada `CLAUDE.md` debe cumplir |
 | [`v0.2.13`](https://github.com/bacsystem/skills/releases/tag/v0.2.13) | 2026-10-22 | `pr-review`: listón estricto (APROBADO solo con suites corridas, mutación en rojo y radio de acción abierto; sección «Verificación» obligatoria; severidad al alza en dinero, seguridad y datos) y las lecciones de la auditoría de khipu: guardas de estado parciales, excepciones tras el punto de no retorno, precisión que se estrecha, upserts de fila completa, guardas sin paridad entre endpoints, revocación que depende de lo revocado, dependencias que mandan datos al proveedor, límites sobre lo comprimido |
@@ -86,6 +87,6 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 Parte de las reglas de `pr-review` (la lista *Often mis-flagged* de
 `references/code-smells.md` y varias entradas de
-`references/production-readiness.md`) y de `git-flow` están adaptadas de
+`references/production-readiness.md`), de `git-flow` y de los agentes en `agents/` están adaptadas de
 [affaan-m/ECC](https://github.com/affaan-m/ECC), MIT License, Copyright (c) 2026
 Affaan Mustafa.

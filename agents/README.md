@@ -10,9 +10,9 @@ proyecto lo leen de su `CLAUDE.md`.
 | Agente | Rol | Modelo |
 |---|---|---|
 | [`tech-lead`](./tech-lead.md) | Sesión principal: descompone issues, reparte sin solapes, revisa todo PR con `/pr-review`, pide al usuario las aprobaciones de merge, tag y despliegue | opus |
-| [`architect`](./architect.md) | Revisión de impacto, modelo de datos, contrato de API, decisiones con trade-offs y ADR. No escribe código | opus |
-| [`po`](./po.md) | Issues con historia de usuario, criterios verificables e INVEST; prioriza y acepta entregas. No escribe código | sonnet |
-| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo y reporta defectos reproducibles | sonnet |
+| [`architect`](./architect.md) | Revisión de impacto, modelo de datos, contrato de API, diseño para concurrencia, escalabilidad y tolerancia a fallos (capacidad, balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga), decisiones con trade-offs y ADR. No escribe código | opus |
+| [`po`](./po.md) | Issues con historia de usuario, criterios verificables, invariantes, criterios de carga con números e INVEST; prioriza y acepta entregas. No escribe código | sonnet |
+| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo (concurrencia real, carga, fallos) y reporta defectos reproducibles | sonnet |
 | [`devops`](./devops.md) | CI/CD, imágenes, entornos, despliegues reversibles, secretos, respaldos, observabilidad y carga | sonnet |
 | [`java-dev`](./java-dev.md) | Backend Java 21 + Spring Boot + PostgreSQL | sonnet |
 | [`go-dev`](./go-dev.md) | Backend Go (servicios HTTP, lotes, SQLite/PostgreSQL) | sonnet |
@@ -21,6 +21,26 @@ proyecto lo leen de su `CLAUDE.md`.
 Los desarrolladores van por tecnología: un proyecto con dos backends en Java lanza
 dos instancias de `java-dev` con nombres distintos (por ejemplo `backend-dev` y
 `backend-dev-2`) y el tech-lead les asigna módulos distintos.
+
+### Sumar más desarrolladores
+
+No se crea ningún archivo nuevo: un desarrollador más es otra instancia del mismo
+agente, con otro nombre.
+
+1. En el `CLAUDE.md` del proyecto, agrega el nombre a la lista de roles y dale su
+   parte en la propiedad de archivos (por ejemplo, `backend-dev-3` →
+   `adapters/out-mail` y `adapters/out-pdf`; `go-dev-2` → `internal/carga`). Dos
+   instancias nunca comparten módulo a la vez.
+2. Pídele al tech-lead que lo lance: «lanza un `java-dev` llamado `backend-dev-3`
+   para los módulos X e Y». El tech-lead le asigna su worktree y su rama, y le
+   reserva el número de migración si la tarea lleva una.
+3. Al terminar su tarea, el tech-lead lo cierra. Lanzar más no tiene costo fijo;
+   cada instancia activa sí consume tokens, así que conviene tener solo las que
+   trabajan en paralelo sobre módulos distintos.
+
+El límite real no es el número de agentes sino cuánto trabajo independiente hay:
+si dos tareas tocan el mismo módulo o dependen una de otra, un desarrollador más
+no acelera, solo genera conflictos.
 
 ## Contrato con el proyecto
 
@@ -31,7 +51,12 @@ funcione sin adivinar, ese archivo debe decir:
 2. **Stack y comandos:** build, suite completa, lint y typecheck, con la señal de
    éxito de cada uno y las pruebas que son caras (cuándo se corren).
 3. **Arquitectura:** módulos o paquetes, reglas de dependencia y el test que las
-   verifica; flujos críticos que no se tocan sin entenderlos.
+   verifica; flujos críticos que no se tocan sin entenderlos (incluidos los
+   locks o transacciones intencionales).
+   **Carga y despliegue:** carga objetivo (usuarios concurrentes, peticiones por
+   segundo, p95), cuántas instancias corren y detrás de qué balanceador o proxy,
+   y la herramienta y el lugar de las pruebas de carga. Sin estos datos, el
+   architect, el po y qa los preguntan en vez de inventarlos.
 4. **Propiedad de archivos por rol:** qué carpetas son de cada desarrollador, de
    devops y de quién es la configuración compartida.
 5. **Ramas y PR:** rama base, ramas protegidas, método de merge, uso de stacks y

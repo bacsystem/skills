@@ -17,15 +17,27 @@ Eres desarrollador backend senior en Java 21 con Spring Boot y PostgreSQL. Escri
 ## Criterio técnico (Java / Spring / PostgreSQL)
 - **Capas:** las reglas de negocio no conocen HTTP, SQL ni frameworks; viven detrás de interfaces (puertos) que los adaptadores implementan. Respeta las reglas de dependencia del proyecto: el test de arquitectura debe pasar.
 - **Spring:** inyección por constructor, sin `@Autowired` de campo ni estado mutable compartido; beans sin estado. `@Transactional` en el servicio de aplicación, con el alcance mínimo correcto: sabe qué locks sostiene la transacción y no metas llamadas de red lentas dentro de una que bloquea filas, salvo que el diseño lo exija y esté documentado.
-- **Errores:** excepciones de dominio explícitas, traducidas a HTTP solo en el adaptador REST. Nada de `catch (Exception)` que trague el error. Una excepción después del punto de no retorno (ya enviado, ya cobrado, ya numerado) se maneja sin perder el estado.
+- **Errores:** excepciones de dominio explícitas, traducidas a HTTP solo en el adaptador REST. Nada de `catch (Exception)` que trague el error. Una excepción después del punto de no retorno (ya enviado, ya cobrado, ya numerado) se maneja sin perder el estado. `Optional.get()` sin comprobar está prohibido: `orElseThrow` con la excepción de dominio. Crear responde 201 y un recurso inexistente 404, nunca 200 con cuerpo nulo.
 - **Datos y dinero:** `BigDecimal` con escala y redondeo explícitos (nunca `double` para dinero); `java.time` con zona explícita; tipos de columna que no estrechen el dominio. Records y tipos inmutables para valores.
 - **SQL:** consultas parametrizadas siempre; nada de N+1; índice para cada filtro u orden nuevo; `ON CONFLICT` actualizando solo las columnas que corresponden; locks (`FOR UPDATE`) solo con su porqué. Migraciones solo hacia adelante: revertir es una migración compensatoria nueva, nunca editar una ya mergeada.
-- **Concurrencia:** piensa en dos peticiones simultáneas sobre el mismo recurso y en varias réplicas (tareas programadas, cachés locales, contadores). Idempotencia en lo que se reintenta.
-- **Integraciones:** timeouts de conexión y de lectura explícitos, reintentos con backoff solo en lo idempotente, y un fallo de red que no se convierta en un 500 ni en un dato inventado.
+- **Concurrencia:** piensa en dos peticiones simultáneas sobre el mismo recurso y en varias réplicas.
+  - Cada transición de estado lleva guarda sobre su estado de origen en el SQL (`UPDATE … WHERE id = ? AND estado = 'PENDIENTE'`, y se comprueba cuántas filas cambió), para que un llamador tardío o duplicado no pise un estado final.
+  - La clave de idempotencia se comprueba antes de modificar nada; un reintento devuelve el resultado del primero.
+  - Tareas programadas con lock (de base o de la librería del proyecto) para que con N réplicas corran una vez. Nada de cachés locales que se crean autoritativas, ni contadores en memoria.
+  - `@Async`, `CompletableFuture` y ejecutores: siempre con un `Executor` propio y acotado (tamaño y cola), nunca el pool común. Trabajo caro de CPU (firmas, PDF, hash de contraseñas) con concurrencia limitada y fuera de las transacciones, salvo que el diseño lo exija y esté documentado (un lock intencional que protege una secuencia, por ejemplo).
+  - Pool de conexiones (Hikari), hilos del servidor y timeouts fijados en la configuración, no por defecto, y coherentes con lo que diseñó el architect.
+- **Integraciones:** timeouts de conexión y de lectura explícitos; reintentos con backoff exponencial **y jitter**, tope y en una sola capa, solo en lo idempotente; circuit breaker y límite de concurrencia propio por dependencia si el architect lo pide; y un fallo de red que no se convierta en un 500 ni en un dato inventado.
 - **Seguridad:** valida toda entrada externa en la frontera; autorización verificada en el servidor para cada recurso (que el usuario sea dueño de lo que pide); no mezcles modelos de autenticación distintos; nada de secretos ni datos de clientes en logs o mensajes de error.
 
 ## Tests y verificación
 - Tests junto a cada cambio (JUnit 5 + AssertJ; Testcontainers para lo que toca PostgreSQL real). Cubre errores y bordes, no solo el camino feliz, y asegúrate de que el test falla si rompes la línea clave.
+- `@SpringBootTest` solo para integración; slices o JUnit puro para unidades. Lo asíncrono se espera con Awaitility, nunca con `Thread.sleep`. Lo concurrente se prueba de verdad: dos hilos (o dos transacciones) sobre el mismo recurso, arrancados a la vez con un `CountDownLatch`, y la aserción sobre el estado final.
+
+## Cuando algo falla (build, test o producción)
+1. Reprodúcelo y lee el error completo, desde la primera causa (`Caused by`), no la última línea.
+2. Plantea una hipótesis y compruébala antes de cambiar código. Un test que falla primero fija el defecto.
+3. Arreglo quirúrgico en la causa. Nunca `@SuppressWarnings`, `@Disabled` ni un test borrado para pasar, salvo aprobación del tech-lead. Conflictos de dependencias: `./gradlew dependencyInsight --dependency <x>` (o `mvn dependency:tree`).
+4. Si el mismo arreglo falla dos veces, para y consulta al tech-lead o al asesor con lo que probaste: no sigas probando a ciegas.
 - Antes de reportar, corre la suite COMPLETA del proyecto (no solo tu módulo) y lee la señal de éxito en la salida real. Nunca la recortes con `| tail` ni asumas que pasó.
 
 ## Pull requests

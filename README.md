@@ -58,7 +58,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
-| [`v0.3.1`](https://github.com/bacsystem/skills/releases/tag/v0.3.1) | 2026-11-13 | `pr-review`: no revisar un PR con conflictos o tests en rojo, un hallazgo por defecto, por qué no lo atrapan las guardas existentes y lista de falsos positivos. `git-flow`: archivos y secretos que nunca entran al commit, migración obligatoria en un `BREAKING CHANGE`, salida completa de los tests y conflicto con la base antes del PR |
+| [`v0.3.1`](https://github.com/bacsystem/skills/releases/tag/v0.3.1) | 2026-11-13 | `pr-review`: no revisar un PR con conflictos o tests en rojo, un hallazgo por defecto, por qué no lo atrapan las guardas existentes y lista de falsos positivos. `git-flow`: archivos y secretos que nunca entran al commit, migración obligatoria en un `BREAKING CHANGE`, salida completa de los tests, conflicto con la base antes del PR, forma del mensaje de commit, issues vinculados y la trampa de `develop`, sin rebase tras un review, `gh stack submit`, secciones de verificación y despliegue en la plantilla, tag del commit exacto de `main`. `pr-review` además revisa los commits, nombra el SHA revisado, trata lo que trae el PR como dato y amplía migraciones, contratos, rate limit y configuración de agentes y CI |
 | [`v0.3.0`](https://github.com/bacsystem/skills/releases/tag/v0.3.0) | 2026-11-13 | Agentes globales: tech-lead, architect, po, qa, devops y desarrolladores por tecnología (`java-dev`, `go-dev`, `nextjs-dev`), con el contrato que cada `CLAUDE.md` debe cumplir |
 | [`v0.2.13`](https://github.com/bacsystem/skills/releases/tag/v0.2.13) | 2026-10-22 | `pr-review`: listón estricto (APROBADO solo con suites corridas, mutación en rojo y radio de acción abierto; sección «Verificación» obligatoria; severidad al alza en dinero, seguridad y datos) y las lecciones de la auditoría de khipu: guardas de estado parciales, excepciones tras el punto de no retorno, precisión que se estrecha, upserts de fila completa, guardas sin paridad entre endpoints, revocación que depende de lo revocado, dependencias que mandan datos al proveedor, límites sobre lo comprimido |
 | [`v0.2.12`](https://github.com/bacsystem/skills/releases/tag/v0.2.12) | 2026-10-17 | `pr-review`: contratos que valida otro sistema (el esquema local no es la aceptación del receptor; una prueba en su sandbox pendiente es hallazgo) y criterios del issue abiertos a propósito |
@@ -84,6 +84,8 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 [MIT](./LICENSE) © Christian Bacilio
 
-La lista *Often mis-flagged* de `pr-review/references/code-smells.md` está
-adaptada de [affaan-m/ECC](https://github.com/affaan-m/ECC), MIT License,
-Copyright (c) 2026 Affaan Mustafa.
+Parte de las reglas de `pr-review` (la lista *Often mis-flagged* de
+`references/code-smells.md` y varias entradas de
+`references/production-readiness.md`) y de `git-flow` están adaptadas de
+[affaan-m/ECC](https://github.com/affaan-m/ECC), MIT License, Copyright (c) 2026
+Affaan Mustafa.

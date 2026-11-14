@@ -558,45 +558,7 @@ APROBADO | APROBADO CON CAMBIOS | REQUIERE CORRECCIONES
 Archivos revisados: N/N
 ```
 
-**English (`--en`):**
-
-```
-**Verdict: APPROVED** · 0 blockers · 0 important · 1 minor
-
-## 🔁 Previous findings              ← re-review only
-| ID | Status | Evidence |
-|---|---|---|
-| F1 | ✅ Resolved | commit abc123, `file:line`, test `testName` |
-| F2 | ⚠️ Partial | what is still missing |
-| F3 | ➖ Dropped | why it was left out (author's argument, or moved to follow-up) |
-
-## 🎯 Issue #N criteria               ← only when the PR links an issue
-| Criterion | Status | Where |
-|---|---|---|
-| the criterion's text | ✅ Met / ❌ Not met / ➖ N/A | `file:line` or test; "reproduced" if you ran it, "per the PR" if you only read it |
-
-## ✅ What's done well
-- [file:line] — which concrete decision in the diff is well resolved, and why
-
-## ⚠️ Must be fixed
-- **F1** [BLOCKER] [file:line] — the defect, its concrete consequence, and the change that resolves it. *Proven by:* the test that fails while it exists.
-- **F2** [IMPORTANT] [file:line] — same
-- **F3** [MINOR] [file:line] — same
-
-## 📌 Follow-ups                     ← optional
-- [file:line] — a real improvement outside this PR's scope; not fixed here and not counted in the verdict.
-
-## 🔬 Verification
-- Suites: `command` → N passed / M failed (or "not run: reason")
-- Mutation: `file:line` changed to X → test `name` went red (or "not done: reason")
-- Inputs traced: empty, duplicate, two at once, … through `function`
-- Reproduced against the real system: what, with what result (or "none")
-- Blast radius: N diff files + M related files opened (table writers, sibling endpoints, callers)
-
-## Verdict
-APPROVED | APPROVED WITH CHANGES | CHANGES REQUIRED
-Files reviewed: N/N
-```
+**English (`--en`):** same sections and verdict rules, English wording — the template is in `references/output-en.md`; read it only when `--en` was passed.
 
 **Follow-ups are not a softer severity.** Use them for something worth doing
 that does not belong in this change — a refactor that needs a second
@@ -620,33 +582,7 @@ Order findings most severe first.
 
 ## Fix mode
 
-Entered when the user asks to apply findings ("fix H2", "CORRIGE", "corrige
-todo") or when the project's `CLAUDE.md` or memory grants standing
-authorization to correct findings before merge. Without one of the two, ask;
-never start fixing on your own after a review.
-
-1. **Scope.** Only the findings named, by ID. "Fix everything" means every
-   finding under *must be fixed*; follow-ups are not included.
-2. **Red first.** For each finding, write or run the test that fails while the
-   defect exists (the report's "Proven by"), watch it fail, then fix. When no
-   automated test can show it (a misleading doc line, a name), say what you
-   checked instead.
-3. **Verify.** Run the suites the change can affect. For a test you added or
-   changed, break the code once on purpose and watch it go red (commit first;
-   mutate committed files only).
-4. **Commit and update.** Commit on the PR's branch with the finding ID in the
-   message and correct the PR body wherever a number or claim it states
-   changed (test counts, mutations, what was not run). **Push only to a branch
-   that is the user's own, or when its owner has said you may.** On someone
-   else's PR — or when you cannot tell — leave the commits local (or offer the
-   patch) and say so: a standing authorization to *correct* findings is not
-   permission to write to a third party's branch, which is public and can only
-   be undone with a force-push.
-5. **Report as a re-review table**: each ID resolved with its evidence
-   (commit, `file:line`, test), and anything left out with the reason.
-
-Never make a finding go away by weakening a test or widening an allowance.
-Merging stays the user's call, and so does closing issues afterwards.
+Entered only when the user asks to apply findings ("fix H2", "corrige todo") or the project's `CLAUDE.md` or memory grants a standing authorization; otherwise ask. The procedure (scope by ID, red first, verify, commit and push rules, re-review table) is in `references/fix-mode.md`: read it before fixing.
 
 ## Posting to the PR (`--comment`)
 
@@ -726,28 +662,7 @@ GitHub approval. Approving a PR is the human's call.
 
 ## Growing this skill
 
-After a real review surfaces something worth keeping, add it to the file
-that matches its shape — don't add findings that are project-specific,
-one-off, or already covered by an existing entry or axis bullet:
-
-- **A finding technique or defect shape that applies across languages**
-  (e.g. "verify a comment's claim against other evidence in the same
-  diff") → `references/case-studies.md`. Short, generalized entry: pattern
-  name, axis, what to watch for, how to verify it, one abstracted example
-  — no project/PR-specific names.
-- **A pitfall specific to one language or framework** (e.g. "Go: ignored
-  error from `os.Create`", "Next.js: function prop crossing the
-  Server→Client boundary") → `references/language-idioms.md`, under that
-  language's heading (add the heading if it's the first entry for that
-  language). Short bullet: pattern name, what to look for, the concrete
-  consequence.
-- **A smell that turned out to be a real defect** → `references/code-smells.md`,
-  with the signal that separated it from taste.
-- **Something that broke after a merge** (a migration, a config default, a
-  client that depended on a field) → `references/production-readiness.md`.
-
-The reference files grow over time — skim them during every review, not just
-after writing to them.
+When a review surfaces a lesson worth keeping, `references/growing.md` says which reference file it goes in and how to write it. Skim the reference files during every review.
 
 ## Common Mistakes
 

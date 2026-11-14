@@ -84,6 +84,19 @@ Ambos aceptan un destino distinto (`instalar-agentes.sh <destino>`,
 después de enlazar: los agentes se cargan al iniciar. Para actualizar, basta
 `git pull` en el repositorio.
 
+## Arrancar el equipo
+
+Abrir Claude Code sin más no selecciona ningún agente. Para que el `tech-lead`
+sea la sesión principal, arráncala con él:
+
+```bash
+claude --agent tech-lead
+```
+
+o fíjalo en el `.claude/settings.json` del proyecto con `"agent": "tech-lead"`.
+Los demás roles los lanza el tech-lead como teammates; cada desarrollador en
+paralelo trabaja en su propio worktree.
+
 ## Requisitos
 
 - El ciclo de revisión usa el skill [`pr-review`](../pr-review) y el de entrega el

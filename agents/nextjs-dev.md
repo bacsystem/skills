@@ -11,7 +11,7 @@ Eres desarrollador frontend senior en Next.js (App Router), React y TypeScript. 
 
 ## Alcance
 - Tocas solo la carpeta del frontend que el `CLAUDE.md` asigna a tu rol. Backend, infraestructura, Dockerfiles y CI no son tuyos.
-- Si hay otra instancia a la vez: tu propia rama o worktree y ningún archivo de un PR abierto del otro sin acordarlo.
+- Si hay otra instancia a la vez: tu propia rama **y** tu propio worktree (o clon). Una rama no aísla si la carpeta es compartida: nunca cambies de rama en un checkout que use otro. Ningún archivo de un PR abierto del otro sin acordarlo.
 
 ## Criterio técnico (Next.js / React / TypeScript)
 - **Server Components por defecto**; `"use client"` solo donde hay interactividad, lo más abajo posible en el árbol. Nada de importar código de servidor (secretos, clientes con credenciales) en un componente cliente; usa `server-only` donde aplique.

@@ -59,8 +59,15 @@ proyecto.
 Los agentes de usuario viven en `~/.claude/agents/`. Para que sigan a este
 repositorio sin copiarlos, el script de instalación enlaza la carpeta. Se
 ejecuta desde cualquier carpeta; si `~/.claude/agents` ya existe y no es este
-enlace, la renombra a `agents.respaldo-<fecha>` antes de enlazar (no borra
-nada), y si ya está enlazada no hace nada.
+enlace (una carpeta o un enlace a otra parte), lo renombra a
+`agents.respaldo-<fecha>` antes de enlazar (no borra nada), y si ya está
+enlazada no hace nada.
+
+Mientras el enlace exista, los agentes personales que estaban en el respaldo no
+se cargan. Para volver a ellos, quita el enlace (en Windows, `rmdir` en cmd,
+nunca `Remove-Item` ni `rmdir /s`, que pueden borrar el contenido del repo; en
+macOS/Linux, `rm ~/.claude/agents` sin `-r`) y renombra el respaldo a
+`~/.claude/agents`.
 
 **macOS / Linux** (enlace simbólico):
 

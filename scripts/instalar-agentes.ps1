@@ -14,22 +14,22 @@ if (-not (Test-Path -LiteralPath $origen -PathType Container)) {
     throw "No se encontró $origen"
 }
 $origen = (Resolve-Path -LiteralPath $origen).Path.TrimEnd('\')
+# Sin barras finales: con "dir\" el respaldo tomaría un nombre equivocado.
+$Destino = $Destino.TrimEnd('\', '/')
 
-if (Test-Path -LiteralPath $Destino) {
-    $item = Get-Item -LiteralPath $Destino -Force
-    if ($item.LinkType -in @('Junction', 'SymbolicLink')) {
-        $actual = "$($item.Target)".TrimEnd('\')
-        if ($actual -eq $origen) {
-            Write-Output "Ya enlazado: $Destino -> $origen"
-            exit 0
-        }
-        # Borra solo el enlace, nunca el contenido de la carpeta a la que apunta.
-        [System.IO.Directory]::Delete($Destino, $false)
-    } else {
-        $respaldo = "$Destino.respaldo-$(Get-Date -Format 'yyyyMMddHHmmss')"
-        Rename-Item -LiteralPath $Destino -NewName (Split-Path -Leaf $respaldo)
-        Write-Output "Respaldado: $Destino -> $respaldo"
+# Get-Item y no Test-Path: Test-Path da falso con un enlace roto, que sí existe.
+$item = Get-Item -LiteralPath $Destino -Force -ErrorAction SilentlyContinue
+if ($item) {
+    $esEnlace = $item.LinkType -in @('Junction', 'SymbolicLink')
+    if ($esEnlace -and "$($item.Target)".TrimEnd('\') -eq $origen) {
+        Write-Output "Ya enlazado: $Destino -> $origen"
+        exit 0
     }
+    # Carpeta o enlace a otra parte: se renombra. Rename-Item sobre una junction
+    # renombra el enlace, no el contenido de la carpeta a la que apunta.
+    $respaldo = "$Destino.respaldo-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    Rename-Item -LiteralPath $Destino -NewName (Split-Path -Leaf $respaldo)
+    Write-Output "Respaldado: $Destino -> $respaldo"
 }
 
 $padre = Split-Path -Parent $Destino

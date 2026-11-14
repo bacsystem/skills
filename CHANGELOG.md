@@ -23,7 +23,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   uno en su propio worktree.
 - `scripts/instalar-agentes.sh` (macOS y Linux) y `scripts/instalar-agentes.ps1`
   (Windows, con junction): enlazan `agents/` a `~/.claude/agents` desde
-  cualquier carpeta, respaldan un `~/.claude/agents` previo en vez de pisarlo y
+  cualquier carpeta, respaldan un `~/.claude/agents` previo (carpeta o enlace,
+  también roto) en vez de pisarlo, aceptan el destino con barra final y
   no hacen nada si el enlace ya existe.
 
 ## [0.2.13] - 2026-10-22

@@ -79,15 +79,19 @@ instalar_gemini() {
 
     mkdir -p "$dest_dir"
     awk '
-      BEGIN { fm = 0 }
+      BEGIN { fm = 0; has_tools = 0 }
       /^---[[:space:]]*$/ && fm < 2 {
         fm++
+        if (fm == 2 && !has_tools) {
+          print "tools: [read_file, edit_file, write_file, run_command, manage_task, search_web, send_message, invoke_subagent, define_subagent, manage_subagents]"
+        }
         print
         next
       }
       fm == 1 {
         if ($0 ~ /^effort:[[:space:]]*/) next
         if ($0 ~ /^tools:[[:space:]]*/) {
+          has_tools = 1
           line = $0
           sub(/^tools:[[:space:]]*/, "", line)
           n = split(line, raw, /,[[:space:]]*/)
@@ -102,7 +106,8 @@ instalar_gemini() {
             else if (t == "Write") mapped = "write_file"
             else if (t == "Bash") mapped = "run_command, manage_task"
             else if (t == "WebSearch" || t == "WebFetch") mapped = "search_web"
-            else if (t == "SendMessage") mapped = "send_message"
+            else if (t == "SendMessage") mapped = "send_message, invoke_subagent, define_subagent, manage_subagents"
+            else if (t == "Agent") mapped = "invoke_subagent, define_subagent, manage_subagents"
             if (mapped != "") {
               m = split(mapped, parts, /, /)
               for (j = 1; j <= m; j++) {

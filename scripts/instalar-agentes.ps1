@@ -80,15 +80,20 @@ function Instalar-Gemini {
         $lineas = Get-Content -LiteralPath $archivo.FullName -Encoding UTF8
         $salida = New-Object System.Collections.Generic.List[string]
         $fm = 0
+        $hasTools = $false
         foreach ($linea in $lineas) {
             if ($fm -lt 2 -and $linea -match '^---\s*$') {
                 $fm++
+                if ($fm -eq 2 -and -not $hasTools) {
+                    $salida.Add('tools: [read_file, edit_file, write_file, run_command, manage_task, search_web, send_message, invoke_subagent, define_subagent, manage_subagents]')
+                }
                 $salida.Add($linea)
                 continue
             }
             if ($fm -eq 1) {
                 if ($linea -match '^effort:\s*') { continue }
                 if ($linea -match '^tools:\s*(.*)$') {
+                    $hasTools = $true
                     $rawTools = $Matches[1] -split ',\s*'
                     $mapped = New-Object System.Collections.Generic.List[string]
                     foreach ($t in $rawTools) {
@@ -99,7 +104,8 @@ function Instalar-Gemini {
                             'Write' { @('write_file') }
                             'Bash' { @('run_command', 'manage_task') }
                             { $_ -in @('WebSearch', 'WebFetch') } { @('search_web') }
-                            'SendMessage' { @('send_message') }
+                            'SendMessage' { @('send_message', 'invoke_subagent', 'define_subagent', 'manage_subagents') }
+                            'Agent' { @('invoke_subagent', 'define_subagent', 'manage_subagents') }
                             default { @() }
                         }
                         foreach ($m in $targets) {

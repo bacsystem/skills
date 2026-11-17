@@ -5,6 +5,12 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.6] - 2026-11-17
+
+### Corregido
+- `scripts/instalar-agentes.sh` y `scripts/instalar-agentes.ps1`: los agentes sin `tools:` declarado ahora reciben el set completo de Antigravity (incluyendo escritura, terminal y subagentes) en lugar del set read-only por defecto, y `SendMessage` mapea también `invoke_subagent`, `define_subagent` y `manage_subagents`.
+- `agents/tech-lead.md`: declarado `tools:` explícito sin `Write` ni `Edit` para que siempre delegue la implementación en el equipo.
+
 ## [0.3.5] - 2026-11-17
 
 ### Corregido

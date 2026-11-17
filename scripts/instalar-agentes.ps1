@@ -1,6 +1,6 @@
-﻿# Enlaza la carpeta agents\ de este repositorio a las carpetas globales de agentes:
-# - Claude Code: %USERPROFILE%\.claude\agents
-# - Gemini / Antigravity: %USERPROFILE%\.gemini\agents
+﻿# Enlaza o instala la carpeta agents\ de este repositorio en las carpetas globales de agentes:
+# - Claude Code: %USERPROFILE%\.claude\agents (junction directo)
+# - Gemini / Antigravity: %USERPROFILE%\.gemini\config\agents\<nombre>\agent.md (frontmatter adaptado)
 # Usa junctions: no requiere permisos de administrador ni el modo desarrollador.
 #
 # Uso:
@@ -48,16 +48,70 @@ function Enlazar-Carpeta {
     Write-Output "Enlazado ($Nombre): $RutaDestino -> $origen"
 }
 
+function Instalar-Gemini {
+    param(
+        [string]$BaseDestino,
+        [string]$Nombre
+    )
+    $BaseDestino = $BaseDestino.TrimEnd('\', '/')
+    $item = Get-Item -LiteralPath $BaseDestino -Force -ErrorAction SilentlyContinue
+    if ($item -and $item.LinkType -in @('Junction', 'SymbolicLink')) {
+        $respaldo = "$BaseDestino.respaldo-$(Get-Date -Format 'yyyyMMddHHmmss')"
+        Rename-Item -LiteralPath $BaseDestino -NewName (Split-Path -Leaf $respaldo)
+        Write-Output "Respaldado ($Nombre): $BaseDestino -> $respaldo"
+    }
+
+    if (-not (Test-Path -LiteralPath $BaseDestino)) {
+        New-Item -ItemType Directory -Path $BaseDestino | Out-Null
+    }
+
+    $count = 0
+    $archivos = Get-ChildItem -LiteralPath $origen -Filter '*.md' -File
+    foreach ($archivo in $archivos) {
+        if ($archivo.Name -eq 'README.md') { continue }
+
+        $agentName = $archivo.BaseName
+        $destDir = Join-Path $BaseDestino $agentName
+        $destFile = Join-Path $destDir 'agent.md'
+        if (-not (Test-Path -LiteralPath $destDir)) {
+            New-Item -ItemType Directory -Path $destDir | Out-Null
+        }
+
+        $lineas = Get-Content -LiteralPath $archivo.FullName -Encoding UTF8
+        $salida = New-Object System.Collections.Generic.List[string]
+        $fm = 0
+        foreach ($linea in $lineas) {
+            if ($fm -lt 2 -and $linea -match '^---\s*$') {
+                $fm++
+                $salida.Add($linea)
+                continue
+            }
+            if ($fm -eq 1) {
+                if ($linea -match '^(effort|tools):\s*') { continue }
+                if ($linea -match '^model:\s*opus\s*$') { $salida.Add('model: pro'); continue }
+                if ($linea -match '^model:\s*sonnet\s*$') { $salida.Add('model: flash'); continue }
+                if ($linea -match '^model:\s*haiku\s*$') { $salida.Add('model: flash_lite'); continue }
+            }
+            $salida.Add($linea)
+        }
+
+        [System.IO.File]::WriteAllLines($destFile, $salida, [System.Text.UTF8Encoding]::new($false))
+        $count++
+    }
+
+    Write-Output "Instalados $count agentes ($Nombre): $BaseDestino\<nombre>\agent.md"
+}
+
 if ($Destino -ne '') {
     Enlazar-Carpeta -RutaDestino $Destino -Nombre 'Personalizado'
 } elseif ($Target -eq 'claude') {
     Enlazar-Carpeta -RutaDestino (Join-Path $HOME '.claude\agents') -Nombre 'Claude Code'
     Write-Output 'Abre una sesión nueva de Claude Code para cargar los agentes.'
 } elseif ($Target -eq 'gemini') {
-    Enlazar-Carpeta -RutaDestino (Join-Path $HOME '.gemini\agents') -Nombre 'Gemini / Antigravity'
+    Instalar-Gemini -BaseDestino (Join-Path $HOME '.gemini\config\agents') -Nombre 'Gemini / Antigravity'
     Write-Output 'Abre una sesión nueva de Gemini CLI o Antigravity para cargar los agentes.'
 } else {
     Enlazar-Carpeta -RutaDestino (Join-Path $HOME '.claude\agents') -Nombre 'Claude Code'
-    Enlazar-Carpeta -RutaDestino (Join-Path $HOME '.gemini\agents') -Nombre 'Gemini / Antigravity'
+    Instalar-Gemini -BaseDestino (Join-Path $HOME '.gemini\config\agents') -Nombre 'Gemini / Antigravity'
     Write-Output 'Abre una sesión nueva de Claude Code o Gemini/Antigravity para cargar los agentes.'
 }

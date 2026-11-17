@@ -84,8 +84,7 @@ proyecto.
 
 ## Instalación
 
-Los agentes de usuario se pueden instalar para **Claude Code** (`~/.claude/agents/`), para **Gemini / Antigravity** (`~/.gemini/agents/`), o para **ambos**. Para que sigan a este
-repositorio sin copiarlos, los scripts de instalación enlazan la carpeta automáticamente.
+Los agentes de usuario se pueden instalar para **Claude Code** (`~/.claude/agents/`, enlace simbólico), para **Gemini / Antigravity** (`~/.gemini/config/agents/<nombre>/agent.md`, con el frontmatter adaptado automáticamente), o para **ambos**.
 
 **macOS / Linux** (enlace simbólico):
 
@@ -110,7 +109,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\instalar-agentes.ps1 -Target 
 ```
 
 Si el destino ya existe y no es este enlace, el script lo renombra a
-`<destino>.respaldo-<fecha>` antes de enlazar (no se borra nada). Abre una sesión nueva de Claude Code o Gemini/Antigravity después de enlazar. Para actualizar, basta con hacer `git pull` en este repositorio.
+`<destino>.respaldo-<fecha>` antes de enlazar (no se borra nada). Abre una sesión nueva de Claude Code o Gemini/Antigravity después de instalar. Para actualizar, haz `git pull` en este repositorio (en Gemini/Antigravity vuelve a ejecutar el script para regenerar los `agent.md`).
 
 ## Arrancar el equipo
 

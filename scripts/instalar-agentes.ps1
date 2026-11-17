@@ -55,7 +55,7 @@ function Instalar-Gemini {
     )
     $BaseDestino = $BaseDestino.TrimEnd('\', '/')
     $item = Get-Item -LiteralPath $BaseDestino -Force -ErrorAction SilentlyContinue
-    if ($item -and $item.LinkType -in @('Junction', 'SymbolicLink')) {
+    if ($item -and (($item.LinkType -in @('Junction', 'SymbolicLink')) -or (-not $item.PSIsContainer))) {
         $respaldo = "$BaseDestino.respaldo-$(Get-Date -Format 'yyyyMMddHHmmss')"
         Rename-Item -LiteralPath $BaseDestino -NewName (Split-Path -Leaf $respaldo)
         Write-Output "Respaldado ($Nombre): $BaseDestino -> $respaldo"
@@ -87,7 +87,30 @@ function Instalar-Gemini {
                 continue
             }
             if ($fm -eq 1) {
-                if ($linea -match '^(effort|tools):\s*') { continue }
+                if ($linea -match '^effort:\s*') { continue }
+                if ($linea -match '^tools:\s*(.*)$') {
+                    $rawTools = $Matches[1] -split ',\s*'
+                    $mapped = New-Object System.Collections.Generic.List[string]
+                    foreach ($t in $rawTools) {
+                        $t = $t.Trim()
+                        $targets = switch ($t) {
+                            { $_ -in @('Read', 'Grep', 'Glob') } { @('read_file') }
+                            { $_ -in @('Edit', 'MultiEdit') } { @('edit_file') }
+                            'Write' { @('write_file') }
+                            'Bash' { @('run_command', 'manage_task') }
+                            { $_ -in @('WebSearch', 'WebFetch') } { @('search_web') }
+                            'SendMessage' { @('send_message') }
+                            default { @() }
+                        }
+                        foreach ($m in $targets) {
+                            if (-not $mapped.Contains($m)) { $mapped.Add($m) }
+                        }
+                    }
+                    if ($mapped.Count -gt 0) {
+                        $salida.Add("tools: [$($mapped -join ', ')]")
+                    }
+                    continue
+                }
                 if ($linea -match '^model:\s*opus\s*$') { $salida.Add('model: pro'); continue }
                 if ($linea -match '^model:\s*sonnet\s*$') { $salida.Add('model: flash'); continue }
                 if ($linea -match '^model:\s*haiku\s*$') { $salida.Add('model: flash_lite'); continue }

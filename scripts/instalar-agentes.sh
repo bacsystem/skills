@@ -58,7 +58,7 @@ instalar_gemini() {
     base_destino="${base_destino%/}"
   done
 
-  if [ -L "$base_destino" ]; then
+  if [ -L "$base_destino" ] || { [ -e "$base_destino" ] && [ ! -d "$base_destino" ]; }; then
     local respaldo="$base_destino.respaldo-$(date +%Y%m%d%H%M%S)"
     mv "$base_destino" "$respaldo"
     echo "Respaldado ($nombre_entorno): $base_destino -> $respaldo"
@@ -86,7 +86,37 @@ instalar_gemini() {
         next
       }
       fm == 1 {
-        if ($0 ~ /^effort:[[:space:]]*/ || $0 ~ /^tools:[[:space:]]*/) next
+        if ($0 ~ /^effort:[[:space:]]*/) next
+        if ($0 ~ /^tools:[[:space:]]*/) {
+          line = $0
+          sub(/^tools:[[:space:]]*/, "", line)
+          n = split(line, raw, /,[[:space:]]*/)
+          out = ""
+          delete seen
+          for (i = 1; i <= n; i++) {
+            t = raw[i]
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", t)
+            mapped = ""
+            if (t == "Read" || t == "Grep" || t == "Glob") mapped = "read_file"
+            else if (t == "Edit" || t == "MultiEdit") mapped = "edit_file"
+            else if (t == "Write") mapped = "write_file"
+            else if (t == "Bash") mapped = "run_command, manage_task"
+            else if (t == "WebSearch" || t == "WebFetch") mapped = "search_web"
+            else if (t == "SendMessage") mapped = "send_message"
+            if (mapped != "") {
+              m = split(mapped, parts, /, /)
+              for (j = 1; j <= m; j++) {
+                p = parts[j]
+                if (!(p in seen)) {
+                  seen[p] = 1
+                  out = (out == "" ? p : out ", " p)
+                }
+              }
+            }
+          }
+          if (out != "") print "tools: [" out "]"
+          next
+        }
         if ($0 ~ /^model:[[:space:]]*opus[[:space:]]*$/) { print "model: pro"; next }
         if ($0 ~ /^model:[[:space:]]*sonnet[[:space:]]*$/) { print "model: flash"; next }
         if ($0 ~ /^model:[[:space:]]*haiku[[:space:]]*$/) { print "model: flash_lite"; next }

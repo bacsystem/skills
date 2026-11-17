@@ -139,7 +139,7 @@ migration has nothing to report under migrations. Every finding still needs
 
 ## Agent and CI configuration
 
-A diff to `.claude/` (settings, hooks, agents, MCP servers) or to
+A diff to `.claude/`, `.gemini/`, `.agents/` (settings, hooks, agents, MCP servers) or to
 `.github/workflows/` is executable configuration and is reviewed like code:
 
 - **Permission allowlists that widen** (a new `Bash(*)`-style rule, a tool

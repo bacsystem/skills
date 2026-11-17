@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# Enlaza la carpeta agents/ de este repositorio a ~/.claude/agents (macOS y Linux).
+# Enlaza la carpeta agents/ de este repositorio a las carpetas globales de agentes:
+# - Claude Code: ~/.claude/agents
+# - Gemini / Antigravity: ~/.gemini/agents
 # En Windows usa scripts/instalar-agentes.ps1: Git Bash no crea enlaces simbólicos reales.
 #
-# Uso: scripts/instalar-agentes.sh [destino]     (destino por defecto: ~/.claude/agents)
-# Se puede ejecutar desde cualquier carpeta. Si el destino ya existe y no es este
-# enlace, se renombra a <destino>.respaldo-<fecha> antes de enlazar: nada se borra.
+# Uso:
+#   scripts/instalar-agentes.sh [--all | --claude | --gemini]
+#   scripts/instalar-agentes.sh [destino_personalizado]
+#
+# Si no se pasa argumento, por defecto instala para ambos (--all).
+# Si el destino ya existe y no es este enlace, se renombra a <destino>.respaldo-<fecha>
+# antes de enlazar: nada se borra.
 set -euo pipefail
 
 case "$(uname -s)" in
@@ -15,32 +21,54 @@ case "$(uname -s)" in
 esac
 
 origen="$(cd "$(dirname "$0")/.." && pwd -P)/agents"
-destino="${1:-$HOME/.claude/agents}"
-# Sin barras finales (las deja el autocompletado): con "dir/", -L no ve el enlace
-# y el respaldo quedaría dentro de la propia carpeta.
-while [ "$destino" != "/" ] && [ "${destino%/}" != "$destino" ]; do
-  destino="${destino%/}"
-done
-
 if [ ! -d "$origen" ]; then
   echo "No se encontró $origen" >&2
   exit 1
 fi
 
-if [ -L "$destino" ] && [ "$(cd "$destino" 2>/dev/null && pwd -P)" = "$origen" ]; then
-  echo "Ya enlazado: $destino -> $origen"
-  exit 0
-fi
+enlazar_a() {
+  local destino="$1"
+  local nombre="$2"
 
-# Carpeta o enlace a otra parte: se renombra (mv sobre un enlace mueve el enlace,
-# no su destino).
-if [ -e "$destino" ] || [ -L "$destino" ]; then
-  respaldo="$destino.respaldo-$(date +%Y%m%d%H%M%S)"
-  mv "$destino" "$respaldo"
-  echo "Respaldado: $destino -> $respaldo"
-fi
+  while [ "$destino" != "/" ] && [ "${destino%/}" != "$destino" ]; do
+    destino="${destino%/}"
+  done
 
-mkdir -p "$(dirname "$destino")"
-ln -s "$origen" "$destino"
-echo "Enlazado: $destino -> $origen"
-echo "Abre una sesión nueva de Claude Code para cargar los agentes."
+  if [ -L "$destino" ] && [ "$(cd "$destino" 2>/dev/null && pwd -P)" = "$origen" ]; then
+    echo "Ya enlazado ($nombre): $destino -> $origen"
+    return 0
+  fi
+
+  if [ -e "$destino" ] || [ -L "$destino" ]; then
+    local respaldo="$destino.respaldo-$(date +%Y%m%d%H%M%S)"
+    mv "$destino" "$respaldo"
+    echo "Respaldado ($nombre): $destino -> $respaldo"
+  fi
+
+  mkdir -p "$(dirname "$destino")"
+  ln -s "$origen" "$destino"
+  echo "Enlazado ($nombre): $destino -> $origen"
+}
+
+target="${1:---all}"
+
+case "$target" in
+  --claude)
+    enlazar_a "$HOME/.claude/agents" "Claude Code"
+    echo "Abre una sesión nueva de Claude Code para cargar los agentes."
+    ;;
+  --gemini)
+    enlazar_a "$HOME/.gemini/agents" "Gemini / Antigravity"
+    echo "Abre una sesión nueva de Gemini CLI o Antigravity para cargar los agentes."
+    ;;
+  --all)
+    enlazar_a "$HOME/.claude/agents" "Claude Code"
+    enlazar_a "$HOME/.gemini/agents" "Gemini / Antigravity"
+    echo "Abre una sesión nueva de Claude Code o Gemini/Antigravity para cargar los agentes."
+    ;;
+  *)
+    # Destino personalizado
+    enlazar_a "$target" "Personalizado"
+    echo "Enlace completado en destino personalizado."
+    ;;
+esac

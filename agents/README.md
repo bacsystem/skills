@@ -1,22 +1,22 @@
 # agents
 
-Agentes reutilizables para Claude Code: un equipo completo (producto, arquitectura,
+Agentes reutilizables para Claude Code y Gemini / Antigravity: un equipo completo (producto, arquitectura,
 liderazgo técnico, desarrollo por tecnología, QA y DevOps) que trabaja sobre
 cualquier repositorio. Los agentes son **genéricos**: todo lo propio de cada
-proyecto lo leen de su `CLAUDE.md`.
+proyecto lo leen de su archivo de contexto (`GEMINI.md`, `AGENTS.md` o `CLAUDE.md`).
 
 ## Agentes
 
-| Agente | Rol | Modelo |
-|---|---|---|
-| [`tech-lead`](./tech-lead.md) | Sesión principal: descompone issues, reparte sin solapes, revisa todo PR con `/pr-review`, pide al usuario las aprobaciones de merge, tag y despliegue | opus |
-| [`architect`](./architect.md) | Revisión de impacto, modelo de datos, contrato de API, diseño para concurrencia, escalabilidad y tolerancia a fallos (capacidad, balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga), decisiones con trade-offs y ADR. No escribe código | opus |
-| [`po`](./po.md) | Issues con historia de usuario, criterios verificables, invariantes, criterios de carga con números e INVEST; prioriza y acepta entregas. No escribe código | sonnet · esfuerzo medio |
-| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo (concurrencia real, carga, fallos) y reporta defectos reproducibles | sonnet · esfuerzo medio |
-| [`devops`](./devops.md) | CI/CD, imágenes, entornos, despliegues reversibles, secretos, respaldos, observabilidad y carga | sonnet · esfuerzo medio |
-| [`java-dev`](./java-dev.md) | Backend Java 21 + Spring Boot + PostgreSQL | sonnet |
-| [`go-dev`](./go-dev.md) | Backend Go (servicios HTTP, lotes, SQLite/PostgreSQL) | sonnet |
-| [`nextjs-dev`](./nextjs-dev.md) | Frontend Next.js (App Router) + React + TypeScript | sonnet |
+| Agente | Rol | Modelo Claude | Equivalente Gemini |
+|---|---|---|---|
+| [`tech-lead`](./tech-lead.md) | Sesión principal: descompone issues, reparte sin solapes, revisa todo PR con `/pr-review`, pide al usuario las aprobaciones de merge, tag y despliegue | opus | gemini-pro / pro |
+| [`architect`](./architect.md) | Revisión de impacto, modelo de datos, contrato de API, diseño para concurrencia, escalabilidad y tolerancia a fallos (capacidad, balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga), decisiones con trade-offs y ADR. No escribe código | opus | gemini-pro / pro |
+| [`po`](./po.md) | Issues con historia de usuario, criterios verificables, invariantes, criterios de carga con números e INVEST; prioriza y acepta entregas. No escribe código | sonnet · esfuerzo medio | gemini-flash / flash |
+| [`qa`](./qa.md) | Valida contra los criterios, ejecuta las verificaciones, diseña casos por riesgo (concurrencia real, carga, fallos) y reporta defectos reproducibles | sonnet · esfuerzo medio | gemini-flash / flash |
+| [`devops`](./devops.md) | CI/CD, imágenes, entornos, despliegues reversibles, secretos, respaldos, observabilidad y carga | sonnet · esfuerzo medio | gemini-flash / flash |
+| [`java-dev`](./java-dev.md) | Backend Java 21 + Spring Boot + PostgreSQL | sonnet | gemini-flash / flash |
+| [`go-dev`](./go-dev.md) | Backend Go (servicios HTTP, lotes, SQLite/PostgreSQL) | sonnet | gemini-flash / flash |
+| [`nextjs-dev`](./nextjs-dev.md) | Frontend Next.js (App Router) + React + TypeScript | sonnet | gemini-flash / flash |
 
 Los desarrolladores van por tecnología: un proyecto con dos backends en Java lanza
 dos instancias de `java-dev` con nombres distintos (por ejemplo `backend-dev` y
@@ -27,7 +27,7 @@ dos instancias de `java-dev` con nombres distintos (por ejemplo `backend-dev` y
 No se crea ningún archivo nuevo: un desarrollador más es otra instancia del mismo
 agente, con otro nombre.
 
-1. En el `CLAUDE.md` del proyecto, agrega el nombre a la lista de roles y dale su
+1. En el archivo de contexto del proyecto (`GEMINI.md`, `AGENTS.md` o `CLAUDE.md`), agrega el nombre a la lista de roles y dale su
    parte en la propiedad de archivos (por ejemplo, `backend-dev-3` →
    `adapters/out-mail` y `adapters/out-pdf`; `go-dev-2` → `internal/carga`). Dos
    instancias nunca comparten módulo a la vez.
@@ -44,7 +44,7 @@ no acelera, solo genera conflictos.
 
 ## Contrato con el proyecto
 
-Cada agente empieza leyendo el `CLAUDE.md` del repositorio. Para que el equipo
+Cada agente empieza leyendo el archivo de contexto del repositorio (`GEMINI.md`, `AGENTS.md` o `CLAUDE.md`). Para que el equipo
 funcione sin adivinar, ese archivo debe decir:
 
 1. **Qué es el producto** y quiénes son sus usuarios y roles.
@@ -69,69 +69,65 @@ funcione sin adivinar, ese archivo debe decir:
 10. **Memoria del proyecto** (opcional): dónde se consulta y cómo se registra cada
     sesión.
 
+> [!TIP]
+> **Compatibilidad dual:** Puedes crear un enlace simbólico en tus proyectos (`ln -s CLAUDE.md GEMINI.md`) o utilizar el archivo neutral `AGENTS.md`. De esta forma, tanto Claude Code como Gemini / Antigravity leerán exactamente el mismo contrato.
+
 Si a un agente le falta uno de estos datos, lo pregunta en vez de inventarlo. Si
-el `CLAUDE.md` contradice al agente, manda el `CLAUDE.md`.
+el archivo de contexto contradice al agente, manda el del proyecto.
 
 ## Personalizar en un proyecto
 
-Un agente en `.claude/agents/<nombre>.md` del proyecto **reemplaza por completo**
+Un agente en `.claude/agents/<nombre>.md` o `.agents/<nombre>.md` del proyecto **reemplaza por completo**
 al global del mismo nombre (no hay herencia). Úsalo solo si el rol necesita algo
-que no cabe en el `CLAUDE.md`; lo normal es dejar el global y documentar el
+que no cabe en el contexto general; lo normal es dejar el global y documentar el
 proyecto.
 
 ## Instalación
 
-Los agentes de usuario viven en `~/.claude/agents/`. Para que sigan a este
-repositorio sin copiarlos, el script de instalación enlaza la carpeta. Se
-ejecuta desde cualquier carpeta; si `~/.claude/agents` ya existe y no es este
-enlace (una carpeta o un enlace a otra parte), lo renombra a
-`agents.respaldo-<fecha>` antes de enlazar (no borra nada), y si ya está
-enlazada no hace nada.
-
-Mientras el enlace exista, los agentes personales que estaban en el respaldo no
-se cargan. Para volver a ellos, quita el enlace (en Windows, `rmdir` en cmd,
-nunca `Remove-Item` ni `rmdir /s`, que pueden borrar el contenido del repo; en
-macOS/Linux, `rm ~/.claude/agents` sin `-r`) y renombra el respaldo a
-`~/.claude/agents`.
+Los agentes de usuario se pueden instalar para **Claude Code** (`~/.claude/agents/`), para **Gemini / Antigravity** (`~/.gemini/agents/`), o para **ambos**. Para que sigan a este
+repositorio sin copiarlos, los scripts de instalación enlazan la carpeta automáticamente.
 
 **macOS / Linux** (enlace simbólico):
 
 ```bash
-/ruta/al/repo/skills/scripts/instalar-agentes.sh
+# Instala para ambos asistentes (por defecto)
+./scripts/instalar-agentes.sh --all
+
+# O específicamente para uno de ellos:
+./scripts/instalar-agentes.sh --claude
+./scripts/instalar-agentes.sh --gemini
 ```
 
-**Windows** (junction; no requiere administrador ni modo desarrollador), desde
-PowerShell o cmd:
+**Windows** (junction; no requiere modo desarrollador ni administrador):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\ruta\al\repo\skills\scripts\instalar-agentes.ps1
+# Instala para ambos asistentes
+powershell -ExecutionPolicy Bypass -File .\scripts\instalar-agentes.ps1 -Target all
+
+# O específicamente para uno de ellos:
+powershell -ExecutionPolicy Bypass -File .\scripts\instalar-agentes.ps1 -Target claude
+powershell -ExecutionPolicy Bypass -File .\scripts\instalar-agentes.ps1 -Target gemini
 ```
 
-En Git Bash no uses `ln -s`: sin el modo desarrollador copia la carpeta en vez
-de enlazarla, y la copia deja de seguir al repositorio. Por eso el script de
-Bash se niega a correr ahí y remite al de PowerShell.
-
-Ambos aceptan un destino distinto (`instalar-agentes.sh <destino>`,
-`instalar-agentes.ps1 -Destino <ruta>`). Abre una sesión nueva de Claude Code
-después de enlazar: los agentes se cargan al iniciar. Para actualizar, basta
-`git pull` en el repositorio.
+Si el destino ya existe y no es este enlace, el script lo renombra a
+`<destino>.respaldo-<fecha>` antes de enlazar (no se borra nada). Abre una sesión nueva de Claude Code o Gemini/Antigravity después de enlazar. Para actualizar, basta con hacer `git pull` en este repositorio.
 
 ## Arrancar el equipo
 
-Abrir Claude Code sin más no selecciona ningún agente. Para que el `tech-lead`
-sea la sesión principal, arráncala con él:
+- **En Claude Code:**
+  ```bash
+  claude --agent tech-lead
+  ```
+  o fíjalo en `.claude/settings.json` del proyecto con `"agent": "tech-lead"`.
 
-```bash
-claude --agent tech-lead
-```
+- **En Gemini / Antigravity:**
+  Carga el rol del `tech-lead` al inicio de la sesión o invócalo a través de los subagentes configurados.
 
-o fíjalo en el `.claude/settings.json` del proyecto con `"agent": "tech-lead"`.
-Los demás roles los lanza el tech-lead como teammates; cada desarrollador en
+Los demás roles los lanza el tech-lead como teammates / subagentes; cada desarrollador en
 paralelo trabaja en su propio worktree.
 
 ## Requisitos
 
 - El ciclo de revisión usa el skill [`pr-review`](../pr-review) y el de entrega el
   skill [`git-flow`](../git-flow).
-- Los teammates (mensajes entre agentes, apagado al terminar) requieren los
-  equipos de agentes de Claude Code (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`).
+- En Claude Code, los teammates requieren `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. En Gemini / Antigravity, se ejecutan mediante subagentes nativos o multi-agente.

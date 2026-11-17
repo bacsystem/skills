@@ -1,6 +1,6 @@
 # git-flow
 
-A Claude Code skill that takes changes from the working tree to a pull request,
+A skill for Claude Code and Gemini / Antigravity that takes changes from the working tree to a pull request,
 following consistent conventions: branch naming, code review, Conventional
 Commits, automatic SemVer, and a PR template. It is **guided, not blind** — it
 pauses for your confirmation at the review, doc-update, and PR steps.
@@ -15,7 +15,7 @@ There are three ways to trigger the skill:
 /git-flow
 ```
 
-**2. Natural language** — Claude activates it from the skill description:
+**2. Natural language** — the assistant activates it from the skill description:
 
 ```
 ship this
@@ -24,7 +24,7 @@ create the PR for these changes
 I'm done with this fix, take it from here
 ```
 
-**3. By context** — after finishing a feature or fix, just ask Claude to wrap up
+**3. By context** — after finishing a feature or fix, just ask the assistant to wrap up
 the work and it will pick up the workflow (branch → review → commit → version →
 PR), pausing for your confirmation at the review, doc-update, and PR steps.
 
@@ -82,8 +82,17 @@ that reads the latest version from `CHANGELOG.md` and creates the matching
 Symlink the skill into your personal skills directory so repo edits apply
 immediately:
 
+**Claude Code:**
 ```bash
+mkdir -p ~/.claude/skills
 ln -snf "$(pwd)/git-flow" ~/.claude/skills/git-flow
 ```
 
-Then start a new Claude Code session and use `/git-flow`.
+**Gemini / Antigravity:**
+```bash
+mkdir -p ~/.gemini/skills
+ln -snf "$(pwd)/git-flow" ~/.gemini/skills/git-flow
+```
+
+Or install all skills at once using `./scripts/instalar-skills.sh --all`.
+Then start a new session in Claude Code or Gemini/Antigravity and use `/git-flow`.

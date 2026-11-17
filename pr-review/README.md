@@ -1,6 +1,6 @@
 # pr-review
 
-A Claude Code skill that reviews a pull request — **yours or someone else's** —
+A skill for Claude Code and Gemini / Antigravity that reviews a pull request — **yours or someone else's** —
 for **correctness** (logic, edge cases, data types and validation) and against
 **Clean Code, SOLID, DRY and development best practices**, and reports
 what is done well and what must be fixed, ending in an explicit verdict.
@@ -8,7 +8,7 @@ Optionally posts the review as a comment on the GitHub PR.
 
 In review mode it reviews and reports: it never edits files, commits, or merges.
 A separate **fix mode** applies the findings by ID, only when you ask for it
-(or the project's `CLAUDE.md` or memory says to).
+(or the project's `GEMINI.md`, `AGENTS.md`, `CLAUDE.md` or memory says to).
 
 ## How to use it
 
@@ -22,7 +22,7 @@ A separate **fix mode** applies the findings by ID, only when you ask for it
 /pr-review 42 --en --comment
 ```
 
-**2. Natural language** — Claude activates it from the skill description:
+**2. Natural language** — the assistant activates it from the skill description:
 
 ```
 review this PR
@@ -122,7 +122,7 @@ code once on purpose to confirm the new test goes red, commits on the PR's
 branch (pushing only to a branch that is yours or whose owner allowed it),
 updates the numbers in the PR body and reports a re-review table with
 evidence. It never makes a finding go away by weakening a test, and it never
-merges. If your project's `CLAUDE.md` or memory already authorizes fixing
+merges. If your project's `GEMINI.md`, `AGENTS.md`, `CLAUDE.md` or memory already authorizes fixing
 findings before merge, it does not ask first.
 
 ### Your own PRs, and small ones
@@ -200,8 +200,17 @@ findings before merge, it does not ask first.
 Symlink the skill into your personal skills directory so repo edits apply
 immediately:
 
+**Claude Code:**
 ```bash
+mkdir -p ~/.claude/skills
 ln -snf "$(pwd)/pr-review" ~/.claude/skills/pr-review
 ```
 
-Then start a new Claude Code session and use `/pr-review`.
+**Gemini / Antigravity:**
+```bash
+mkdir -p ~/.gemini/skills
+ln -snf "$(pwd)/pr-review" ~/.gemini/skills/pr-review
+```
+
+Or install all skills at once using `./scripts/instalar-skills.sh --all`.
+Then start a new session in Claude Code or Gemini/Antigravity and use `/pr-review`.

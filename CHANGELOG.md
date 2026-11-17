@@ -5,6 +5,12 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.5] - 2026-11-17
+
+### Corregido
+- `scripts/instalar-agentes.sh` y `scripts/instalar-agentes.ps1`: al instalar para Gemini / Antigravity (`--gemini` o `--all`), ahora generan `~/.gemini/config/agents/<nombre>/agent.md` adaptando el frontmatter de Claude Code (`model: opus` → `pro`, `model: sonnet` → `flash`, `model: haiku` → `flash_lite`, y omitiendo `tools:` y `effort:`) en lugar de enlazar hacia `~/.gemini/agents/`.
+- `scripts/instalar.sh` y `agents/README.md`: actualizada la ruta de instalación documentada para Gemini / Antigravity.
+
 ## [0.3.4] - 2026-11-17
 
 ### Añadido

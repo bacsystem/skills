@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Instala tanto agentes como skills de este repositorio:
 # - Claude Code: ~/.claude/agents y ~/.claude/skills/
-# - Gemini / Antigravity: ~/.gemini/agents y ~/.gemini/skills/
+# - Gemini / Antigravity: ~/.gemini/config/agents y ~/.gemini/skills/
 #
 # Uso:
 #   scripts/instalar.sh [--all | --claude | --gemini]

@@ -1,6 +1,6 @@
 # ui-ux-scout
 
-A Claude Code skill that takes a style from
+A skill for Claude Code and Gemini / Antigravity that takes a style from
 [Refero Styles](https://styles.refero.design/) and **creates and improves
 components in [khipu-design-system](https://github.com/bacsystem/khipu-design-system)**,
 with expert judgment in UI/UX, React 19 and Next.js 15, DRY, SOLID and field
@@ -80,8 +80,17 @@ No network: pages are synthetic fixtures.
 Requires Node 18 or later. Symlink the skill into your personal skills
 directory so repo edits apply immediately:
 
+**Claude Code:**
 ```bash
+mkdir -p ~/.claude/skills
 ln -snf "$(pwd)/ui-ux-scout" ~/.claude/skills/ui-ux-scout
 ```
 
-Then start a new Claude Code session and use `/ui-ux-scout`.
+**Gemini / Antigravity:**
+```bash
+mkdir -p ~/.gemini/skills
+ln -snf "$(pwd)/ui-ux-scout" ~/.gemini/skills/ui-ux-scout
+```
+
+Or install all skills at once using `./scripts/instalar-skills.sh --all`.
+Then start a new session in Claude Code or Gemini/Antigravity and use `/ui-ux-scout`.

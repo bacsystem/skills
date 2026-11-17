@@ -63,7 +63,7 @@ Follow these steps in order. Steps 1–4 never modify a file.
 
 ### 2. Read khipu's context
 
-Read `CLAUDE.md` (if present), `README.md`, `docs/design-system.md` (principles, tokens,
+Read `GEMINI.md` / `AGENTS.md` / `CLAUDE.md` (if present), `README.md`, `docs/design-system.md` (principles, tokens,
 §4 height scale, §20 reusable kit), `src/app/globals.css` (`@theme inline`,
 `:root`, `.dark`), `src/lib/estilos.ts` and `registry/registry.json`.
 

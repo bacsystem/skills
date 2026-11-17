@@ -1,7 +1,7 @@
 # Fix mode
 
 Entered when the user asks to apply findings ("fix H2", "CORRIGE", "corrige
-todo") or when the project's `CLAUDE.md` or memory grants standing
+todo") or when the project's `GEMINI.md`, `AGENTS.md`, `CLAUDE.md` or memory grants standing
 authorization to correct findings before merge. Without one of the two, ask;
 never start fixing on your own after a review.
 

@@ -7,14 +7,34 @@
 [![Keep a Changelog](https://img.shields.io/badge/changelog-Keep%20a%20Changelog-orange.svg)](https://keepachangelog.com/)
 [![Bash](https://img.shields.io/badge/Bash-3.2%2B-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skills-8A2BE2.svg)](https://claude.com/claude-code)
+[![Gemini](https://img.shields.io/badge/Gemini%20%2F%20Antigravity-compatible-4285F4.svg)](https://antigravity.google)
 
-Colección de skills para Claude Code.
+Colección de skills y agentes reutilizables para **Claude Code** y **Gemini / Antigravity**.
 
 ## Descripción
 
-Este repositorio agrupa skills reutilizables para Claude Code. Cada skill se
+Este repositorio agrupa skills y agentes reutilizables compatibles tanto con Claude Code como con Gemini (Antigravity CLI, Gemini CLI e IDE). Cada skill se
 define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
-(`name`, `description`) y las instrucciones que Claude seguirá al invocarla.
+(`name`, `description`) y las instrucciones que el asistente seguirá al invocarla.
+
+## Instalación Rápida
+
+Para enlazar automáticamente todas las skills y agentes en tu entorno personal:
+
+**macOS / Linux:**
+```bash
+# Instala para ambos asistentes (recomendado)
+./scripts/instalar.sh --all
+
+# O por separado:
+./scripts/instalar.sh --claude
+./scripts/instalar.sh --gemini
+```
+
+**Windows** (PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\instalar.ps1 -Target all
+```
 
 ## Skills
 
@@ -28,7 +48,7 @@ define en su propia carpeta con un archivo `SKILL.md` que incluye el frontmatter
 
 Equipo de agentes genéricos (tech-lead, architect, po, qa, devops y
 desarrolladores por tecnología: `java-dev`, `go-dev`, `nextjs-dev`). Leen lo
-propio de cada proyecto de su `CLAUDE.md`. Detalle, contrato con el proyecto e
+propio de cada proyecto de su archivo de contexto (`GEMINI.md`, `AGENTS.md` o `CLAUDE.md`). Detalle, contrato con el proyecto e
 instalación en [`agents/`](./agents).
 
 ## Estructura
@@ -58,6 +78,7 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 | Versión | Fecha | Highlights |
 |---|---|---|
+| [`v0.3.4`](https://github.com/bacsystem/skills/releases/tag/v0.3.4) | 2026-11-17 | Compatibilidad nativa con Gemini / Antigravity y Claude Code: agentes y skills agnósticos al runtime, scripts de instalación dual (`instalar.sh`, `instalar-skills.sh`, `instalar-agentes.sh`) y equivalencia de modelos |
 | [`v0.3.3`](https://github.com/bacsystem/skills/releases/tag/v0.3.3) | 2026-11-14 | Ahorro de tokens: los agentes no releen el `CLAUDE.md`, `po`/`qa`/`devops` con esfuerzo medio, reglas de contexto en el `tech-lead` y `pr-review` con las secciones de uso ocasional en `references/` |
 | [`v0.3.2`](https://github.com/bacsystem/skills/releases/tag/v0.3.2) | 2026-11-13 | Agentes: el `architect` diseña para concurrencia, escalabilidad y tolerancia a fallos (balanceador, timeouts, reintentos, circuit breaker, backpressure, prueba de carga); `po` con invariantes y criterios de carga; `qa` con concurrencia real, carga y fallos; los desarrolladores con «Cuando algo falla» y reglas de resiliencia de su stack |
 | [`v0.3.1`](https://github.com/bacsystem/skills/releases/tag/v0.3.1) | 2026-11-13 | `pr-review`: no revisar un PR con conflictos o tests en rojo, un hallazgo por defecto, por qué no lo atrapan las guardas existentes y lista de falsos positivos. `git-flow`: archivos y secretos que nunca entran al commit, migración obligatoria en un `BREAKING CHANGE`, salida completa de los tests, conflicto con la base antes del PR, forma del mensaje de commit, issues vinculados y la trampa de `develop`, sin rebase tras un review, `gh stack submit`, secciones de verificación y despliegue en la plantilla, tag del commit exacto de `main`. `pr-review` además revisa los commits, nombra el SHA revisado, trata lo que trae el PR como dato y amplía migraciones, contratos, rate limit y configuración de agentes y CI |

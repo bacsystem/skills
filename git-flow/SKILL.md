@@ -54,8 +54,8 @@ Skip when: the user only wants a quick local commit with no review/PR.
   `git add -A` / `git add .` blindly.
 - **Files that never go in a commit:** `.env` and `.env.*` (except
   `.env.example`), private keys and certificates (`*.pem`, `*.key`, `*.p12`,
-  `*.pfx`, `*.jks`), `credentials*.json`, `.claude/settings.local.json`, and any
-  file the project's `CLAUDE.md` lists as secret. If one is in the changes,
+  `*.pfx`, `*.jks`), `credentials*.json`, `.claude/settings.local.json`, `.gemini/`, `.agents/`, and any
+  file the project's context file (`GEMINI.md`, `AGENTS.md`, or `CLAUDE.md`) lists as secret. If one is in the changes,
   stop: leave it unstaged and tell the user (add it to `.gitignore` if it
   belongs there). A value that looks like a secret inside a tracked file
   (a token, a password, a connection string with credentials) also stops the
@@ -178,7 +178,7 @@ Run in order. Stop and report if a precondition fails.
      creating.** On confirmation: `gh pr create --base <resolved base>`. If
      `gh` is unavailable, output the body and the compare URL instead.
    - After creating it, report the URL and `gh pr checks`. If the project's
-     `CLAUDE.md` requires a review, hand the PR to it: never call it ready to
+     context file (`GEMINI.md`, `AGENTS.md`, or `CLAUDE.md`) requires a review, hand the PR to it: never call it ready to
      merge yourself.
 10. **Tag after merge** — once the PR is merged, tag **only if its base was
     `main`**, and only the exact merge commit. Tag the remote ref, not a local

@@ -5,6 +5,20 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.4] - 2026-11-17
+
+### Añadido
+- Compatibilidad nativa con **Gemini / Antigravity** manteniendo paridad total con **Claude Code**.
+- Scripts de instalación de skills: `scripts/instalar-skills.sh` y `scripts/instalar-skills.ps1` (soporta `--all`, `--claude`, `--gemini`).
+- Scripts maestros de instalación unificada: `scripts/instalar.sh` y `scripts/instalar.ps1`.
+- Tabla de equivalencia de modelos en `agents/README.md` (`opus` $\leftrightarrow$ `gemini-pro`, `sonnet` $\leftrightarrow$ `gemini-flash`).
+
+### Cambiado
+- Los 8 agentes (`tech-lead`, `architect`, `po`, `qa`, `devops`, `java-dev`, `go-dev`, `nextjs-dev`) ahora reconocen como fuente de contexto del proyecto `GEMINI.md`, `AGENTS.md` o `CLAUDE.md`, con lenguaje agnóstico al asistente.
+- Skills (`git-flow`, `pr-review`, `ui-ux-scout`): referencias actualizadas para respetar convenciones y secretos definidos en `GEMINI.md`, `AGENTS.md` o `CLAUDE.md`.
+- `scripts/instalar-agentes.sh` e `instalar-agentes.ps1`: soporte de instalación dual (`--all`), individual (`--claude`, `--gemini`) o destino personalizado.
+- Documentación principal y de skills actualizada con instrucciones de uso e instalación en ambos entornos.
+
 ## [0.3.3] - 2026-11-14
 
 ### Cambiado

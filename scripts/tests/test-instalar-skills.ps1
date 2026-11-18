@@ -5,7 +5,10 @@ $ErrorActionPreference = 'Stop'
 
 $script = Join-Path (Split-Path -Parent $PSScriptRoot) 'instalar-skills.ps1'
 $repo = Split-Path -Parent (Split-Path -Parent $script)
-$skill = 'git-flow'
+$skill = (Get-ChildItem -LiteralPath $repo -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') } | Select-Object -First 1).Name
+$real = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.gemini\skills")
+function Foto { ($real | ForEach-Object { if (Test-Path -LiteralPath $_) { (Get-ChildItem -LiteralPath $_ -Force | ForEach-Object { $_.Name }) -join ',' } else { '-' } }) -join '|' }
+$antes = Foto
 $T = Join-Path ([IO.Path]::GetTempPath()) ("skills-test-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $T | Out-Null
 
@@ -38,6 +41,7 @@ try {
     Run $d | Out-Null
     Check 'enlace ajeno reemplazado' (ApuntaAlRepo "$d\$skill")
     Check 'carpeta del enlace ajeno intacta' (Existe "$otra\dato")
+    Check 'enlace ajeno sin respaldo' (-not (Existe $r))
 
     # 3: carpeta real -> <destino>-respaldo\<skill>-<fecha>
     (Get-Item -LiteralPath "$d\$skill" -Force).Delete()
@@ -51,8 +55,12 @@ try {
     # 4: <skill>.respaldo-* dentro del destino (carpeta real y enlace) salen
     New-Item -ItemType Directory -Path "$d\$skill.respaldo-1" | Out-Null
     NewLink "$d\$skill.respaldo-2" $otra
+    New-Item -ItemType Directory -Path "$T\nada-3" | Out-Null
+    NewLink "$d\$skill.respaldo-3" "$T\nada-3"
+    Remove-Item -LiteralPath "$T\nada-3"   # junction rota
     Run $d | Out-Null
     Check 'respaldo viejo (carpeta) movido' (Existe "$r\$skill.respaldo-1")
+    Check 'respaldo viejo roto movido' (Existe "$r\$skill.respaldo-3")
     Check 'respaldo viejo (enlace) movido' ((Get-Item -LiteralPath "$r\$skill.respaldo-2" -Force).LinkType -eq 'Junction')
     Check 'nada .respaldo-* dentro del destino' (@(Get-ChildItem -LiteralPath $d -Force -Filter '*.respaldo-*').Count -eq 0)
 
@@ -68,6 +76,19 @@ try {
     $out = Run "$T\clon"
     Check 'aviso si el destino es un clon git' (($out -replace '\s+', ' ') -match 'clon de git') $out
 
+    # 7: junction rota en el destino de la skill se reemplaza
+    $rotoDir = Join-Path $T 'gone'; New-Item -ItemType Directory -Path $rotoDir | Out-Null
+    (Get-Item -LiteralPath "$d\$skill" -Force).Delete(); NewLink "$d\$skill" $rotoDir
+    Remove-Item -LiteralPath $rotoDir
+    Run $d | Out-Null
+    Check 'junction rota reemplazada' (ApuntaAlRepo "$d\$skill")
+
+    # 9: -Destino con \ final
+    New-Item -ItemType Directory -Path "$T\barra" | Out-Null
+    Run "$T\barra\" | Out-Null
+    Check 'destino con \ final enlaza' (ApuntaAlRepo "$T\barra\$skill")
+
+    Check 'no tocó ~\.claude ni ~\.gemini' ((Foto) -eq $antes)
     Write-Host 'OK: instalar-skills.ps1 pasa todas las pruebas (reglas 1-6, 8)'
 } finally {
     Set-Location $env:TEMP 2>$null

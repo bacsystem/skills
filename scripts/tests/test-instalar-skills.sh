@@ -6,7 +6,7 @@ set -euo pipefail
 script="${1:-$(CDPATH= cd -- "$(dirname "$0")/.." && pwd -P)/instalar-skills.sh}"
 # El script resuelve las skills desde su propia carpeta: <script>/../..
 repo="$(CDPATH= cd -- "$(dirname "$script")/.." && pwd -P)"
-skill=git-flow
+skill="$(cd "$repo" && ls -d */SKILL.md | head -1 | cut -d/ -f1)"  # primera skill del repo
 T="$(mktemp -d)"
 trap 'rm -rf "$T"' EXIT
 export HOME="$T/home"; mkdir -p "$HOME"
@@ -31,6 +31,7 @@ rm "$d/$skill"; ln -s "$T/otra" "$d/$skill"
 run "$d" >/dev/null
 check "enlace ajeno reemplazado" apunta_al_repo "$d/$skill"
 check "carpeta del enlace ajeno intacta" test -f "$T/otra/dato"
+check "enlace ajeno sin respaldo" test ! -e "$r"
 
 # 3: carpeta real -> <destino>-respaldo/<skill>-<fecha>
 rm "$d/$skill"; mkdir "$d/$skill"; echo y > "$d/$skill/mio"
@@ -40,7 +41,9 @@ check "carpeta real respaldada" test -f "$(ls -d "$r/$skill"-* | head -1)/mio"
 
 # 4: <skill>.respaldo-* dentro del destino (carpeta real y enlace) salen
 mkdir "$d/$skill.respaldo-1"; ln -s "$T/otra" "$d/$skill.respaldo-2"
+ln -s "$T/nada" "$d/$skill.respaldo-3"   # enlace roto
 run "$d" >/dev/null
+check "respaldo viejo roto movido" test -L "$r/$skill.respaldo-3"
 check "respaldo viejo (carpeta) movido" test -d "$r/$skill.respaldo-1"
 check "respaldo viejo (enlace) movido" test -L "$r/$skill.respaldo-2"
 check "nada .respaldo-* dentro del destino" test -z "$(ls -d "$d"/*.respaldo-* 2>/dev/null)"
@@ -50,6 +53,11 @@ mkdir -p "$T/rel"; rm -rf "$T/rel-respaldo"
 (cd "$T/rel" && mkdir "$skill" && bash "$script" . >/dev/null 2>&1)
 check "destino '.' : respaldo fuera" test -d "$T/rel-respaldo"
 check "destino '.' : nada dentro" test -z "$(ls -d "$T"/rel/*respaldo* 2>/dev/null)"
+
+# 5b: destino relativo bajo CDPATH
+mkdir -p "$T/decoy/rel2" "$T/w"
+(cd "$T/w" && CDPATH="$T/decoy" bash "$script" rel2 >/dev/null 2>&1) || true
+check "destino relativo con CDPATH" apunta_al_repo "$T/w/rel2/$skill"
 
 # 6: destino con .git -> aviso
 mkdir -p "$T/clon/.git"

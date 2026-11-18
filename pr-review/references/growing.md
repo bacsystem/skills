@@ -19,5 +19,6 @@ one-off, or already covered by an existing entry or axis bullet:
 - **Something that broke after a merge** (a migration, a config default, a
   client that depended on a field) → `production-readiness.md`.
 
-The reference files grow over time — skim them during every review, not just
-after writing to them.
+The reference files grow over time. During a review, read the ones whose
+trigger in `SKILL.md` (*Which reference to read, and when*) matches the diff —
+not only after writing to them.

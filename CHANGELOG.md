@@ -5,6 +5,20 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.8] - 2026-11-18
+
+### Cambiado
+- `pr-review`: carga condicional de las referencias. `SKILL.md` ya no pide leer todo
+  `references/` en cada revisión: una tabla *Which reference to read, and when* dice qué
+  archivo leer y con qué disparador (`language-idioms.md` solo la sección del lenguaje del
+  diff, `production-readiness.md` solo las secciones que el diff toca, etc.). Las secciones
+  que aplican solo a veces pasan a `references/re-review.md`, `references/modes.md` (código
+  propio y cambios pequeños de configuración) y `references/posting.md` (`--comment`), con un
+  puntero en `SKILL.md`; el procedimiento de contratos de un sistema externo pasa a
+  `production-readiness.md`. La lista de seguridad y *What breaks after the merge* quedan como
+  puntero a `production-readiness.md`, y *Common Mistakes* conserva solo lo que no cubren ya
+  los pasos, los ejes o las Rules. Mismo comportamiento, menos tokens por revisión.
+
 ## [0.3.7] - 2026-11-18
 
 ### Corregido

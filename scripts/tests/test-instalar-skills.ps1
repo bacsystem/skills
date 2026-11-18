@@ -66,7 +66,7 @@ try {
     # 6: destino con .git -> aviso
     New-Item -ItemType Directory -Path "$T\clon\.git" -Force | Out-Null
     $out = Run "$T\clon"
-    Check 'aviso si el destino es un clon git' ($out -match 'clon de git') $out
+    Check 'aviso si el destino es un clon git' (($out -replace '\s+', ' ') -match 'clon de git') $out
 
     Write-Host 'OK: instalar-skills.ps1 pasa todas las pruebas (reglas 1-6, 8)'
 } finally {

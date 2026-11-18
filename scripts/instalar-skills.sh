@@ -34,6 +34,9 @@ enlazar_skills_en() {
   done
 
   mkdir -p "$base_destino"
+  # Ruta absoluta: con un destino relativo como "." el respaldo caería dentro de la carpeta.
+  base_destino="$(cd "$base_destino" && pwd)"
+  local carpeta_respaldo="$base_destino-respaldo"
 
   if [ -e "$base_destino/.git" ]; then
     echo "Aviso ($nombre_entorno): $base_destino es un clon de git. Un pull o checkout ahí" >&2
@@ -47,6 +50,14 @@ enlazar_skills_en() {
       skill_name="$(basename "$dir")"
       local destino="$base_destino/$skill_name"
 
+      # Respaldos que versiones anteriores del instalador dejaron dentro de la carpeta.
+      for viejo in "$base_destino/$skill_name".respaldo-*; do
+        [ -e "$viejo" ] || [ -L "$viejo" ] || continue
+        mkdir -p "$carpeta_respaldo"
+        mv "$viejo" "$carpeta_respaldo/"
+        echo "Movido fuera ($nombre_entorno): $viejo -> $carpeta_respaldo/"
+      done
+
       if [ -L "$destino" ] && [ "$(cd "$destino" 2>/dev/null && pwd -P)" = "$dir" ]; then
         echo "Ya enlazado ($nombre_entorno): $destino -> $dir"
         continue
@@ -56,7 +67,6 @@ enlazar_skills_en() {
         rm "$destino"
         echo "Reemplazado ($nombre_entorno): enlace anterior $destino"
       elif [ -e "$destino" ]; then
-        local carpeta_respaldo="$base_destino-respaldo"
         local respaldo="$carpeta_respaldo/$skill_name-$(date +%Y%m%d%H%M%S)"
         mkdir -p "$carpeta_respaldo"
         mv "$destino" "$respaldo"

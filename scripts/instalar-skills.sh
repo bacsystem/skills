@@ -23,7 +23,7 @@ case "$(uname -s)" in
     ;;
 esac
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+repo_root="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd -P)"
 
 enlazar_skills_en() {
   local base_destino="$1"
@@ -35,7 +35,7 @@ enlazar_skills_en() {
 
   mkdir -p "$base_destino"
   # Ruta absoluta: con un destino relativo como "." el respaldo caería dentro de la carpeta.
-  base_destino="$(cd "$base_destino" && pwd)"
+  base_destino="$(CDPATH= cd -- "$base_destino" && pwd)"
   local carpeta_respaldo="$base_destino-respaldo"
 
   if [ -e "$base_destino/.git" ]; then
@@ -58,7 +58,7 @@ enlazar_skills_en() {
         echo "Movido fuera ($nombre_entorno): $viejo -> $carpeta_respaldo/"
       done
 
-      if [ -L "$destino" ] && [ "$(cd "$destino" 2>/dev/null && pwd -P)" = "$dir" ]; then
+      if [ -L "$destino" ] && [ "$(CDPATH= cd -- "$destino" 2>/dev/null && pwd -P)" = "$dir" ]; then
         echo "Ya enlazado ($nombre_entorno): $destino -> $dir"
         continue
       fi

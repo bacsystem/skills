@@ -1,0 +1,75 @@
+# Prueba scripts\instalar-skills.ps1 con junctions en una carpeta temporal
+# (nunca toca ~\.claude ni ~\.gemini). Sirve en Windows PowerShell 5.1 y en pwsh.
+# Uso: powershell -ExecutionPolicy Bypass -File scripts\tests\test-instalar-skills.ps1
+$ErrorActionPreference = 'Stop'
+
+$script = Join-Path (Split-Path -Parent $PSScriptRoot) 'instalar-skills.ps1'
+$repo = Split-Path -Parent (Split-Path -Parent $script)
+$skill = 'git-flow'
+$T = Join-Path ([IO.Path]::GetTempPath()) ("skills-test-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $T | Out-Null
+
+function Check([string]$desc, [bool]$cond) {
+    if (-not $cond) { Write-Error "FALLO: $desc"; exit 1 }
+    Write-Host "ok - $desc"
+}
+function Run([string]$dest) { (& $script -Destino $dest *>&1 | Out-String) }
+function ApuntaAlRepo([string]$p) {
+    $i = Get-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue
+    return [bool]($i -and $i.LinkType -eq 'Junction' -and ("$($i.Target)".TrimEnd('\') -eq (Join-Path $repo $skill)))
+}
+function Existe([string]$p) { Test-Path -LiteralPath $p }
+function NewLink([string]$link, [string]$target) { New-Item -ItemType Junction -Path $link -Target $target | Out-Null }
+
+try {
+    $d = Join-Path $T 'skills'; $r = "$d-respaldo"
+
+    # 1 y 8: enlaza, y la segunda corrida no cambia nada
+    Run $d | Out-Null
+    Check 'enlaza la skill al repo' (ApuntaAlRepo "$d\$skill")
+    $out = Run $d
+    Check 'segunda corrida: Ya enlazado' ($out -match "Ya enlazado.*$skill")
+    Check 'segunda corrida: sin respaldo' (-not (Existe $r))
+
+    # 2: un enlace a otra ruta se reemplaza y su destino queda intacto
+    $otra = Join-Path $T 'otra'; New-Item -ItemType Directory -Path $otra | Out-Null
+    Set-Content -LiteralPath "$otra\dato" -Value 'x'
+    (Get-Item -LiteralPath "$d\$skill" -Force).Delete(); NewLink "$d\$skill" $otra
+    Run $d | Out-Null
+    Check 'enlace ajeno reemplazado' (ApuntaAlRepo "$d\$skill")
+    Check 'carpeta del enlace ajeno intacta' (Existe "$otra\dato")
+
+    # 3: carpeta real -> <destino>-respaldo\<skill>-<fecha>
+    (Get-Item -LiteralPath "$d\$skill" -Force).Delete()
+    New-Item -ItemType Directory -Path "$d\$skill" | Out-Null
+    Set-Content -LiteralPath "$d\$skill\mio" -Value 'y'
+    Run $d | Out-Null
+    Check 'carpeta real enlazada' (ApuntaAlRepo "$d\$skill")
+    $resp = @(Get-ChildItem -LiteralPath $r -Directory -Filter "$skill-*")
+    Check 'carpeta real respaldada' (($resp.Count -eq 1) -and (Existe "$($resp[0].FullName)\mio"))
+
+    # 4: <skill>.respaldo-* dentro del destino (carpeta real y enlace) salen
+    New-Item -ItemType Directory -Path "$d\$skill.respaldo-1" | Out-Null
+    NewLink "$d\$skill.respaldo-2" $otra
+    Run $d | Out-Null
+    Check 'respaldo viejo (carpeta) movido' (Existe "$r\$skill.respaldo-1")
+    Check 'respaldo viejo (enlace) movido' ((Get-Item -LiteralPath "$r\$skill.respaldo-2" -Force).LinkType -eq 'Junction')
+    Check 'nada .respaldo-* dentro del destino' (@(Get-ChildItem -LiteralPath $d -Force -Filter '*.respaldo-*').Count -eq 0)
+
+    # 5: destino relativo "." -> el respaldo cae al lado, no dentro
+    $rel = Join-Path $T 'rel'; New-Item -ItemType Directory -Path "$rel\$skill" | Out-Null
+    Push-Location $rel
+    try { Run '.' | Out-Null } finally { Pop-Location }
+    Check "destino '.' : respaldo fuera" (Existe "$rel-respaldo")
+    Check "destino '.' : nada dentro" (@(Get-ChildItem -LiteralPath $rel -Force -Filter '*respaldo*').Count -eq 0)
+
+    # 6: destino con .git -> aviso
+    New-Item -ItemType Directory -Path "$T\clon\.git" -Force | Out-Null
+    $out = Run "$T\clon"
+    Check 'aviso si el destino es un clon git' ($out -match 'clon de git')
+
+    Write-Host 'OK: instalar-skills.ps1 pasa todas las pruebas (reglas 1-6, 8)'
+} finally {
+    Set-Location $env:TEMP 2>$null
+    Remove-Item -LiteralPath $T -Recurse -Force -ErrorAction SilentlyContinue
+}

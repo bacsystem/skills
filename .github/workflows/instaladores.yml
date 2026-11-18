@@ -1,0 +1,39 @@
+name: Instaladores
+
+# Prueba los instaladores de skills en Linux y en Windows (Windows PowerShell 5.1 y pwsh).
+# Las pruebas usan carpetas temporales: nunca tocan ~/.claude ni ~/.gemini.
+
+on:
+  pull_request:
+    paths:
+      - scripts/**
+      - .github/workflows/instaladores.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/**
+      - .github/workflows/instaladores.yml
+
+permissions:
+  contents: read
+
+jobs:
+  bash-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probar instalar-skills.sh
+        run: bash scripts/tests/test-instalar-skills.sh
+
+  powershell-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probar instalar-skills.ps1 (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion
+          .\scripts\tests\test-instalar-skills.ps1
+      - name: Probar instalar-skills.ps1 (pwsh)
+        shell: pwsh
+        run: .\scripts\tests\test-instalar-skills.ps1

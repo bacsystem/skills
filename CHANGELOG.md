@@ -28,6 +28,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   respaldo se cargaba como una skill más con el mismo `name:`: descripciones duplicadas
   en cada sesión y riesgo de invocar la versión vieja. Un enlace a otra ruta ya no se
   respalda: se reemplaza. Si la carpeta de skills es un clon de git, el instalador avisa.
+  Los `<skill>.respaldo-*` que dejaron las versiones 0.3.4 a 0.3.6 se mueven a esa
+  carpeta de respaldo al reinstalar. Un destino relativo (p. ej. `.`) se resuelve a
+  ruta absoluta antes de calcular dónde va el respaldo.
 
 ## [0.3.6] - 2026-11-17
 

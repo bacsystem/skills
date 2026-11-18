@@ -37,8 +37,10 @@ PR), pausing for your confirmation at the review, doc-update, and PR steps.
 1. **Detect context** — changes, version files, push remote, `gh` auth.
 2. **Classify** — one Conventional Commit type + SemVer bump.
 3. **Create branch** — `type/description` (e.g. `feat/login-form`).
-4. **Code review** — bugs, conventions, simplifications.
-5. **Verify** — run the project's test/lint command; stop if it fails.
+4. **Code review** — bugs, conventions, simplifications; only the one-thing
+   check when the project requires `/pr-review`.
+5. **Verify** — run the project's test/lint command; stop if it fails. The
+   suite is not re-run when CI runs it or its output for this tree is attached.
 6. **Compute version** — per source precedence, apply the bump.
 7. **Update docs** — CHANGELOG, version files, README (shown before staging).
 8. **Stage & commit** — Conventional Commit message in English.

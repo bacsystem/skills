@@ -5,6 +5,27 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.9] - 2026-11-18
+
+### Cambiado
+- `agents` y `git-flow`: el equipo deja de repetir trabajo. El autor corre la suite una vez y adjunta
+  la salida real, para no subir un PR en rojo; la corrida del revisor de `/pr-review` se
+  mantiene como puerta independiente. El ahorro está en `git-flow` (paso 5), que no la repite si el CI la corre
+  en el PR o ya está la salida de ese árbol, y solo corre lint y typecheck; `qa` reutiliza la
+  evidencia de la revisión o del CI si el SHA del head es el revisado y el CI está verde. La
+  mutación la hace solo `/pr-review`. `tech-lead` ya no repite lo que hace el skill (PR
+  mergeable, límites, migraciones, secretos, PR propios; un PR sin evidencia se sigue
+  devolviendo antes de revisar): pasa al subagente las reglas extra del proyecto, los archivos
+  de contexto de las subcarpetas, el número de migración reservado, que no entren datos reales
+  de clientes y, sin issue, que el PR haga una sola cosa, y no relee el diff. `git-flow` (paso 4) se reduce a comprobar que el PR hace una sola cosa cuando
+  el proyecto exige `/pr-review`. El checklist de «issue listo» es solo del `po`; el
+  `architect` firma contrato, datos y límites, y el `tech-lead` le pide la revisión de impacto
+  solo si el issue toca API, datos, límites de módulo, un camino caliente o la capacidad. Al
+  abrir el PR, el dev avisa a la vez al `tech-lead` y a `qa`, que trabajan en paralelo; la
+  re-revisión se lanza con cualquier commit nuevo tras la última revisión (el aviso del autor
+  nombra los IDs corregidos, si los hay), y el OK de `qa` y el veredicto quedan atados al SHA
+  del head.
+
 ## [0.3.8] - 2026-11-18
 
 ### Cambiado

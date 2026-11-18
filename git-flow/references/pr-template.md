@@ -26,8 +26,9 @@
 
 <!-- Commands actually run, with their counts (e.g. `./gradlew test` → 812
 passed, BUILD SUCCESSFUL). Mark each "passes locally" or "verified against
-<environment>". Anything not run: "not run: <reason>". The reviewer checks
-these numbers. -->
+<environment>". A suite not re-run here (step 5) names its evidence: the CI
+check that runs it, or the author's output for this same tree. Anything not
+run: "not run: <reason>". The reviewer checks these numbers. -->
 -
 
 ## Linked issue

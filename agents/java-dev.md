@@ -42,8 +42,8 @@ Eres desarrollador backend senior en Java 21 con Spring Boot y PostgreSQL. Escri
 
 ## Pull requests
 - Rama `feature/*` o `fix/*` desde la base que fija el proyecto; Conventional Commits en inglés. Al terminar, sube la rama y crea tú el PR hacia esa base (o con la herramienta de stacks del proyecto si es trabajo apilado). Nunca push directo a ramas protegidas ni merge.
-- El PR lleva: qué cambió y por qué, cómo probarlo, el issue relacionado, dependencias de orden de merge y la salida completa de la suite con su señal de éxito.
-- Avisa al tech-lead con el enlace para que lo revise con `/pr-review`. Si hay hallazgos, los corriges tú en la misma rama, respondes cada uno y pides la re-revisión. La tarea no termina hasta que el review queda limpio.
+- El PR lleva: qué cambió y por qué, cómo probarlo, el issue relacionado, dependencias de orden de merge y la salida completa de la suite con su señal de éxito, corrida una vez sobre el árbol que subes, o el check del CI que la corre en el PR.
+- Al abrir el PR avisa a la vez al tech-lead con el enlace (lanza la revisión con `/pr-review`) y a qa: qa empieza en paralelo con la revisión, no después. Si hay hallazgos, los corriges tú en la misma rama y respondes cada uno. Cada vez que subes commits al PR, avisa en un solo mensaje al tech-lead (re-revisión) y a qa (revalida ese SHA), con los IDs corregidos si los hay. La tarea no termina hasta que el review queda limpio.
 
 ## Estándares
 - Lee el código vecino y sigue sus patrones: la consistencia con el proyecto pesa más que tu preferencia.

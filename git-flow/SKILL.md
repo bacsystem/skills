@@ -108,15 +108,24 @@ Run in order. Stop and report if a precondition fails.
    (see Conventions + tie-breakers).
 3. **Create branch** — if on `main`/`master`, `git switch -c type/description`.
    If already on a work branch, keep it.
-4. **Code review** — review the diff for bugs, convention issues, and
-   simplifications. Show findings; continue after the user's OK. If the diff
+4. **Code review** — if the project's context file (`CLAUDE.md`,
+   `AGENTS.md`, `GEMINI.md`) requires `/pr-review` on every PR, that review
+   is the gate: this step only checks that the diff does one thing (the split
+   below), with no ad hoc review and no confirmation asked for it. Otherwise,
+   review the diff for bugs, convention issues, and simplifications; show
+   findings and continue after the user's OK. If the diff
    holds changes that can be reviewed and reverted on their own (a refactor
    plus a feature, a backend change plus an unrelated UI fix), propose
    splitting them before committing: one branch each, stacked (`gh stack add`)
    when one builds on the other. Size alone is not the reason; the reason is
    that a reviewer cannot judge, or a revert cannot undo, one without the
    other.
-5. **Verify** — detect the project's test/lint command and run it (see
+5. **Verify** — the suite runs once per tree. If CI runs it on the PR, or
+   the author already has its real output for this same tree (no edits
+   since), don't re-run it: run only the fast lint and typecheck if the
+   project has them (same stop rule as below), and the PR body carries the suite evidence (the CI
+   check, or the attached output with its success line). Otherwise, detect
+   the project's test/lint command and run it (see
    `references/verify-commands.md` for the per-ecosystem mapping). Prefer a
    command the repo already defines (scripts, `Makefile` targets, CI) over a
    generic guess. **Stop and report if it fails;** continue once green. Judge it
@@ -204,7 +213,8 @@ Run in order. Stop and report if a precondition fails.
 - **Assuming `package.json`** — follow the version-source precedence; detect first.
 - **Hardcoding `origin`** — resolve the real remote (step 1); some repos use an SSH-alias remote.
 - **Over-bumping a `0.x` project** — pre-1.0, `feat` is a patch and a breaking change is a minor.
-- **Skipping tests** — run the project's test/lint command (step 5) before committing.
+- **Skipping tests** — run the project's test/lint command (step 5) before committing,
+  or cite the CI run or the attached output for this same tree.
 - **Trusting a filtered output** — `./gradlew test | tail` exits 0 even when the
   build failed; read the success line or use `set -o pipefail`.
 - **Committing a secret** — check the staged names (step 8); deleting it in a

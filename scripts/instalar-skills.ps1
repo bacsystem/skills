@@ -6,6 +6,12 @@
 # Uso:
 #   powershell -ExecutionPolicy Bypass -File scripts\instalar-skills.ps1 [-Target all|claude|gemini]
 #   powershell -ExecutionPolicy Bypass -File scripts\instalar-skills.ps1 [-Destino <ruta>]
+#
+# Si el destino de una skill ya existe:
+# - un enlace (junction o symlink) a otra ruta se reemplaza (borrar un enlace no pierde nada);
+# - una carpeta o archivo real se mueve a <carpeta_destino>-respaldo\<skill>-<fecha>,
+#   fuera de la carpeta de skills: un respaldo dentro de ella se cargaría como
+#   una skill más con el mismo nombre.
 param(
     [ValidateSet('all', 'claude', 'gemini')]
     [string]$Target = 'all',
@@ -24,6 +30,13 @@ function Enlazar-SkillsEn {
     if (-not (Test-Path -LiteralPath $BaseDestino)) {
         New-Item -ItemType Directory -Path $BaseDestino | Out-Null
     }
+    # Ruta absoluta: con un destino relativo como "." el respaldo caería dentro de la carpeta.
+    $BaseDestino = (Resolve-Path -LiteralPath $BaseDestino).Path.TrimEnd('\', '/')
+    $carpetaRespaldo = "$BaseDestino-respaldo"
+
+    if (Test-Path -LiteralPath (Join-Path $BaseDestino '.git')) {
+        Write-Warning "($NombreEntorno) $BaseDestino es un clon de git. Un pull o checkout ahí puede devolver copias viejas de las skills que pisen estos enlaces. Conviértela en una carpeta normal (saca .git y los archivos del repo)."
+    }
 
     $candidatos = Get-ChildItem -LiteralPath $repoRoot -Directory
     foreach ($dir in $candidatos) {
@@ -33,6 +46,16 @@ function Enlazar-SkillsEn {
             $destino = Join-Path $BaseDestino $skillName
             $origen = $dir.FullName.TrimEnd('\')
 
+            # Respaldos que versiones anteriores del instalador dejaron dentro de la carpeta.
+            $viejos = Get-ChildItem -LiteralPath $BaseDestino -Force -Filter "$skillName.respaldo-*" -ErrorAction SilentlyContinue
+            foreach ($viejo in $viejos) {
+                if (-not (Test-Path -LiteralPath $carpetaRespaldo)) {
+                    New-Item -ItemType Directory -Path $carpetaRespaldo | Out-Null
+                }
+                Move-Item -LiteralPath $viejo.FullName -Destination (Join-Path $carpetaRespaldo $viejo.Name)
+                Write-Output "Movido fuera ($NombreEntorno): $($viejo.FullName) -> $carpetaRespaldo"
+            }
+
             $item = Get-Item -LiteralPath $destino -Force -ErrorAction SilentlyContinue
             if ($item) {
                 $esEnlace = $item.LinkType -in @('Junction', 'SymbolicLink')
@@ -40,9 +63,18 @@ function Enlazar-SkillsEn {
                     Write-Output "Ya enlazado ($NombreEntorno): $destino -> $origen"
                     continue
                 }
-                $respaldo = "$destino.respaldo-$(Get-Date -Format 'yyyyMMddHHmmss')"
-                Rename-Item -LiteralPath $destino -NewName (Split-Path -Leaf $respaldo)
-                Write-Output "Respaldado ($NombreEntorno): $destino -> $respaldo"
+                if ($esEnlace) {
+                    # Quitar el enlace no toca la carpeta a la que apunta.
+                    $item.Delete()
+                    Write-Output "Reemplazado ($NombreEntorno): enlace anterior $destino"
+                } else {
+                    if (-not (Test-Path -LiteralPath $carpetaRespaldo)) {
+                        New-Item -ItemType Directory -Path $carpetaRespaldo | Out-Null
+                    }
+                    $respaldo = Join-Path $carpetaRespaldo "$skillName-$(Get-Date -Format 'yyyyMMddHHmmss')"
+                    Move-Item -LiteralPath $destino -Destination $respaldo
+                    Write-Output "Respaldado ($NombreEntorno): $destino -> $respaldo"
+                }
             }
 
             New-Item -ItemType Junction -Path $destino -Target $origen | Out-Null

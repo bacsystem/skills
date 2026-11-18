@@ -3,7 +3,8 @@
 A skill for Claude Code and Gemini / Antigravity that takes changes from the working tree to a pull request,
 following consistent conventions: branch naming, code review, Conventional
 Commits, automatic SemVer, and a PR template. It is **guided, not blind** — it
-pauses for your confirmation at the review, doc-update, and PR steps.
+pauses for your confirmation at the review (unless the project requires
+`/pr-review`), doc-update, and PR steps.
 
 ## How to use it
 
@@ -26,7 +27,8 @@ I'm done with this fix, take it from here
 
 **3. By context** — after finishing a feature or fix, just ask the assistant to wrap up
 the work and it will pick up the workflow (branch → review → commit → version →
-PR), pausing for your confirmation at the review, doc-update, and PR steps.
+PR), pausing for your confirmation at the review (unless the project requires
+`/pr-review`), doc-update, and PR steps.
 
 > Prerequisite for the PR step: `gh` installed and authenticated
 > (`gh auth status`). Without it, the skill prints the PR body and a compare URL

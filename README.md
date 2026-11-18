@@ -36,6 +36,8 @@ Para enlazar automáticamente todas las skills y agentes en tu entorno personal:
 powershell -ExecutionPolicy Bypass -File .\scripts\instalar.ps1 -Target all
 ```
 
+Pruebas de los instaladores (carpeta temporal, no tocan `~/.claude`): `bash scripts/tests/test-instalar-skills.sh` y, en Windows, `powershell -ExecutionPolicy Bypass -File scripts\tests\test-instalar-skills.ps1`. Corren en CI (`.github/workflows/instaladores.yml`).
+
 ## Skills
 
 | Skill | Descripción |

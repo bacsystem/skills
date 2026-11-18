@@ -9,8 +9,8 @@ $skill = 'git-flow'
 $T = Join-Path ([IO.Path]::GetTempPath()) ("skills-test-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $T | Out-Null
 
-function Check([string]$desc, [bool]$cond) {
-    if (-not $cond) { Write-Error "FALLO: $desc"; exit 1 }
+function Check([string]$desc, [bool]$cond, [string]$detalle = '') {
+    if (-not $cond) { Write-Host "salida:`n$detalle"; Write-Error "FALLO: $desc"; exit 1 }
     Write-Host "ok - $desc"
 }
 function Run([string]$dest) { (& $script -Destino $dest *>&1 | Out-String) }
@@ -66,7 +66,7 @@ try {
     # 6: destino con .git -> aviso
     New-Item -ItemType Directory -Path "$T\clon\.git" -Force | Out-Null
     $out = Run "$T\clon"
-    Check 'aviso si el destino es un clon git' ($out -match 'clon de git')
+    Check 'aviso si el destino es un clon git' ($out -match 'clon de git') $out
 
     Write-Host 'OK: instalar-skills.ps1 pasa todas las pruebas (reglas 1-6, 8)'
 } finally {

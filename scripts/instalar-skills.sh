@@ -8,6 +8,12 @@
 #   scripts/instalar-skills.sh [carpeta_destino]
 #
 # Si no se pasa argumento, por defecto instala para ambos (--all).
+#
+# Si el destino de una skill ya existe:
+# - un enlace a otra ruta se reemplaza (borrar un enlace no pierde nada);
+# - una carpeta o archivo real se mueve a <carpeta_destino>-respaldo/<skill>-<fecha>,
+#   fuera de la carpeta de skills: un respaldo dentro de ella se cargaría como
+#   una skill más con el mismo nombre.
 set -euo pipefail
 
 case "$(uname -s)" in
@@ -23,7 +29,17 @@ enlazar_skills_en() {
   local base_destino="$1"
   local nombre_entorno="$2"
 
+  while [ "$base_destino" != "/" ] && [ "${base_destino%/}" != "$base_destino" ]; do
+    base_destino="${base_destino%/}"
+  done
+
   mkdir -p "$base_destino"
+
+  if [ -e "$base_destino/.git" ]; then
+    echo "Aviso ($nombre_entorno): $base_destino es un clon de git. Un pull o checkout ahí" >&2
+    echo "  puede devolver copias viejas de las skills que pisen estos enlaces." >&2
+    echo "  Conviértela en una carpeta normal (saca .git y los archivos del repo)." >&2
+  fi
 
   for dir in "$repo_root"/*; do
     if [ -d "$dir" ] && [ -f "$dir/SKILL.md" ]; then
@@ -36,8 +52,13 @@ enlazar_skills_en() {
         continue
       fi
 
-      if [ -e "$destino" ] || [ -L "$destino" ]; then
-        local respaldo="$destino.respaldo-$(date +%Y%m%d%H%M%S)"
+      if [ -L "$destino" ]; then
+        rm "$destino"
+        echo "Reemplazado ($nombre_entorno): enlace anterior $destino"
+      elif [ -e "$destino" ]; then
+        local carpeta_respaldo="$base_destino-respaldo"
+        local respaldo="$carpeta_respaldo/$skill_name-$(date +%Y%m%d%H%M%S)"
+        mkdir -p "$carpeta_respaldo"
         mv "$destino" "$respaldo"
         echo "Respaldado ($nombre_entorno): $destino -> $respaldo"
       fi

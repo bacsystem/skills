@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.7] - 2026-11-18
+
+### Corregido
+- `scripts/instalar-skills.sh` y `scripts/instalar-skills.ps1`: el respaldo de una skill
+  que ya existía va a `<carpeta_destino>-respaldo/<skill>-<fecha>` (p. ej.
+  `~/.claude/skills-respaldo/`) y no junto a ella. Dentro de la carpeta de skills, el
+  respaldo se cargaba como una skill más con el mismo `name:`: descripciones duplicadas
+  en cada sesión y riesgo de invocar la versión vieja. Un enlace a otra ruta ya no se
+  respalda: se reemplaza. Si la carpeta de skills es un clon de git, el instalador avisa.
+
 ## [0.3.6] - 2026-11-17
 
 ### Corregido

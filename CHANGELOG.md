@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.11] - 2026-11-18
+
+### Cambiado
+- `agents/tech-lead.md`: el review en subagente elige el modelo según el riesgo al lanzarlo
+  (el rápido para PR de docs o de configuración que no toca sesiones, secretos, CI ni
+  despliegue; el más capaz para lo demás y ante la duda; las re-revisiones siguen en ese
+  modelo), y un ciclo de revisión se corta cuando una re-revisión da `APROBADO` y solo deja
+  menores nuevos: el tech-lead los lleva, con los menores abiertos de rondas anteriores, a un
+  issue de seguimiento enlazado y el PR cuenta como limpio.
+
 ## [0.3.10] - 2026-11-18
 
 ### Cambiado

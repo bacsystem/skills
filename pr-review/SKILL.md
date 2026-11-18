@@ -153,14 +153,16 @@ repository. The references supplement, never replace, the five axes below.
 ### Which reference to read, and when
 
 Read a reference only when its trigger matches the diff or the mode; read
-nothing else from `references/`. A bullet below that cites a reference by
-name is a trigger too.
+nothing else from `references/`. A bullet below that cites a reference is a
+trigger too, but only for the section or entry it names (or, when it names
+none, the entries whose title matches that bullet's topic) — never for the
+whole file.
 
 | Reference | Read when |
 |---|---|
 | `language-idioms.md` | Every review, **only the section** for the language or framework in the diff (Go, Python, TypeScript/React/Next.js, Java/Spring); none if no section matches. |
-| `production-readiness.md` | The diff touches migrations or schema, an API or serialized contract, configuration or environment, auth/sessions/cookies/rate limits, a document or contract another system validates, agent or CI config (`.claude/`, `.gemini/`, `.agents/`, `.github/workflows/`), deploy, error handling/retries/logging, queries or list endpoints, frontend, or dependencies — **only the sections touched**. |
-| `case-studies.md` | The diff touches authorization or credentials, money or a signed/sent decimal, persistence (state transitions, saves, upserts), an irreversible external call or an external contract, concurrency, mocks/fakes/fixtures or a comment claiming a fix; or you wrote the code. Read the entries whose title matches. |
+| `production-readiness.md` | The diff touches migrations or schema, an API or serialized contract, configuration or environment, auth/sessions/cookies, **a new endpoint or page** (*Security boundaries*: rate limit and security headers, which apply because of what the diff leaves out), a document or contract another system validates, agent or CI config (`.claude/`, `.gemini/`, `.agents/`, `.github/workflows/`), deploy, error handling/retries/logging, queries or list endpoints, frontend, or dependencies — **only the sections touched**. |
+| `case-studies.md` | The diff touches authorization or credentials, money or a signed/sent decimal, persistence (state transitions, saves, upserts), an irreversible external call or an external contract, concurrency, mocks/fakes/fixtures or a comment claiming a fix; or you wrote the code. Also, by entry: *A test that passes — or fails — for the wrong reason* when you pick the key test to mutate (axis 5, *Tests discriminate*); *An acceptance criterion names a variant no test exercises* when a criterion names variants; *Defense in depth hides a single-layer regression* when a property (auth, validation, a constraint) is enforced in two layers; *The same value is stored in two spellings depending on the path* when a value reaches storage or a comparison by more than one route. Read only the entries whose trigger or title matches. |
 | `code-smells.md` | Before reporting a smell, a complexity finding or a "consider…" (at least *Often mis-flagged*). |
 | `re-review.md` | The PR was already reviewed (step 2). |
 | `modes.md` | You wrote the code, or the change is small and config-only. |
@@ -296,7 +298,10 @@ The axis that catches bugs. Don't read the change and judge whether it
   Mutate only files that are committed in git and restore each one with
   `git checkout -- <file>`: a mutation script run over uncommitted work
   corrupts it. Run each mutation against the tests that guard that line, not
-  the whole suite.
+  the whole suite. When the mutation turns only unrelated tests red, the test
+  named after the guarantee caught nothing: that is the finding (see
+  `references/case-studies.md`, *A test that passes — or fails — for the
+  wrong reason*).
 - **Fakes, mocks and clients match the real contract.** When the diff adds or
   changes a mock, a fake repository, an API client or a fixture, compare it
   with the real thing it stands for (the endpoint, the schema, the sibling
@@ -311,7 +316,8 @@ The axis that catches bugs. Don't read the change and judge whether it
 - **A criterion that names variants** (invoice and receipt, web and mobile,
   every user type) has a test per variant, not one test plus a shared code
   path. When only the shared path is guarded, report it as MINOR with the
-  test to add.
+  test to add (see `references/case-studies.md`, *An acceptance criterion
+  names a variant no test exercises*).
 - **Contracts owned by an external system.** When the change decides a code,
   a field, an element order or a rule that another system enforces, follow
   the procedure in `references/production-readiness.md` (*Documents another

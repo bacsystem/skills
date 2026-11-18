@@ -1,4 +1,4 @@
-# Prueba scripts\instalar-skills.ps1 con junctions en una carpeta temporal
+﻿# Prueba scripts\instalar-skills.ps1 con junctions en una carpeta temporal
 # (nunca toca ~\.claude ni ~\.gemini). Sirve en Windows PowerShell 5.1 y en pwsh.
 # Uso: powershell -ExecutionPolicy Bypass -File scripts\tests\test-instalar-skills.ps1
 $ErrorActionPreference = 'Stop'
@@ -6,9 +6,6 @@ $ErrorActionPreference = 'Stop'
 $script = Join-Path (Split-Path -Parent $PSScriptRoot) 'instalar-skills.ps1'
 $repo = Split-Path -Parent (Split-Path -Parent $script)
 $skill = (Get-ChildItem -LiteralPath $repo -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') } | Select-Object -First 1).Name
-$real = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.gemini\skills")
-function Foto { ($real | ForEach-Object { if (Test-Path -LiteralPath $_) { (Get-ChildItem -LiteralPath $_ -Force | ForEach-Object { $_.Name }) -join ',' } else { '-' } }) -join '|' }
-$antes = Foto
 $T = Join-Path ([IO.Path]::GetTempPath()) ("skills-test-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $T | Out-Null
 
@@ -16,7 +13,18 @@ function Check([string]$desc, [bool]$cond, [string]$detalle = '') {
     if (-not $cond) { Write-Host "salida:`n$detalle"; Write-Error "FALLO: $desc"; exit 1 }
     Write-Host "ok - $desc"
 }
-function Run([string]$dest) { (& $script -Destino $dest *>&1 | Out-String) }
+# El instalador corre en un proceso hijo (el mismo PowerShell que corre el test) con el perfil
+# apuntando a $T\home: aunque ignorara -Destino, no podría tocar ~\.claude ni ~\.gemini.
+$perfil = Join-Path $T 'home'; New-Item -ItemType Directory -Path $perfil | Out-Null
+$env:USERPROFILE = $perfil; $env:HOME = $perfil; $env:HOMEDRIVE = (Split-Path -Qualifier $perfil); $env:HOMEPATH = $perfil.Substring($env:HOMEDRIVE.Length)
+$ps = (Get-Process -Id $PID).Path
+function Run([string]$dest) {
+    $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    $out = & $ps -NoProfile -ExecutionPolicy Bypass -File $script -Destino $dest 2>&1 | Out-String
+    $code = $LASTEXITCODE; $ErrorActionPreference = $eap
+    if ($code -ne 0) { Write-Host $out; Write-Error "FALLO: el instalador salió con código $code"; exit 1 }
+    $out
+}
 function ApuntaAlRepo([string]$p) {
     $i = Get-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue
     return [bool]($i -and $i.LinkType -eq 'Junction' -and ("$($i.Target)".TrimEnd('\') -eq (Join-Path $repo $skill)))
@@ -88,7 +96,7 @@ try {
     Run "$T\barra\" | Out-Null
     Check 'destino con \ final enlaza' (ApuntaAlRepo "$T\barra\$skill")
 
-    Check 'no tocó ~\.claude ni ~\.gemini' ((Foto) -eq $antes)
+    Check 'perfil aislado: el instalador no escribió fuera de -Destino' (-not (Existe "$perfil\.claude"))
     Write-Host 'OK: instalar-skills.ps1 pasa todas las pruebas (reglas 1-6, 8)'
 } finally {
     Set-Location $env:TEMP 2>$null

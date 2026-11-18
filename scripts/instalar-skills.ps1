@@ -30,9 +30,6 @@ function Enlazar-SkillsEn {
     if (-not (Test-Path -LiteralPath $BaseDestino)) {
         New-Item -ItemType Directory -Path $BaseDestino | Out-Null
     }
-    # Ruta absoluta: con un destino relativo como "." el respaldo caería dentro de la carpeta.
-    $BaseDestino = (Resolve-Path -LiteralPath $BaseDestino).Path.TrimEnd('\', '/')
-    $carpetaRespaldo = "$BaseDestino-respaldo"
 
     if (Test-Path -LiteralPath (Join-Path $BaseDestino '.git')) {
         Write-Warning "($NombreEntorno) $BaseDestino es un clon de git. Un pull o checkout ahí puede devolver copias viejas de las skills que pisen estos enlaces. Conviértela en una carpeta normal (saca .git y los archivos del repo)."
@@ -46,16 +43,6 @@ function Enlazar-SkillsEn {
             $destino = Join-Path $BaseDestino $skillName
             $origen = $dir.FullName.TrimEnd('\')
 
-            # Respaldos que versiones anteriores del instalador dejaron dentro de la carpeta.
-            $viejos = Get-ChildItem -LiteralPath $BaseDestino -Force -Filter "$skillName.respaldo-*" -ErrorAction SilentlyContinue
-            foreach ($viejo in $viejos) {
-                if (-not (Test-Path -LiteralPath $carpetaRespaldo)) {
-                    New-Item -ItemType Directory -Path $carpetaRespaldo | Out-Null
-                }
-                Move-Item -LiteralPath $viejo.FullName -Destination (Join-Path $carpetaRespaldo $viejo.Name)
-                Write-Output "Movido fuera ($NombreEntorno): $($viejo.FullName) -> $carpetaRespaldo"
-            }
-
             $item = Get-Item -LiteralPath $destino -Force -ErrorAction SilentlyContinue
             if ($item) {
                 $esEnlace = $item.LinkType -in @('Junction', 'SymbolicLink')
@@ -68,6 +55,7 @@ function Enlazar-SkillsEn {
                     $item.Delete()
                     Write-Output "Reemplazado ($NombreEntorno): enlace anterior $destino"
                 } else {
+                    $carpetaRespaldo = "$BaseDestino-respaldo"
                     if (-not (Test-Path -LiteralPath $carpetaRespaldo)) {
                         New-Item -ItemType Directory -Path $carpetaRespaldo | Out-Null
                     }

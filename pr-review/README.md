@@ -171,6 +171,18 @@ findings before merge, it does not ask first.
 ## Files
 
 - [`SKILL.md`](./SKILL.md) — the full skill definition (the authoritative spec).
+  It says which reference to read and when; a review reads only the
+  references whose trigger matches the diff or the mode.
+- [`references/re-review.md`](./references/re-review.md) — re-review mode:
+  previous findings by ID, new commits only.
+- [`references/modes.md`](./references/modes.md) — reviewing code you wrote
+  yourself, and the short form for small, config-only changes.
+- [`references/posting.md`](./references/posting.md) — posting the report on
+  the PR with `--comment`.
+- [`references/fix-mode.md`](./references/fix-mode.md) — applying findings by ID.
+- [`references/output-en.md`](./references/output-en.md) — the report template
+  in English (`--en`).
+- [`references/growing.md`](./references/growing.md) — where a new lesson goes.
 - [`references/case-studies.md`](./references/case-studies.md) — finding
   patterns learned from real reviews, independent of language: state saves
   guarded only for some states, exceptions after the point of no return,
@@ -190,6 +202,7 @@ findings before merge, it does not ask first.
 - [`references/production-readiness.md`](./references/production-readiness.md)
   — what breaks after the merge: migrations, compatibility, configuration (a
   setting that reaches only some of its readers, features dark until a flag),
+  documents and contracts another system validates (sandbox runs left pending),
   security boundaries, operability (including dev adapters that log one-time
   links and retry caps a catch-all bypasses), performance, frontend,
   dependencies (default egress, support window of a pinned framework line,

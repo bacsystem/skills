@@ -1,0 +1,30 @@
+name: Agentes
+
+# Comprueba que los agentes de agents/*.md no divergen entre sí
+# (sección de comunicación idéntica, frontmatter, líneas comunes).
+
+on:
+  pull_request:
+    paths:
+      - agents/**
+      - scripts/tests/test-agentes.sh
+      - .github/workflows/agentes.yml
+  push:
+    branches: [main]
+    paths:
+      - agents/**
+      - scripts/tests/test-agentes.sh
+      - .github/workflows/agentes.yml
+
+permissions:
+  contents: read
+
+jobs:
+  consistencia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test de agentes
+        run: bash scripts/tests/test-agentes.sh

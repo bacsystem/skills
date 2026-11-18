@@ -111,6 +111,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\instalar-agentes.ps1 -Target 
 Si el destino ya existe y no es este enlace, el script lo renombra a
 `<destino>.respaldo-<fecha>` antes de enlazar (no se borra nada). Abre una sesión nueva de Claude Code o Gemini/Antigravity después de instalar. Para actualizar, haz `git pull` en este repositorio (en Gemini/Antigravity vuelve a ejecutar el script para regenerar los `agent.md`).
 
+Este `README.md` no es un agente: sin frontmatter (`name`, `description`), Claude Code no lo carga y `instalar-agentes.sh` lo salta. `scripts/tests/test-agentes.sh` comprueba que las partes comunes de los agentes sigan idénticas.
+
 ## Arrancar el equipo
 
 - **En Claude Code:**

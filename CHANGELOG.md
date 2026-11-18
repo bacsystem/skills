@@ -13,7 +13,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   en el PR o ya está la salida de ese árbol, y solo corre lint y typecheck; `qa` reutiliza la
   evidencia de la revisión o del CI si el SHA del head es el revisado y el CI está verde. La
   mutación la hace solo `/pr-review`. `tech-lead` ya no repite lo que hace el skill (PR
-  mergeable, evidencia, límites, migraciones, secretos, una sola cosa, PR propios): pasa al
+  mergeable, límites, migraciones, secretos, una sola cosa, PR propios; un PR sin evidencia se
+  sigue devolviendo antes de revisar): pasa al
   subagente las reglas extra del proyecto y los archivos de contexto de las subcarpetas y no
   relee el diff. `git-flow` (paso 4) se reduce a comprobar que el PR hace una sola cosa cuando
   el proyecto exige `/pr-review`. El checklist de «issue listo» es solo del `po`; el

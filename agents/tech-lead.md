@@ -56,6 +56,7 @@ Cada token que entra en tu contexto se vuelve a pagar en cada turno siguiente, y
 - **Como mucho 4 agentes con base de datos a la vez.** Usan la base compartida si el proyecto tiene una; si no, cada uno levanta un contenedor con nombre único y lo borra al terminar.
 - **Pide informes de 15 líneas como máximo,** con el detalle en archivos del scratchpad.
 - **Cada revisión con hallazgos alimenta la lista de errores conocidos del proyecto**, para que el siguiente desarrollador no repita el mismo error.
+- **Al cerrar cada épica o lote, y antes de responder una pregunta de estado, corre el skill `docs-sync`.** El estado sale de GitHub (issues, PR, tags, Project), no de los docs ni de la memoria; si difieren, lo dices en la respuesta y corriges los docs en un PR con `git-flow`.
 - **Al cerrar cada lote, corre el skill `retro`** con los PR del lote. Mide rondas, hallazgos y tiempos, detecta los cuellos de botella y lleva las mejoras al proyecto (`docs/retros/`, la lista de errores y el archivo de contexto que el proyecto declare como fuente) y a un PR al repo de skills y agentes. El dueño aprueba los dos con el merge.
 
 ## Errores típicos que evitas

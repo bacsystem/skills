@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.15] - 2026-11-19
+
+### Agregado
+- Skill `docs-sync`: mantiene al día la documentación que afirma un estado (roadmap, líneas «Estado:», qué está hecho o pendiente, versiones, enlaces a issues) contra las fuentes de verdad: GitHub (issues, PR, tags, Project), los archivos de versión y el código.
+  - Se usa después de cada merge, al cerrar una épica o un lote, al tomar una decisión y antes de responder una pregunta de estado, que se contesta desde `gh` y nunca solo desde los docs o la memoria. Si difieren, se dice y se corrige.
+  - Los docs de estado los nombra el archivo de contexto del proyecto; si no, el skill propone la lista y la agrega.
+  - `docs-sync/scripts/check.sh <owner/repo> <archivo.md>...` (solo lectura, `gh` y `jq`) reporta con `archivo:línea` cada `#N` cerrado en una línea «pendiente» o abierto en una «hecho» (palabras en español e inglés, ampliables con `DOCS_SYNC_DONE_WORDS` y `DOCS_SYNC_PENDING_WORDS`), cada `vX.Y.Z` que no existe como tag y el archivo de versión por debajo del último tag. Sale con 1 si hay desvíos y aborta con 2 si `gh` falla: un fallo nunca pasa por limpio.
+  - `scripts/tests/test-docs-sync-check.sh` lo prueba con un `gh` falso.
+- `agents/tech-lead.md`: quien coordina corre `docs-sync` al cerrar cada épica o lote y antes de responder una pregunta de estado.
+
 ## [0.3.14] - 2026-11-19
 
 ### Cambiado

@@ -67,12 +67,16 @@ run before approving your own work, the second sets the short report form.
    to stop. A local branch or uncommitted work has no checks: skip
    this step.
    **Again before any `APROBADO`, first review or re-review:** the PR is not
-   in conflict (`mergeStateStatus` is not `DIRTY`) and the checks that run the
-   tests ran, green, on the exact head SHA the report names
-   (`gh pr view <n> --json headRefOid,statusCheckRollup`). A PR in conflict
-   has no CI on its SHA, and a re-review that only reads the new commits does
-   not notice; if the head moved or the checks are still running, the report
-   says so and does not approve that SHA.
+   in conflict (`mergeable` is not `CONFLICTING`, `mergeStateStatus` is not
+   `DIRTY`), and the suite ran green on the exact head SHA the report names
+   (`gh pr view <n> --json
+   mergeable,mergeStateStatus,headRefOid,statusCheckRollup`). When the repo
+   has CI that runs the tests on the PR (step 4), that means its checks on
+   that SHA. When it has none, or the target is a local branch, it means the
+   reviewer's own run on that SHA, with its counts in the report. A PR in
+   conflict has no CI on its SHA, and a re-review that only reads the new
+   commits does not notice; if the head moved or the checks are still
+   running, the report says so and does not approve that SHA.
 1. **Read the repository's own conventions** — `CLAUDE.md`, `AGENTS.md`,
    `CONTRIBUTING.md`, and any QA/testing doc the repo points to. Judge the PR
    against what this repo established (branch targets, test bar, commit
@@ -139,8 +143,10 @@ based on a misread of partial context is a false positive, and false positives
 cost more trust than a missed nitpick.
 
 **Merges of the base.** When the branch merged its base (`git log --merges
-<base>..HEAD`), read the diff each merge introduced (`git show --remerge-diff
-<sha>`, or `git diff <sha>^1 <sha>` against what the base had), above all in
+<base>..HEAD`), read the diff each merge introduced, preferably with `git show
+--remerge-diff <sha>` (what the conflict resolution changed). Without it, compare
+against the base parent too: `git diff <sha>^2 <sha>` shows a base line the
+resolution dropped, which `git diff <sha>^1 <sha>` does not. Above all in
 shared files: test-case scripts, allowlists, migration and ID lists,
 changelogs. A conflict resolved by hand can drop a line (a `ROLLBACK`, a
 guard) or duplicate an ID, and the PR diff against the new base hides it.
@@ -553,9 +559,10 @@ Verdict rules (identical in both languages):
   the missing verification (see **Severity and the bar**).
 - A `[POSIBLE]` on money, authorization, sessions or persistence caps the
   verdict at `APROBADO CON CAMBIOS`.
-- `APROBADO` / `APPROVED` also needs the PR free of conflicts with green CI on
-  the reviewed SHA (step 0) and every non-functional criterion with its
-  measured number.
+- `APROBADO` / `APPROVED` also needs the PR free of conflicts, the suite green
+  on the reviewed SHA (the PR's CI when the repo has one that runs the tests;
+  otherwise the reviewer's own run on that SHA, with counts — step 0), and
+  every non-functional criterion with its measured number.
 
 Order findings most severe first.
 

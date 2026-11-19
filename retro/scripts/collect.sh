@@ -1,25 +1,44 @@
 #!/usr/bin/env bash
 # Junta las métricas de un lote de PR para la retrospectiva: rondas de revisión,
-# informes de QA, hallazgos por severidad, commits de trabajo y merges de la base,
+# informes de QA, hallazgos por severidad, commits de trabajo y merges recibidos,
 # tiempo hasta el merge y fallos (con su causa) y duración de la CI.
 # Uso: retro/scripts/collect.sh <owner/repo> <PR> [<PR>...]
 # Solo lee (gh api, gh run view). Escribe Markdown por stdout.
+# Con `source` solo define las funciones (las prueba scripts/tests/test-retro-collect.sh).
 set -euo pipefail
-[ $# -ge 2 ] || { echo "uso: $0 <owner/repo> <PR> [<PR>...]" >&2; exit 2; }
-repo=$1; shift
-command -v gh >/dev/null || { echo "falta gh" >&2; exit 2; }
-command -v jq >/dev/null || { echo "falta jq" >&2; exit 2; }
 
 # Una ronda es un comentario cuya primera línea abre una revisión, una re-revisión
 # o el cierre de la revisión (el formato de `pr-review`). Las líneas «Veredicto»
 # de dentro de un comentario (tablas de cierre, informes de QA) no cuentan.
-ronda='^(\*\*)?(Veredicto|Verdict)|^#+ (Re-revisión|Re-review|Revisión|Review|Code review|Cierre|Closing)'
-qa='^#+ QA'
+RONDA='^(\*\*)?(Veredicto|Verdict)|^#+ (Re-revisión|Re-review|Revisión|Review|Code review|Cierre|Closing)'
+QA='^#+ .*\bQA\b'
 
-# Primer test que falló en el log de un run, con el job: Go (`--- FAIL:`),
-# Playwright (`✘`) o Vitest/Jest (`FAIL`). Vacío si no hay log o no se reconoce.
-causa() {
-  { gh run view "$1" --repo "$repo" --log-failed 2>/dev/null || true; } | awk -F'\t' '
+# Cuenta los comentarios (JSON de la API de issues, por stdin) cuya primera línea
+# cumple la regex $1.
+contar_primera_linea() {
+  jq --arg r "$1" '[.[] | select(.body | split("\n")[0] | test($r))] | length'
+}
+
+# Commits subidos después de abrir el PR ($1 = created_at), JSON por stdin.
+# Imprime «trabajo merges»: un merge es un commit con dos padres, venga de la base
+# o de otra rama (en una rama apilada, también los de la rama de abajo).
+contar_commits() {
+  jq -r --arg c "$1" '[.[] | select(.commit.committer.date > $c) | (.parents | length > 1)]
+    | "\(map(select(. == false)) | length) \(map(select(. == true)) | length)"'
+}
+
+# Tiempo entre dos instantes ISO 8601: minutos por debajo de una hora; si no,
+# horas con un decimal.
+tiempo_entre() {
+  jq -rn --arg a "$1" --arg b "$2" '
+    ((($b|fromdate) - ($a|fromdate)) / 60) as $m
+    | if $m < 60 then "\($m | floor) min" else "\(($m / 6 | round) / 10) h" end'
+}
+
+# Primer test que falló en un log de `gh run view --log-failed` (stdin), con el
+# job: Go (`--- FAIL:`), Playwright (`✘`) o Vitest/Jest (`FAIL`). Vacío si no se reconoce.
+primer_test_fallido() {
+  awk -F'\t' '
     {
       msg = $NF; sub(/^[0-9T:.-]+Z /, "", msg)
       if (match(msg, /--- FAIL: [^ ]+/))   { t = substr(msg, RSTART + 10, RLENGTH - 10) }
@@ -31,45 +50,52 @@ causa() {
     }' | tr '|' '/'
 }
 
-echo "| PR | Título | Rondas de revisión | Informes de QA | Bloq. | Imp. | Men. | Commits de trabajo | Merges de la base | Hasta el merge | CI fallida | Causa de la falla | Minutos de CI |"
-echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|"
-for pr in "$@"; do
-  case "$pr" in *[!0-9]*) echo "PR inválido: $pr" >&2; exit 2;; esac
-  meta=$(gh api "repos/$repo/pulls/$pr")
-  title=$(jq -r '.title' <<<"$meta" | cut -c1-60 | tr '|' '/')
-  created=$(jq -r '.created_at' <<<"$meta")
-  merged=$(jq -r '.merged_at // empty' <<<"$meta")
-  comments=$(gh api --paginate "repos/$repo/issues/$pr/comments" | jq -s 'add // []')
-  rounds=$(jq --arg r "$ronda" '[.[] | select(.body | split("\n")[0] | test($r))] | length' <<<"$comments")
-  qas=$(jq --arg r "$qa" '[.[] | select(.body | split("\n")[0] | test($r))] | length' <<<"$comments")
-  bodies=$(jq -r '.[].body' <<<"$comments")
-  blk=$({ grep -o -E '\[(BLOQUEANTE|BLOCKER)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
-  imp=$({ grep -o -E '\[(IMPORTANTE|IMPORTANT)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
-  min=$({ grep -o -E '\[(MENOR|MINOR)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
-  # Commits subidos después de abrir el PR: los de trabajo y los merges de la base
-  # (un commit con dos padres) van en columnas separadas.
-  commits=$(gh api --paginate "repos/$repo/pulls/$pr/commits" | jq -s --arg c "$created" \
-    '[add // [] | .[] | select(.commit.committer.date > $c) | (.parents | length > 1)]')
-  work=$(jq '[.[] | select(. == false)] | length' <<<"$commits")
-  merges=$(jq '[.[] | select(. == true)] | length' <<<"$commits")
-  elapsed="-"
-  if [ -n "$merged" ]; then
-    elapsed=$(jq -rn --arg a "$created" --arg b "$merged" '
-      ((($b|fromdate) - ($a|fromdate)) / 60) as $m
-      | if $m < 60 then "\($m | floor) min" else "\(($m / 6 | round) / 10) h" end')
-  fi
-  runs=$(gh api "repos/$repo/actions/runs?branch=$(jq -r '.head.ref' <<<"$meta")&per_page=100" --jq '.workflow_runs')
-  failed=$(jq '[.[] | select(.conclusion=="failure")] | length' <<<"$runs")
-  minutes=$(jq '[.[] | select(.conclusion=="success" or .conclusion=="failure") | ((.updated_at|fromdate)-(.run_started_at|fromdate))] | add // 0 | ./60 | floor' <<<"$runs")
-  causes="-"
-  if [ "$failed" -gt 0 ]; then
-    causes=""
-    for id in $(jq -r '.[] | select(.conclusion=="failure") | .id' <<<"$runs"); do
-      c=$(causa "$id")
-      causes="${causes:+$causes; }${c:-sin test reconocido (run $id)}"
-    done
-  fi
-  echo "| #$pr | $title | $rounds | $qas | $blk | $imp | $min | $work | $merges | $elapsed | $failed | $causes | $minutes |"
-done
-echo
-echo "_Cuentas aproximadas: las rondas son los comentarios que empiezan con el veredicto, una re-revisión o el cierre del skill \`pr-review\`; los hallazgos salen de sus etiquetas de severidad en todos los comentarios. La causa de la falla es el primer test que falló en el log del run (\`gh run view --log-failed\`), si el log sigue disponible. Revisa a mano los valores que no cuadren._"
+# $1 = repo, $2 = id del run. Nunca falla: sin log, imprime vacío.
+causa() {
+  { gh run view "$2" --repo "$1" --log-failed 2>/dev/null || true; } | primer_test_fallido
+}
+
+main() {
+  [ $# -ge 2 ] || { echo "uso: $0 <owner/repo> <PR> [<PR>...]" >&2; exit 2; }
+  local repo=$1; shift
+  command -v gh >/dev/null || { echo "falta gh" >&2; exit 2; }
+  command -v jq >/dev/null || { echo "falta jq" >&2; exit 2; }
+
+  echo "| PR | Título | Rondas de revisión | Informes de QA | Bloq. | Imp. | Men. | Commits de trabajo | Merges | Hasta el merge | CI fallida | Causa de la falla | Minutos de CI |"
+  echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+  local pr meta title created merged comments rounds qas bodies blk imp min work merges elapsed branch runs failed minutes causes id c
+  for pr in "$@"; do
+    case "$pr" in *[!0-9]*) echo "PR inválido: $pr" >&2; exit 2;; esac
+    meta=$(gh api "repos/$repo/pulls/$pr")
+    title=$(jq -r '.title' <<<"$meta" | cut -c1-60 | tr '|' '/')
+    created=$(jq -r '.created_at' <<<"$meta")
+    merged=$(jq -r '.merged_at // empty' <<<"$meta")
+    comments=$(gh api --paginate "repos/$repo/issues/$pr/comments" | jq -s 'add // []')
+    rounds=$(contar_primera_linea "$RONDA" <<<"$comments")
+    qas=$(contar_primera_linea "$QA" <<<"$comments")
+    bodies=$(jq -r '.[].body' <<<"$comments")
+    blk=$({ grep -o -E '\[(BLOQUEANTE|BLOCKER)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
+    imp=$({ grep -o -E '\[(IMPORTANTE|IMPORTANT)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
+    min=$({ grep -o -E '\[(MENOR|MINOR)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
+    read -r work merges < <(gh api --paginate "repos/$repo/pulls/$pr/commits" | jq -s 'add // []' | contar_commits "$created")
+    elapsed="-"
+    [ -z "$merged" ] || elapsed=$(tiempo_entre "$created" "$merged")
+    branch=$(jq -r '.head.ref | @uri' <<<"$meta")
+    runs=$(gh api "repos/$repo/actions/runs?branch=$branch&per_page=100" --jq '.workflow_runs')
+    failed=$(jq '[.[] | select(.conclusion=="failure")] | length' <<<"$runs")
+    minutes=$(jq '[.[] | select(.conclusion=="success" or .conclusion=="failure") | ((.updated_at|fromdate)-(.run_started_at|fromdate))] | add // 0 | ./60 | floor' <<<"$runs")
+    causes="-"
+    if [ "$failed" -gt 0 ]; then
+      causes=""
+      for id in $(jq -r '.[] | select(.conclusion=="failure") | .id' <<<"$runs"); do
+        c=$(causa "$repo" "$id")
+        causes="${causes:+$causes; }${c:-sin test reconocido (run $id)}"
+      done
+    fi
+    echo "| #$pr | $title | $rounds | $qas | $blk | $imp | $min | $work | $merges | $elapsed | $failed | $causes | $minutes |"
+  done
+  echo
+  echo "_Cuentas aproximadas: las rondas son los comentarios que empiezan con el veredicto, una re-revisión o el cierre del skill \`pr-review\`; los hallazgos salen de sus etiquetas de severidad en todos los comentarios. «Merges» cuenta los commits con dos padres subidos tras abrir el PR: los de la base y, en una rama apilada, los de la rama de abajo. La causa de la falla es el primer test que falló en el log del run (\`gh run view --log-failed\`), si el log sigue disponible. Revisa a mano los valores que no cuadren._"
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main "$@"; fi

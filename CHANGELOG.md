@@ -10,14 +10,16 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Corregido
 - `retro/scripts/collect.sh`: las cuentas de la primera retro no cuadraban.
   - Una ronda de revisión es un comentario cuya primera línea abre una revisión, una re-revisión o el cierre, no cada línea con «Veredicto» (daba 8 a 12 rondas por PR; las reales eran 2 o 3). Los informes de QA van en su propia columna.
-  - Los commits de trabajo y los merges de la base, en dos columnas.
+  - Los commits de trabajo y los merges, en dos columnas (los merges incluyen los de la base y, en una rama apilada, los de la rama de abajo).
+  - Un informe de QA es un comentario cuyo primer encabezado nombra QA, con o sin emoji.
+  - `scripts/tests/test-retro-collect.sh` prueba el parseo sin red (rondas, QA, commits, tiempo y causa de la falla).
   - El tiempo hasta el merge, en minutos o en horas con un decimal.
   - Por cada run de CI fallido, el job y el primer test que falló, sacado de `gh run view --log-failed` (Go, Playwright, Vitest/Jest). Si el log no está o no se reconoce, lo dice sin cortar el script.
-- `retro/SKILL.md`: leer la causa de cada CI en rojo antes de contarla como defecto; el tiempo hasta el merge mide la espera del merge cuando el dueño mergea el lote junto.
+- `retro/SKILL.md`: leer la causa de cada CI en rojo antes de contarla como defecto (un test de tiempo es falsa alarma solo con evidencia de que la causa fue el entorno; si no, se investiga como posible regresión); el tiempo hasta el merge mide la espera del merge cuando el dueño mergea el lote junto.
 
 ### Cambiado
-- `pr-review`: antes de cualquier `APROBADO`, también en una re-revisión, el PR no está en conflicto y la CI corrió en verde sobre el SHA revisado. Se lee el diff de cada merge de la base que trae la rama, sobre todo en archivos compartidos. Un criterio no funcional no se aprueba sin el número medido junto a la cota.
-- `agents/go-dev.md` y `agents/qa.md`: un criterio no funcional se reporta con su número; una cota de tiempo tiene que ser alcanzable en la CI con `-race`, o el test se salta con `-race` y corre aparte; un test concurrente no lanza más trabajo que el tamaño del pool.
+- `pr-review`: antes de cualquier `APROBADO`, también en una re-revisión, el PR no está en conflicto y la suite corrió en verde sobre el SHA revisado: la CI del PR si el repo la tiene, o la corrida del revisor, con sus cuentas, si no hay CI o es una rama local. Se lee el diff de cada merge de la base que trae la rama (`--remerge-diff`, o contra el padre de la base), sobre todo en archivos compartidos. Un criterio no funcional no se aprueba sin el número medido junto a la cota.
+- `agents/go-dev.md` y `agents/qa.md`: un criterio no funcional se reporta con su número; una cota de tiempo tiene que ser alcanzable en la CI con `-race`, o el test se salta con `-race` y corre aparte, sin instrumentar (un paso de CI propio o, sin CI, la corrida final del desarrollador); si se sube la cota, la original se verifica igual sin instrumentar. Un test que mide tiempo no lanza más trabajo que el tamaño del pool; uno de contención sí puede saturarlo.
 - `agents/architect.md`: la revisión previa suma el punto 9, verificable (cada criterio con un número o el test que lo fija), y el 10, techo absoluto para todo límite de abuso (intentos, envíos, reintentos). Aplica también a las historias de solo docs o contrato. `agents/tech-lead.md` lo refleja.
 - README: `/pr-review` es la puerta de revisión y CodeRabbit una ayuda, no un requisito; cada retro abre un solo PR a este repo.
 

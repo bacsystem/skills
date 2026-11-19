@@ -88,18 +88,22 @@ Skip when: the user only wants a quick local commit with no review/PR.
   (e.g. `git@host-alias:org/repo.git`) whose name is not `origin`. Use the
   resolved remote name for the push (step 9) and the post-merge tag (step 10).
 - **Changes** = tracked modifications (staged or unstaged) and/or new files.
-  Whitespace-only or no changes → stop.
+  Whitespace-only or no changes → stop, except the release PR of a
+  batch-release project, which starts from a clean tree (step 6).
 
 ## Workflow
 
 Run in order. Stop and report if a precondition fails.
 
-1. **Detect context** — `git status` / `git diff`; stop if no changes. Detect
+1. **Detect context** — `git status` / `git diff`; stop if no changes (except
+   for the release PR of a batch-release project, which starts from a clean
+   tree: step 6 creates its edits). Detect
    version files (`package.json`, `VERSION`, `CHANGELOG.md`, `README.md`).
    Resolve the push remote (`git remote -v`; see the Remote rule). Detect
    whether a `develop` branch exists (`git show-ref --verify --quiet
    refs/heads/develop` or `refs/remotes/<remote>/develop`) — if so, it's the
-   PR base for this run (GitFlow repo); otherwise the base is `main`. Check
+   PR base for this run (GitFlow repo); otherwise the base is `main`. The
+   release PR of a batch-release project always targets `main` (step 6). Check
    `gh auth status`. Sort the changed files into source, tests, docs, config,
    and the three that change the deploy: **migrations, contract artifacts
    (OpenAPI, schemas) and environment variables**. Any of those three makes
@@ -136,7 +140,17 @@ Run in order. Stop and report if a precondition fails.
    environment (a staging service, an external API, a deploy) is reported as
    "passes locally", not as verified. If the project has no test/lint setup,
    say so and move on — don't fabricate a command.
-6. **Compute version** — read current version per precedence, then apply the
+6. **Compute version** — **batch-release projects skip this step.** If the project's
+   context file (or a delivery doc it links, e.g. `docs/delivery-process.md`) says
+   versions are bumped once per batch by a release PR, a story PR does **not**
+   touch the version: step 7 only adds its entry under `## [Unreleased]` (create
+   that heading if missing). Only the release PR (`chore(release): vX.Y.Z`)
+   computes the version, from every `[Unreleased]` entry (any `feat` or breaking
+   change → per the project's rule), renames `[Unreleased]` to `[X.Y.Z] - date`
+   and updates the version files; its tag is created after merge (step 10, or a
+   release-tag workflow if the repo has one). The release PR always targets
+   `main`: in a repo with `develop`, it is the promotion PR (`develop` → `main`,
+   or a `release/vX.Y.Z` branch cut from `develop`), not a PR into `develop`. Otherwise, read the current version per precedence, then apply the
    bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
    implementation of the SemVer table, including the `0.x` rule). The
    Conventions table stays the human-readable reference.
@@ -183,7 +197,7 @@ Run in order. Stop and report if a precondition fails.
      issues*, and *Deploy & rollback* when step 1 found a migration, a contract
      artifact or an environment variable.
    - PR base is the branch resolved in step 1 (`develop` if it exists, else
-     `main`), title = commit subject. **Show the body and ask before
+     `main`; the release PR of a batch-release project always `main`), title = commit subject. **Show the body and ask before
      creating.** On confirmation: `gh pr create --base <resolved base>`. If
      `gh` is unavailable, output the body and the compare URL instead.
    - After creating it, report the URL and `gh pr checks`. If the project's
@@ -201,10 +215,13 @@ Run in order. Stop and report if a precondition fails.
     that merge is an integration step, not a release; the tag happens later
     when `develop` is promoted to `main` (release/hotfix branch), which is
     outside this skill's scope.
+    In a batch-release project, **only the release PR is tagged**: story PRs
+    never are, even when they merge into `main`.
 
 ## Common Mistakes
 
 - **Tagging on the feature branch** — the tag goes on `main` after merge (step 10).
+- **Bumping the version in a story PR of a batch-release project** — stories add an `[Unreleased]` entry only; the release PR bumps once per batch.
 - **Tagging a `develop` merge** — only tag when the PR's base was `main`; a merge into
   `develop` is an integration step, not a release.
 - **Hardcoding PR base to `main`** — detect a `develop` branch first (step 1); GitFlow

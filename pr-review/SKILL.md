@@ -96,6 +96,24 @@ run before approving your own work, the second sets the short report form.
    earlier issue may have fixed the opposite as an acceptance criterion; the
    PR either argues the change explicitly or it is a finding.
 
+## Running cost (when a coordinator runs many reviews in parallel)
+
+- Run the **full** suite once. Mutations and re-checks run only on the packages
+  that guard the line you mutated. A re-review runs what the new commits
+  touch and the packages that depend on them; when the impact is unclear,
+  run the full suite again.
+- If the project provides a shared test database (its context file or delivery
+  doc says so), use it. Otherwise start a container with a unique name
+  (`rev<PR>-pg`) and remove it when done; never remove a container you did not
+  start.
+- Work in the worktree you were given. Never run review mutations in a tree that
+  QA uses at the same time: give QA its own detached worktree.
+- Prefix every scratch file with the PR (`rev<PR>-*`): the scratchpad may be
+  shared.
+- When the caller asks for a short answer, the report file holds the full
+  format and the reply is the verdict plus findings (ID, severity,
+  `file:line`).
+
 ## Getting the diff
 
 Ask which target if none was given. Never guess.

@@ -27,6 +27,7 @@ case "$1" in
   repos/o/r/issues/2) echo '{"number":2,"state":"open"}' ;;
   repos/o/r/issues/3) echo '{"number":3,"state":"closed"}' ;;
   repos/o/r/tags*)    echo '[{"name":"v0.1.0"}]'; echo '[{"name":"v0.2.0"}]' ;;
+  repos/o/s/tags*)    echo '[{"name":"0.1.0"}]'; echo '[{"name":"0.2.0"}]' ;;
   *) echo "gh: Not Found (HTTP 404) $1" >&2; exit 1 ;;
 esac
 EOF
@@ -139,5 +140,11 @@ out="$(corre o/r)"
 contiene "sin archivos: exit 2" "exit=2" "$out"
 out="$(corre o/r no-existe.md)"
 contiene "archivo inexistente: exit 2" "exit=2" "$out"
+
+# 8. tags sin el prefijo v: «v0.1.0» existe; «v0.1.5» (menor que el último) no
+printf 'Publicada la v0.1.0.\nLa v0.1.5 corrigió el instalador.\n' > "$T/v.md"
+out="$(corre o/s v.md)"
+igual "tags sin v: v0.1.0 existe" 0 "$(grep -c 'v0.1.0 no existe' <<<"$out")"
+contiene "tags sin v: v0.1.5 falta" "v.md:2: v0.1.5 no existe como tag" "$out"
 
 [ "$fallos" -eq 0 ] && echo "All tests passed." || { echo "$fallos fallo(s)."; exit 1; }

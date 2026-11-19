@@ -135,10 +135,11 @@ main() {
       return 0
     }
     FILENAME == ARGV[1] { st[$1] = $2; next }
-    FILENAME == ARGV[2] { tag[$1] = 1; next }
+    # Con o sin el prefijo v: un repo con tags «1.2.3» también reconoce «v1.2.3».
+    FILENAME == ARGV[2] { t = $1; sub(/^v/, "", t); tag[t] = 1; next }
     $3 == "R" && $5 == "pending" && st[$4] == "closed" { print $1 ":" $2 ": #" $4 " está cerrado, pero la línea lo da por pendiente" }
     $3 == "R" && $5 == "done" && st[$4] == "open"      { print $1 ":" $2 ": #" $4 " está abierto, pero la línea lo da por hecho" }
-    $3 == "V" && !($4 in tag) && (estricto == "1" || (ultimo != "" && !mayor_que($4, ultimo))) { print $1 ":" $2 ": " $4 " no existe como tag" }
+    $3 == "V" && !(substr($4, 2) in tag) && (estricto == "1" || (ultimo != "" && !mayor_que($4, ultimo))) { print $1 ":" $2 ": " $4 " no existe como tag" }
   ' "$tmp/states" "$tmp/tags" "$tmp/refs")"
   if [ -n "$out" ]; then echo "$out"; desvios=$(wc -l <<<"$out" | tr -d ' '); fi
 

@@ -13,6 +13,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   - Las versiones mayores que el último tag se ignoran, porque son de otras librerías. `DOCS_SYNC_STRICT_VERSIONS=1` las vuelve a marcar.
   - «todo» ya no cuenta como «pendiente» (en español es «all»); solo `TODO` en mayúsculas.
   - `<!-- docs-sync: ignore -->` saltea la línea donde está y la siguiente.
+  - Los tags se comparan con o sin el prefijo `v`: un repo con tags `1.2.3` ya no marca `v1.2.3` como inexistente.
   - Un test por caso.
 
 ## [0.3.15] - 2026-11-19

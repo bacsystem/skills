@@ -44,7 +44,7 @@ Pruebas de los instaladores (carpeta temporal, no tocan `~/.claude`): `bash scri
 |---|---|
 | [`git-flow`](./git-flow) | Flujo guiado de entrega: del working tree al PR (ramas, code review, Conventional Commits, SemVer y plantilla de PR) |
 | [`pr-review`](./pr-review) | Code review de un PR (propio o de terceros): corrección (lógica, casos borde, concurrencia, dinero y tipos), seguridad en los límites de confianza, Clean Code, SOLID, DRY y buenas prácticas, con listón estricto (corre las suites, muta el test clave, abre el radio de acción del cambio y lo deja escrito en una sección de verificación), veredicto explícito (también en la primera línea), modo corrección por ID y opción de publicarlo como comentario en GitHub (`--es`/`--en`, `--comment`) |
-| [`retro`](./retro) | Retrospectiva al cerrar cada lote: mide con datos de GitHub (rondas de revisión, hallazgos por severidad, horas hasta el merge y tiempo y fallos de CI), agrupa los defectos por clase, detecta los cuellos de botella y lleva las mejoras al proyecto y a un PR a este repo |
+| [`retro`](./retro) | Retrospectiva al cerrar cada lote: mide con datos de GitHub (rondas de revisión, informes de QA, hallazgos por severidad, commits de trabajo y merges de la base, tiempo hasta el merge y tiempo, fallos de CI y el test que los causó), agrupa los defectos por clase, detecta los cuellos de botella y lleva las mejoras al proyecto y a un PR a este repo |
 | [`ui-ux-scout`](./ui-ux-scout) | Crea y mejora componentes de khipu-design-system a partir de un estilo de Refero Styles (UUID): plan con tokens y contraste WCAG, aprobación, implementación con criterio de UI/UX, React/Next, DRY, SOLID y validación por tipo de dato, y verificación del build |
 
 ## Agentes
@@ -105,6 +105,8 @@ Resumen de las versiones publicadas. El detalle completo está en el
 
 - Sigue [Semantic Versioning](https://semver.org/lang/es/) para las versiones.
 - Documenta cada cambio relevante en el [CHANGELOG](./CHANGELOG.md).
+- La puerta de revisión de cada PR es [`/pr-review`](./pr-review), con su informe publicado como comentario en el PR. CodeRabbit es una ayuda cuando hay cupo, no un requisito: llega al límite de revisiones gratis y entonces no revisa.
+- Cada retrospectiva ([`retro`](./retro)) abre un solo PR a este repo con todas sus mejoras genéricas para agentes y skills, en vez de uno por mejora.
 
 ## Licencia
 

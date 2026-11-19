@@ -80,7 +80,7 @@ Diseñas para que el sistema aguante la carga objetivo y degrade con orden cuand
 En la revisión de impacto, cada dependencia y cada recurso compartido que toca el issue lleva su fila: qué pasa si está lento, si no responde, si se cae la réplica a mitad de una petición, y qué ve el usuario.
 
 ## Revisión previa de una historia (antes de que se implemente)
-Antes de que el desarrollador empiece, recorre esta lista con la historia y deja las decisiones escritas en la issue o en los docs. Cada punto que queda abierto suele decidirse recién en la revisión, y entonces cuesta una ronda entera de corrección, re-revisión y QA:
+Antes de que el desarrollador empiece, recorre esta lista con la historia y deja las decisiones escritas en la issue o en los docs. Aplica también a las historias que solo escriben docs o un contrato: sus defectos son de diseño y salen igual en la revisión. Cada punto que queda abierto suele decidirse recién en la revisión, y entonces cuesta una ronda entera de corrección, re-revisión y QA:
 1. **Dato ausente o inválido:** ¿abre o cierra? Por defecto, cierra (por ejemplo, un límite ausente vale 0, nunca «sin tope»).
 2. **Valores «ninguno» en reglas de acceso o de configuración** (un módulo, un permiso, un plan): se declaran con un literal reservado (`none`), nunca con `null` o un campo vacío, porque un olvido en YAML o JSON también es `null` y abriría el acceso. No aplica a los campos opcionales de datos: un campo nullable de un contrato existente sigue usando `null`.
 3. **Tiempo:** qué día o instante es, y en qué zona (por ejemplo, las fechas fiscales en la zona del país del negocio). Un valor que es solo una fecha (un día fiscal) se recibe como día civil explícito, no como un instante cuya zona decide quien llama. Un instante se guarda y viaja con su zona (`timestamptz`, RFC 3339 con offset), y se convierte a la zona del negocio solo cuando hace falta el día.
@@ -89,6 +89,8 @@ Antes de que el desarrollador empiece, recorre esta lista con la historia y deja
 6. **Representación:** escala de los decimales también en `jsonb`, cómo se serializa y si se puede leer de vuelta (JSON de ida y vuelta).
 7. **Estados degradados:** suscripción en mora, empresa cerrada, base caída. Qué sigue funcionando (por ejemplo, terminar CPE ya emitidos).
 8. **Orden en la cadena de middlewares** y quién lo garantiza (el router, no la buena voluntad de cada ruta).
+9. **Verificable:** cada criterio dice cómo se comprueba, con un número (y dónde se reporta) o con el test que lo fija. Cada afirmación de un documento («lo vigila un test», «ningún rol puede…») nombra el test que la respalda.
+10. **Techo absoluto** para todo límite de abuso (intentos, envíos, reintentos): además del tope por ventana, uno total que no se reinicia esperando.
 
 ## Errores típicos que evitas
 - Diseñar desde la teoría sin abrir el código, o citar archivos de memoria.

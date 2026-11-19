@@ -66,6 +66,13 @@ run before approving your own work, the second sets the short report form.
    required approval is missing, which is what this review is for: not a reason
    to stop. A local branch or uncommitted work has no checks: skip
    this step.
+   **Again before any `APROBADO`, first review or re-review:** the PR is not
+   in conflict (`mergeStateStatus` is not `DIRTY`) and the checks that run the
+   tests ran, green, on the exact head SHA the report names
+   (`gh pr view <n> --json headRefOid,statusCheckRollup`). A PR in conflict
+   has no CI on its SHA, and a re-review that only reads the new commits does
+   not notice; if the head moved or the checks are still running, the report
+   says so and does not approve that SHA.
 1. **Read the repository's own conventions** — `CLAUDE.md`, `AGENTS.md`,
    `CONTRIBUTING.md`, and any QA/testing doc the repo points to. Judge the PR
    against what this repo established (branch targets, test bar, commit
@@ -130,6 +137,13 @@ is ambiguous (a changed function whose callers are off-diff, a new abstraction
 whose purpose depends on existing code), open the surrounding file — a finding
 based on a misread of partial context is a false positive, and false positives
 cost more trust than a missed nitpick.
+
+**Merges of the base.** When the branch merged its base (`git log --merges
+<base>..HEAD`), read the diff each merge introduced (`git show --remerge-diff
+<sha>`, or `git diff <sha>^1 <sha>` against what the base had), above all in
+shared files: test-case scripts, allowlists, migration and ID lists,
+changelogs. A conflict resolved by hand can drop a line (a `ROLLBACK`, a
+guard) or duplicate an ID, and the PR diff against the new base hides it.
 
 **Large diffs** (roughly 15+ files): group the files by layer or module and
 review one group at a time, so no file is skimmed because it came late. End
@@ -440,6 +454,13 @@ evidence and whether *you* reproduced it (ran the command, opened the page,
 ran the test) or only read it in the PR (a test, the PR body's claim). Met on
 the PR's word alone is a weaker statement and the report should look weaker.
 
+**Non-functional criteria need the number.** A criterion that asks for
+something measured (latency, throughput, pool wait, size, a "measured and
+reported" bound) is met only when the PR body or a test output shows the
+measured value next to the bound, and the test measures the quantity the
+criterion names, not a neighbor of it. Without the number it is not met, and
+the verdict is not `APROBADO`.
+
 **Issue criteria and the verdict.** A PR that says it *closes* an issue while
 a criterion is not met gets a finding (`IMPORTANTE` / `IMPORTANT`): either
 meet the criterion or change "Closes" to "Refs" and say what is left. A PR
@@ -532,6 +553,9 @@ Verdict rules (identical in both languages):
   the missing verification (see **Severity and the bar**).
 - A `[POSIBLE]` on money, authorization, sessions or persistence caps the
   verdict at `APROBADO CON CAMBIOS`.
+- `APROBADO` / `APPROVED` also needs the PR free of conflicts with green CI on
+  the reviewed SHA (step 0) and every non-functional criterion with its
+  measured number.
 
 Order findings most severe first.
 

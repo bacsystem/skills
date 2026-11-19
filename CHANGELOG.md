@@ -5,6 +5,22 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.13] - 2026-11-19
+
+### Corregido
+- `retro/scripts/collect.sh`: las cuentas de la primera retro no cuadraban.
+  - Una ronda de revisión es un comentario cuya primera línea abre una revisión, una re-revisión o el cierre, no cada línea con «Veredicto» (daba 8 a 12 rondas por PR; las reales eran 2 o 3). Los informes de QA van en su propia columna.
+  - Los commits de trabajo y los merges de la base, en dos columnas.
+  - El tiempo hasta el merge, en minutos o en horas con un decimal.
+  - Por cada run de CI fallido, el job y el primer test que falló, sacado de `gh run view --log-failed` (Go, Playwright, Vitest/Jest). Si el log no está o no se reconoce, lo dice sin cortar el script.
+- `retro/SKILL.md`: leer la causa de cada CI en rojo antes de contarla como defecto; el tiempo hasta el merge mide la espera del merge cuando el dueño mergea el lote junto.
+
+### Cambiado
+- `pr-review`: antes de cualquier `APROBADO`, también en una re-revisión, el PR no está en conflicto y la CI corrió en verde sobre el SHA revisado. Se lee el diff de cada merge de la base que trae la rama, sobre todo en archivos compartidos. Un criterio no funcional no se aprueba sin el número medido junto a la cota.
+- `agents/go-dev.md` y `agents/qa.md`: un criterio no funcional se reporta con su número; una cota de tiempo tiene que ser alcanzable en la CI con `-race`, o el test se salta con `-race` y corre aparte; un test concurrente no lanza más trabajo que el tamaño del pool.
+- `agents/architect.md`: la revisión previa suma el punto 9, verificable (cada criterio con un número o el test que lo fija), y el 10, techo absoluto para todo límite de abuso (intentos, envíos, reintentos). Aplica también a las historias de solo docs o contrato. `agents/tech-lead.md` lo refleja.
+- README: `/pr-review` es la puerta de revisión y CodeRabbit una ayuda, no un requisito; cada retro abre un solo PR a este repo.
+
 ## [0.3.12] - 2026-11-19
 
 ### Agregado

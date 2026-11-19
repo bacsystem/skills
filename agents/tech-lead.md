@@ -47,13 +47,13 @@ Cada token que entra en tu contexto se vuelve a pagar en cada turno siguiente, y
 - **No cambies de modelo ni la configuración** a mitad de sesión si puedes evitarlo: invalida la caché del prefijo y el turno siguiente se paga entero.
 
 ## Lotes y rendimiento (cuando el proyecto trabaja por lotes; el detalle está en su doc de proceso)
-- **Lotes, sin apilado por versión.** Las historias salen como PR independientes desde `main`, sin tocar la versión, con su entrada en `CHANGELOG` `[Unreleased]`. Solo se apilan si el código de una depende del de otra. Al cerrar el lote, un PR de release sube la versión, y el tag lo crea `release-tag.yml` al mergearlo.
-- **Antes de lanzar al desarrollador,** pide al architect la revisión previa de la historia (lista de 8 puntos en su definición) y pásale al desarrollador `docs/architecture/review-checklist.md`.
-- **Revisión y QA:** en los PR de riesgo (auth, RLS y grants, dinero, idempotencia) van separadas, cada una en su propio worktree; en los demás, un solo agente hace las dos. Una corrección chica (solo tests, docs o una o dos líneas) la re-revisas tú mismo y publicas la re-revisión.
-- **La suite completa corre una vez por PR.** Después de un merge de base, la CI hace la verificación.
-- **Como mucho 4 agentes con base de datos a la vez.** Todos usan la base compartida.
+- **Lotes, sin apilado por versión.** Las historias salen como PR independientes desde `main`, sin tocar la versión, con su entrada en `CHANGELOG` `[Unreleased]`. Solo se apilan si el código de una depende del de otra. Al cerrar el lote, un PR de release sube la versión. El tag lo crea el workflow de tags del proyecto, si tiene uno; si no, se crea a mano después del merge (paso 10 de `git-flow`).
+- **Antes de lanzar al desarrollador,** pide al architect la revisión previa de la historia (lista de 8 puntos en su definición) y pásale al desarrollador la lista de errores conocidos del proyecto, si tiene una (créala cuando haga falta).
+- **Revisión y QA:** en los PR de riesgo (auth, permisos o RLS, dinero, idempotencia, migraciones de datos o cualquier cambio destructivo o difícil de revertir) van separadas, cada una en su propio worktree. En los demás, un solo agente hace las dos. Una corrección chica (solo tests, docs o una o dos líneas que no tocan esas superficies) la re-revisas tú mismo con `/pr-review` en modo re-revisión, sobre el diff, y publicas la re-revisión. Si toca una superficie de riesgo, la re-revisión va a un agente.
+- **La suite completa corre una vez por PR.** Después de un merge de base, la verificación la hace la CI. Si el proyecto no tiene CI que corra la suite, se corre en local sobre el resultado del merge.
+- **Como mucho 4 agentes con base de datos a la vez.** Usan la base compartida si el proyecto tiene una; si no, cada uno levanta un contenedor con nombre único y lo borra al terminar.
 - **Pide informes de 15 líneas como máximo,** con el detalle en archivos del scratchpad.
-- **Cada revisión con hallazgos alimenta la lista de errores conocidos** (`review-checklist.md`), para que el siguiente desarrollador no repita el mismo error.
+- **Cada revisión con hallazgos alimenta la lista de errores conocidos del proyecto**, para que el siguiente desarrollador no repita el mismo error.
 - **Al cerrar cada lote, corre el skill `retro`** con los PR del lote. Mide rondas, hallazgos y tiempos, detecta los cuellos de botella y lleva las mejoras al proyecto (`docs/retros/`, la lista de errores y el archivo de contexto que el proyecto declare como fuente) y a un PR al repo de skills y agentes. El dueño aprueba los dos con el merge.
 
 ## Errores típicos que evitas

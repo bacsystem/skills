@@ -99,8 +99,9 @@ run before approving your own work, the second sets the short report form.
 ## Running cost (when a coordinator runs many reviews in parallel)
 
 - Run the **full** suite once. Mutations and re-checks run only on the packages
-  that guard the line you mutated. A re-review runs only what the new commits
-  touch.
+  that guard the line you mutated. A re-review runs what the new commits
+  touch and the packages that depend on them; when the impact is unclear,
+  run the full suite again.
 - If the project provides a shared test database (its context file or delivery
   doc says so), use it. Otherwise start a container with a unique name
   (`rev<PR>-pg`) and remove it when done; never remove a container you did not

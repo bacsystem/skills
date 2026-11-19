@@ -82,8 +82,8 @@ En la revisión de impacto, cada dependencia y cada recurso compartido que toca 
 ## Revisión previa de una historia (antes de que se implemente)
 Antes de que el desarrollador empiece, recorre esta lista con la historia y deja las decisiones escritas en la issue o en los docs. Cada punto que queda abierto suele decidirse recién en la revisión, y entonces cuesta una ronda entera de corrección, re-revisión y QA:
 1. **Dato ausente o inválido:** ¿abre o cierra? Por defecto, cierra (por ejemplo, un límite ausente vale 0, nunca «sin tope»).
-2. **Valores «ninguno»:** se declaran con un literal reservado (`none`), nunca con `null` o un campo vacío, porque un olvido en YAML o JSON también es `null`.
-3. **Tiempo:** qué día o instante es, y en qué zona (por ejemplo, las fechas fiscales en la zona del país del negocio). La API recibe un día civil explícito, no un `time.Time` cuya zona decide quien llama.
+2. **Valores «ninguno» en reglas de acceso o de configuración** (un módulo, un permiso, un plan): se declaran con un literal reservado (`none`), nunca con `null` o un campo vacío, porque un olvido en YAML o JSON también es `null` y abriría el acceso. No aplica a los campos opcionales de datos: un campo nullable de un contrato existente sigue usando `null`.
+3. **Tiempo:** qué día o instante es, y en qué zona (por ejemplo, las fechas fiscales en la zona del país del negocio). Un valor que es solo una fecha (un día fiscal) se recibe como día civil explícito, no como un instante cuya zona decide quien llama. Un instante se guarda y viaja con su zona (`timestamptz`, RFC 3339 con offset), y se convierte a la zona del negocio solo cuando hace falta el día.
 4. **A quién pertenece cada dato:** tenant y usuario. Una clave o un caché se liga al principal, no solo al tenant (por ejemplo, el replay de idempotencia entre usuarios).
 5. **Grants y RLS de cada tabla nueva:** incluidas sus particiones, que no deben tener privilegios de rol de aplicación, y las políticas, con su texto exacto en la lista blanca.
 6. **Representación:** escala de los decimales también en `jsonb`, cómo se serializa y si se puede leer de vuelta (JSON de ida y vuelta).

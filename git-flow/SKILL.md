@@ -94,7 +94,9 @@ Skip when: the user only wants a quick local commit with no review/PR.
 
 Run in order. Stop and report if a precondition fails.
 
-1. **Detect context** — `git status` / `git diff`; stop if no changes. Detect
+1. **Detect context** — `git status` / `git diff`; stop if no changes (except
+   for the release PR of a batch-release project, which starts from a clean
+   tree: step 6 creates its edits). Detect
    version files (`package.json`, `VERSION`, `CHANGELOG.md`, `README.md`).
    Resolve the push remote (`git remote -v`; see the Remote rule). Detect
    whether a `develop` branch exists (`git show-ref --verify --quiet
@@ -144,7 +146,9 @@ Run in order. Stop and report if a precondition fails.
    computes the version, from every `[Unreleased]` entry (any `feat` or breaking
    change → per the project's rule), renames `[Unreleased]` to `[X.Y.Z] - date`
    and updates the version files; its tag is created after merge (step 10, or a
-   release-tag workflow if the repo has one). Otherwise, read the current version per precedence, then apply the
+   release-tag workflow if the repo has one). The release PR always targets
+   `main`: in a repo with `develop`, it is the promotion PR (`develop` → `main`,
+   or a `release/vX.Y.Z` branch cut from `develop`), not a PR into `develop`. Otherwise, read the current version per precedence, then apply the
    bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
    implementation of the SemVer table, including the `0.x` rule). The
    Conventions table stays the human-readable reference.
@@ -209,6 +213,8 @@ Run in order. Stop and report if a precondition fails.
     that merge is an integration step, not a release; the tag happens later
     when `develop` is promoted to `main` (release/hotfix branch), which is
     outside this skill's scope.
+    In a batch-release project, **only the release PR is tagged**: story PRs
+    never are, even when they merge into `main`.
 
 ## Common Mistakes
 

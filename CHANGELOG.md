@@ -5,6 +5,17 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.16] - 2026-11-19
+
+### Corregido
+- `docs-sync/scripts/check.sh` daba falsos positivos sobre docs reales. Probado contra 5 docs de estado de un proyecto: daba 6 desvíos y los 6 eran falsos; ahora no da ninguno. Los cambios:
+  - Cada `#N` se juzga solo por una palabra de estado de su misma cláusula, a 6 palabras o menos (`DOCS_SYNC_MAX_DISTANCE`), y la palabra se aplica solo al `#N` más cercano.
+  - Las versiones mayores que el último tag se ignoran, porque son de otras librerías. `DOCS_SYNC_STRICT_VERSIONS=1` las vuelve a marcar.
+  - «todo» ya no cuenta como «pendiente» (en español es «all»); solo `TODO` en mayúsculas.
+  - `<!-- docs-sync: ignore -->` saltea la línea donde está y la siguiente.
+  - Los tags se comparan con o sin el prefijo `v`: un repo con tags `1.2.3` ya no marca `v1.2.3` como inexistente.
+  - Un test por caso.
+
 ## [0.3.15] - 2026-11-19
 
 ### Agregado

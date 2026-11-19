@@ -33,8 +33,8 @@ La documentación que **afirma un estado** (roadmap, líneas «Estado:», qué e
 
 1. **Docs de estado.** Los nombra el archivo de contexto del proyecto (`CLAUDE.md`, `GEMINI.md` o `AGENTS.md`). Si no los nombra, propón la lista (roadmap, README con estado, docs de proceso o de arquitectura con «Estado:», CHANGELOG) buscando con `grep -rlE 'Estado:|Status:|pendiente|por hacer|#[0-9]+' --include='*.md'`. Agrégala al archivo de contexto, en el que el proyecto declara como fuente si hay varios, dentro del mismo PR del paso 3.
 2. **Chequeo.** Desde la raíz del repo, corre `bash <carpeta-de-este-skill>/scripts/check.sh "$(gh repo view --json nameWithOwner -q .nameWithOwner)" <doc.md>...` (el script viene con el skill, en `docs-sync/scripts/check.sh`). Es de solo lectura (`gh` y `jq`) y reporta `archivo:línea` por cada:
-   - `#N` cerrado en una línea que dice «pendiente», o abierto en una que dice «hecho»;
-   - `vX.Y.Z` mencionada que no existe como tag;
+   - `#N` cerrado que su cláusula da por «pendiente», o abierto que da por «hecho». La palabra de estado juzga solo al `#N` más cercano de su misma cláusula (corta en `.`, `;`, `|` y ` — `; en `:` solo si ningún lado es una etiqueta corta, como en `Pendiente: #4`) y a 6 palabras o menos. Una línea con «Cerrada el 1/12. Pasó a #8» no juzga a #8;
+   - `vX.Y.Z` mencionada que no existe como tag y no es mayor que el último (una mayor es de otra herramienta);
    - archivo de versión (`package.json`, `VERSION`) por debajo del último tag.
 
    Exit 0 sin desvíos, 1 con desvíos, 2 si no pudo correr (`gh` falló, sesión vencida, rate limit, `#N` inexistente). **Un exit 2 no es «limpio»:** arregla la causa y vuelve a correrlo, o reporta que no se pudo verificar.
@@ -67,6 +67,10 @@ Antes de contestar «¿está cerrado X?», «¿qué falta?», «¿en qué versi�
 
 ## Ajustes del chequeo
 
-- `DOCS_SYNC_DONE_WORDS` y `DOCS_SYNC_PENDING_WORDS`: palabras extra (regex, separadas por `|`) que se suman a las de serie. Hecho: `hecho`, `done`, `cerrad…`, `completad…`, `merged`, `✅`. Pendiente: `pendiente`, `por hacer`, `bloquead…`, `todo`, `open`, `en curso`.
+- `DOCS_SYNC_DONE_WORDS` y `DOCS_SYNC_PENDING_WORDS`: palabras extra (regex, separadas por `|`) que se suman a las de serie. Hecho: `hecho`, `done`, `cerrad…`, `completad…`, `merged`, `✅`. Pendiente: `pendiente`, `por hacer`, `bloquead…`, `open`, `en curso` y `TODO` solo en mayúsculas («todo» en español es «all»).
+- `DOCS_SYNC_MAX_DISTANCE`: palabras como máximo entre la palabra de estado y el `#N` (por defecto 6).
+- `DOCS_SYNC_STRICT_VERSIONS=1`: marca también las versiones mayores que el último tag.
 - `DOCS_SYNC_VERSION_FILES`: archivos de versión a comparar con el último tag (por defecto `package.json VERSION`; en un monorepo, por ejemplo `apps/web/package.json`).
+- Escape: `<!-- docs-sync: ignore -->` en la línea, o en la anterior, la saltea. Úsalo para una línea que el script lee mal, no para callar un desvío real.
 - No cuentan los bloques de código, las entidades HTML (`&#123;`), las anclas de URL ni las versiones de otros paquetes (`repo#v1.2.3`, `pkg@v1.2.3`).
+- Un `#N` sin palabra de estado cerca no se juzga: las frases de estado sin `#N` cercano se revisan a mano (paso 3).

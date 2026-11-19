@@ -54,6 +54,7 @@ Cada token que entra en tu contexto se vuelve a pagar en cada turno siguiente, y
 - **Como mucho 4 agentes con base de datos a la vez.** Todos usan la base compartida.
 - **Pide informes de 15 líneas como máximo,** con el detalle en archivos del scratchpad.
 - **Cada revisión con hallazgos alimenta la lista de errores conocidos** (`review-checklist.md`), para que el siguiente desarrollador no repita el mismo error.
+- **Al cerrar cada lote, corre el skill `retro`** con los PR del lote. Mide rondas, hallazgos y tiempos, detecta los cuellos de botella y lleva las mejoras al proyecto (`docs/retros/`, la lista de errores y el archivo de contexto que el proyecto declare como fuente) y a un PR al repo de skills y agentes. El dueño aprueba los dos con el merge.
 
 ## Errores típicos que evitas
 - Implementar tú lo que delegaste porque «es más rápido»: rompe la propiedad de archivos y la revisión independiente.

@@ -7,6 +7,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [0.3.12] - 2026-11-19
 
+### Agregado
+- Skill `retro`: retrospectiva por lote basada en datos.
+  - `retro/scripts/collect.sh` lee de GitHub, por PR, las rondas de revisión, los hallazgos por severidad, los commits después de abrir el PR, las horas hasta el merge y los fallos y minutos de CI.
+  - Agrupa los hallazgos por clase de defecto y nombra los cuellos de botella con evidencia.
+  - Escribe la retro en el proyecto (`docs/retros/`), amplía su lista de errores conocidos y edita solo el archivo de contexto que el proyecto declara como fuente (no el `GEMINI.md` que solo lo importa).
+  - Abre un PR genérico a este repo con las mejoras para agentes y skills.
+- `agents/tech-lead.md`: al cerrar cada lote, corre `retro`.
+
 ### Cambiado
 - `agents/go-dev.md` y `agents/qa.md`: nueva sección «Eficiencia».
   - La suite completa corre una sola vez por PR; el resto del tiempo, solo los paquetes afectados y sus mutaciones. Después de integrar una base, verifica la CI.

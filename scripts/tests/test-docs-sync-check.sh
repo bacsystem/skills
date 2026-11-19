@@ -66,12 +66,20 @@ printf -- '- #1 wip\n' > "$T/e.md"
 out="$(cd "$T" && DOCS_SYNC_PENDING_WORDS='wip' bash "$script" o/r e.md 2>&1; echo "exit=$?")"
 contiene "palabra extra de pendiente: desvío" "e.md:1:" "$out"
 
-# 4. una versión mencionada que no existe como tag
-printf 'Publicado en v0.3.0 y v0.2.0\n' > "$T/f.md"
+# 4. una versión mencionada que no existe como tag (por debajo del último, v0.2.0)
+printf 'Publicado en v0.1.5 y v0.2.0\n' > "$T/f.md"
 out="$(corre o/r f.md)"
-contiene "tag inexistente: archivo:línea y versión" "f.md:1: v0.3.0" "$out"
+contiene "tag inexistente: archivo:línea y versión" "f.md:1: v0.1.5" "$out"
 igual "tag existente: no se reporta" 0 "$(grep -c 'v0.2.0' <<<"$out")"
 contiene "tag inexistente: exit 1" "exit=1" "$out"
+
+# 4b. una versión mayor que el último tag es de otra herramienta: se ignora,
+#     salvo con DOCS_SYNC_STRICT_VERSIONS=1
+printf 'Usa la librería X v3.44.1\n' > "$T/f2.md"
+out="$(corre o/r f2.md)"
+contiene "versión de otra herramienta: exit 0" "exit=0" "$out"
+out="$(cd "$T" && DOCS_SYNC_STRICT_VERSIONS=1 bash "$script" o/r f2.md 2>&1; echo "exit=$?")"
+contiene "modo estricto: la marca" "f2.md:1: v3.44.1" "$out"
 
 # 5. archivo de versión por debajo del último tag (v0.2.0)
 printf '{"name":"x","version":"0.1.5"}\n' > "$T/package.json"
@@ -94,6 +102,37 @@ contiene "gh falla: exit 2" "exit=2" "$out"
 printf -- '- #99 pendiente\n' > "$T/h.md"
 out="$(corre o/r h.md)"
 contiene "#N inexistente: exit 2" "exit=2" "$out"
+
+# 8. la palabra de estado habla de otra cosa de la línea (otra oración)
+printf '**Cerrada** el 2026-11-19. Las tareas pasaron a #2 y frenan #2. Los hallazgos están en #2.\n' > "$T/i.md"
+out="$(corre o/r i.md)"
+contiene "palabra en otra oración: exit 0" "exit=0" "$out"
+
+# 9. #N cerrado y «pendiente» de otra cosa, en otra oración
+printf 'Origen del dato (#1 y su proceso). **Pendiente** de decisión del dueño.\n' > "$T/j.md"
+out="$(corre o/r j.md)"
+contiene "pendiente de otra cosa: exit 0" "exit=0" "$out"
+
+# 9b. una palabra con varios #N en la oración: solo juzga al más cercano;
+#     y una palabra lejos (más de 6 palabras) no juzga
+printf -- '- #2 sigue y #1 pendiente\n- Pendiente: #1, #2\n- #1 es el módulo que en la próxima versión del plan queda pendiente\n' > "$T/k.md"
+out="$(corre o/r k.md)"
+contiene "más cercano: el #1 de la línea 1" "k.md:1: #1" "$out"
+contiene "etiqueta con dos puntos: el #1 de la línea 2" "k.md:2: #1" "$out"
+igual "más cercano: el #2 no se juzga" 0 "$(grep -c '#2' <<<"$out")"
+igual "palabra lejana: línea 3 sin desvío" 0 "$(grep -c '^k.md:3:' <<<"$out")"
+
+# 10. «todo» en minúsculas es «all»; TODO en mayúsculas sí es pendiente
+printf -- '- Con #1 queda todo el módulo listo\n- TODO #3\n' > "$T/m.md"
+out="$(corre o/r m.md)"
+igual "todo en minúsculas: sin desvío" 0 "$(grep -c '^m.md:1:' <<<"$out")"
+contiene "TODO en mayúsculas: desvío" "m.md:2: #3" "$out"
+
+# 11. escape por línea, en la misma línea o en la anterior
+printf -- '- #1 pendiente <!-- docs-sync: ignore -->\n<!-- docs-sync: ignore -->\n- #1 pendiente\n- #1 pendiente\n' > "$T/n.md"
+out="$(corre o/r n.md)"
+igual "escape: líneas 1 y 3 salteadas" 0 "$(grep -cE '^n.md:(1|3):' <<<"$out")"
+contiene "escape: la línea 4 se sigue revisando" "n.md:4: #1" "$out"
 
 # 7. uso incorrecto y archivo que no existe
 out="$(corre o/r)"

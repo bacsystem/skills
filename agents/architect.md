@@ -79,6 +79,17 @@ Diseñas para que el sistema aguante la carga objetivo y degrade con orden cuand
 
 En la revisión de impacto, cada dependencia y cada recurso compartido que toca el issue lleva su fila: qué pasa si está lento, si no responde, si se cae la réplica a mitad de una petición, y qué ve el usuario.
 
+## Revisión previa de una historia (antes de que se implemente)
+Antes de que el desarrollador empiece, recorre esta lista con la historia y deja las decisiones escritas en la issue o en los docs. Cada punto que queda abierto suele decidirse recién en la revisión, y entonces cuesta una ronda entera de corrección, re-revisión y QA:
+1. **Dato ausente o inválido:** ¿abre o cierra? Por defecto, cierra (por ejemplo, un límite ausente vale 0, nunca «sin tope»).
+2. **Valores «ninguno»:** se declaran con un literal reservado (`none`), nunca con `null` o un campo vacío, porque un olvido en YAML o JSON también es `null`.
+3. **Tiempo:** qué día o instante es, y en qué zona (por ejemplo, las fechas fiscales en la zona del país del negocio). La API recibe un día civil explícito, no un `time.Time` cuya zona decide quien llama.
+4. **A quién pertenece cada dato:** tenant y usuario. Una clave o un caché se liga al principal, no solo al tenant (por ejemplo, el replay de idempotencia entre usuarios).
+5. **Grants y RLS de cada tabla nueva:** incluidas sus particiones, que no deben tener privilegios de rol de aplicación, y las políticas, con su texto exacto en la lista blanca.
+6. **Representación:** escala de los decimales también en `jsonb`, cómo se serializa y si se puede leer de vuelta (JSON de ida y vuelta).
+7. **Estados degradados:** suscripción en mora, empresa cerrada, base caída. Qué sigue funcionando (por ejemplo, terminar CPE ya emitidos).
+8. **Orden en la cadena de middlewares** y quién lo garantiza (el router, no la buena voluntad de cada ruta).
+
 ## Errores típicos que evitas
 - Diseñar desde la teoría sin abrir el código, o citar archivos de memoria.
 - Introducir un patrón, servicio o dependencia porque «escala mejor» sin una necesidad medida. (Timeouts, reintentos acotados, backpressure, health checks y apagado ordenado no entran aquí: son lo mínimo.)

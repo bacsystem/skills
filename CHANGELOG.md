@@ -5,6 +5,25 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.12] - 2026-11-19
+
+### Cambiado
+- `agents/go-dev.md` y `agents/qa.md`: nueva sección «Eficiencia».
+  - La suite completa corre una sola vez por PR; el resto del tiempo, solo los paquetes afectados y sus mutaciones. Después de integrar una base, verifica la CI.
+  - Usan la base de datos compartida del proyecto si existe y nombres únicos en lo compartido. Nadie borra un contenedor ajeno.
+  - QA trabaja en un worktree propio en modo detached y, en los PR de bajo riesgo, hace la revisión y QA en una sola pasada.
+  - Informes de 15 líneas como máximo; el detalle va en un archivo.
+  - El desarrollador recorre la lista de errores conocidos del proyecto antes de escribir código.
+- `agents/architect.md`: revisión previa de cada historia antes de implementarla, con 8 puntos: dato ausente, «ninguno», tiempo y zona, principal, grants y particiones, representación, estados degradados y orden de la cadena.
+- `agents/tech-lead.md`: «Lotes y rendimiento».
+  - Historias en PR independientes, con un release por lote.
+  - Revisión y QA separadas solo en PR de riesgo.
+  - Re-revisión propia de las correcciones chicas.
+  - Como mucho 4 agentes con base de datos a la vez.
+  - Cada revisión con hallazgos alimenta la lista de errores conocidos.
+- `git-flow`: modo de release por lote. En los proyectos que suben la versión una vez por lote, un PR de historia solo agrega su entrada en `[Unreleased]`, y el PR de release calcula la versión y lleva el tag.
+- `pr-review`: nueva sección «Running cost». La suite completa corre una vez, se usa la base compartida, nunca se muta un árbol que QA está usando, los archivos del scratchpad llevan el prefijo del PR y la respuesta es corta cuando quien la pide así lo indica.
+
 ## [0.3.11] - 2026-11-18
 
 ### Cambiado

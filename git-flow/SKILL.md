@@ -136,7 +136,15 @@ Run in order. Stop and report if a precondition fails.
    environment (a staging service, an external API, a deploy) is reported as
    "passes locally", not as verified. If the project has no test/lint setup,
    say so and move on — don't fabricate a command.
-6. **Compute version** — read current version per precedence, then apply the
+6. **Compute version** — **batch-release projects skip this step.** If the project's
+   context file (or a delivery doc it links, e.g. `docs/delivery-process.md`) says
+   versions are bumped once per batch by a release PR, a story PR does **not**
+   touch the version: step 7 only adds its entry under `## [Unreleased]` (create
+   that heading if missing). Only the release PR (`chore(release): vX.Y.Z`)
+   computes the version, from every `[Unreleased]` entry (any `feat` or breaking
+   change → per the project's rule), renames `[Unreleased]` to `[X.Y.Z] - date`
+   and updates the version files; its tag is created after merge (step 10, or a
+   release-tag workflow if the repo has one). Otherwise, read the current version per precedence, then apply the
    bump with `scripts/next-version.sh <current> <type>` (the canonical, tested
    implementation of the SemVer table, including the `0.x` rule). The
    Conventions table stays the human-readable reference.
@@ -205,6 +213,7 @@ Run in order. Stop and report if a precondition fails.
 ## Common Mistakes
 
 - **Tagging on the feature branch** — the tag goes on `main` after merge (step 10).
+- **Bumping the version in a story PR of a batch-release project** — stories add an `[Unreleased]` entry only; the release PR bumps once per batch.
 - **Tagging a `develop` merge** — only tag when the PR's base was `main`; a merge into
   `develop` is an integration step, not a release.
 - **Hardcoding PR base to `main`** — detect a `develop` branch first (step 1); GitFlow

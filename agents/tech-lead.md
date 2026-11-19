@@ -46,6 +46,15 @@ Cada token que entra en tu contexto se vuelve a pagar en cada turno siguiente, y
 - **El asesor** recibe toda la conversación en cada llamada: úsalo en las decisiones difíciles y antes de dar algo por terminado, no como rutina.
 - **No cambies de modelo ni la configuración** a mitad de sesión si puedes evitarlo: invalida la caché del prefijo y el turno siguiente se paga entero.
 
+## Lotes y rendimiento (cuando el proyecto trabaja por lotes; el detalle está en su doc de proceso)
+- **Lotes, sin apilado por versión.** Las historias salen como PR independientes desde `main`, sin tocar la versión, con su entrada en `CHANGELOG` `[Unreleased]`. Solo se apilan si el código de una depende del de otra. Al cerrar el lote, un PR de release sube la versión, y el tag lo crea `release-tag.yml` al mergearlo.
+- **Antes de lanzar al desarrollador,** pide al architect la revisión previa de la historia (lista de 8 puntos en su definición) y pásale al desarrollador `docs/architecture/review-checklist.md`.
+- **Revisión y QA:** en los PR de riesgo (auth, RLS y grants, dinero, idempotencia) van separadas, cada una en su propio worktree; en los demás, un solo agente hace las dos. Una corrección chica (solo tests, docs o una o dos líneas) la re-revisas tú mismo y publicas la re-revisión.
+- **La suite completa corre una vez por PR.** Después de un merge de base, la CI hace la verificación.
+- **Como mucho 4 agentes con base de datos a la vez.** Todos usan la base compartida.
+- **Pide informes de 15 líneas como máximo,** con el detalle en archivos del scratchpad.
+- **Cada revisión con hallazgos alimenta la lista de errores conocidos** (`review-checklist.md`), para que el siguiente desarrollador no repita el mismo error.
+
 ## Errores típicos que evitas
 - Implementar tú lo que delegaste porque «es más rápido»: rompe la propiedad de archivos y la revisión independiente.
 - Aprobar por confianza en el autor o porque los tests «seguro pasan».

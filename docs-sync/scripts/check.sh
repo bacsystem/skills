@@ -9,37 +9,71 @@
 # Un fallo nunca pasa por limpio: si gh falla, aborta con 2.
 #
 # Variables:
-#   DOCS_SYNC_DONE_WORDS     palabras extra de «hecho», separadas por | (regex)
-#   DOCS_SYNC_PENDING_WORDS  palabras extra de «pendiente», separadas por | (regex)
-#   DOCS_SYNC_VERSION_FILES  archivos de versión (por defecto: «package.json VERSION»)
+#   DOCS_SYNC_DONE_WORDS      palabras extra de «hecho», separadas por | (regex)
+#   DOCS_SYNC_PENDING_WORDS   palabras extra de «pendiente», separadas por | (regex)
+#   DOCS_SYNC_VERSION_FILES   archivos de versión (por defecto: «package.json VERSION»)
+#   DOCS_SYNC_MAX_DISTANCE    palabras como máximo entre la palabra de estado y el #N (6)
+#   DOCS_SYNC_STRICT_VERSIONS 1 = también marca las versiones mayores que el último tag
+#
+# Escape: `<!-- docs-sync: ignore -->` en la línea, o en la anterior, la saltea.
 set -euo pipefail
 
 DONE='\b(?:hecho|done|cerrad\w*|completad\w*|merged)\b|✅'
-PENDING='\b(?:pendiente\w*|por hacer|bloquead\w*|todo|open|en curso)\b'
+# «todo» en minúsculas es «all» en español: solo cuenta TODO en mayúsculas (aparte).
+PENDING='\b(?:pendiente\w*|por hacer|bloquead\w*|open|en curso)\b'
+IGNORE='<!--\s*docs-sync:\s*ignore\s*-->'
 
 die() { echo "docs-sync: $*" >&2; exit 2; }
 
 # Analiza un archivo (stdin) y escribe por stdout, una por línea:
-#   <línea>\tR\t<N>\t<done|pending|mixed>   por cada #N de una línea con estado
+#   <línea>\tR\t<N>\t<done|pending|mixed>   por cada #N que una palabra de estado juzga
 #   <línea>\tV\t<vX.Y.Z>                    por cada versión mencionada
-# Se saltan los bloques de código (``` o ~~~). Un #N pegado a & / # o a una
-# palabra no cuenta (entidades HTML, anclas de URL); una versión pegada a # @ /
-# no cuenta (es de otro paquete: `repo#v1.2.3`, `pkg@v1.2.3`).
+# Cada #N se juzga solo por una palabra de estado de su misma cláusula (se corta en
+# . ; | y « — »; en «:» también, salvo que un lado sea una etiqueta corta sin #N,
+# como «Pendiente: #4» o «(#4): hecho») y a DOCS_SYNC_MAX_DISTANCE palabras o menos.
+# Cada palabra se aplica solo al #N más cercano. Se saltan los bloques de código
+# (``` o ~~~) y las líneas con el escape. Un #N pegado a & / # o a una palabra no
+# cuenta (entidades HTML, anclas de URL); una versión pegada a # @ / no cuenta (es
+# de otro paquete: `repo#v1.2.3`, `pkg@v1.2.3`).
 analizar() {
   local done_re="$DONE" pend_re="$PENDING"
   [ -z "${DOCS_SYNC_DONE_WORDS:-}" ] || done_re="$done_re|\\b(?:$DOCS_SYNC_DONE_WORDS)\\b"
   [ -z "${DOCS_SYNC_PENDING_WORDS:-}" ] || pend_re="$pend_re|\\b(?:$DOCS_SYNC_PENDING_WORDS)\\b"
-  jq -nRr --arg d "$done_re" --arg p "$pend_re" '
-    foreach inputs as $l ({n: 0, code: false, fence: false};
+  jq -nRr --arg d "$done_re" --arg p "$pend_re" --arg ign "$IGNORE" \
+     --argjson max "${DOCS_SYNC_MAX_DISTANCE:-6}" '
+    def palabras: [splits("\\s+") | select(length > 0)] | length;
+    def tiene_ref: test("(?<![&\\w/#])#[0-9]");
+    # Índice de palabra de la posición $o dentro de $s.
+    def indice($s; $o): [$s[:$o] | sub("^\\s+"; "") | match("\\s+"; "g")] | length;
+    # Une las partes separadas por «:» cuando un lado es una etiqueta corta sin #N.
+    def unir_dos_puntos:
+      reduce .[] as $x ([];
+        if length == 0 then [$x]
+        elif (.[-1] | (tiene_ref | not) and palabras <= 2) then .[:-1] + [.[-1] + ":" + $x]
+        elif ($x | (tiene_ref | not) and palabras <= 3) then .[:-1] + [.[-1] + ":" + $x]
+        else . + [$x] end);
+    def clausulas: [splits("[.;|]|\\s—\\s")] | map([splits(":")] | unir_dos_puntos | .[]);
+    # Por cada palabra de estado, el #N más cercano a $max palabras o menos.
+    def juicios:
+      . as $c
+      | [match("(?<![&\\w/#])#([0-9]+)\\b"; "g") | {n: .captures[0].string, w: indice($c; .offset)}] as $refs
+      | ([match($d; "gi") | {k: "done", w: indice($c; .offset)}]
+         + [match($p; "gi") | {k: "pending", w: indice($c; .offset)}]
+         + [match("\\bTODO\\b"; "g") | {k: "pending", w: indice($c; .offset)}])[]
+      | . as $s
+      | [$refs[] | {n, dist: ((.w - $s.w) | fabs)} | select(.dist <= $max)]
+      | select(length > 0) | min_by(.dist) | {n, k: $s.k};
+    foreach inputs as $l ({n: 0, code: false, fence: false, prev: ""};
       .n += 1
       | .fence = ($l | test("^\\s*(```|~~~)"))
+      | .skip = (($l | test($ign)) or (.prev | test($ign)))
+      | .prev = $l
       | if .fence then .code = (.code | not) else . end;
-      select((.fence or .code) | not)
+      select((.fence or .code or .skip) | not)
       | .n as $n
-      | ($l | test($d; "i")) as $hd
-      | ($l | test($p; "i")) as $hp
-      | ( (if $hd and $hp then "mixed" elif $hd then "done" elif $hp then "pending" else empty end) as $k
-          | ($l | [scan("(?<![&\\w/#])#([0-9]+)\\b") | .[0]] | unique | .[]) | "\($n)\tR\t\(.)\t\($k)" )
+      | ( [$l | clausulas[] | juicios] | group_by(.n)[]
+          | {n: .[0].n, k: (map(.k) | unique | if length > 1 then "mixed" else .[0] end)}
+          | "\($n)\tR\t\(.n)\t\(.k)" )
       , ($l | [scan("(?<![\\w#@/.-])(v[0-9]+\\.[0-9]+\\.[0-9]+)\\b") | .[0]] | unique | .[] | "\($n)\tV\t\(.)")
     )'
 }
@@ -90,12 +124,21 @@ main() {
 
   # 4. Desvíos de #N y de versiones.
   local desvios=0
-  out="$(awk -F'\t' '
+  local ultimo
+  ultimo="$(sed -n 's/^v\{0,1\}\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' "$tmp/tags" | mayor)"
+  # Una versión mayor que el último tag (o sin tags) es de otro paquete o del
+  # futuro: no se marca, salvo con DOCS_SYNC_STRICT_VERSIONS=1.
+  out="$(awk -F'\t' -v ultimo="$ultimo" -v estricto="${DOCS_SYNC_STRICT_VERSIONS:-0}" '
+    function mayor_que(a, b,   x, y, i) {
+      sub(/^v/, "", a); split(a, x, "."); split(b, y, ".")
+      for (i = 1; i <= 3; i++) { if (x[i] + 0 != y[i] + 0) return x[i] + 0 > y[i] + 0 }
+      return 0
+    }
     FILENAME == ARGV[1] { st[$1] = $2; next }
     FILENAME == ARGV[2] { tag[$1] = 1; next }
     $3 == "R" && $5 == "pending" && st[$4] == "closed" { print $1 ":" $2 ": #" $4 " está cerrado, pero la línea lo da por pendiente" }
     $3 == "R" && $5 == "done" && st[$4] == "open"      { print $1 ":" $2 ": #" $4 " está abierto, pero la línea lo da por hecho" }
-    $3 == "V" && !($4 in tag)                         { print $1 ":" $2 ": " $4 " no existe como tag" }
+    $3 == "V" && !($4 in tag) && (estricto == "1" || (ultimo != "" && !mayor_que($4, ultimo))) { print $1 ":" $2 ": " $4 " no existe como tag" }
   ' "$tmp/states" "$tmp/tags" "$tmp/refs")"
   if [ -n "$out" ]; then echo "$out"; desvios=$(wc -l <<<"$out" | tr -d ' '); fi
 
@@ -103,8 +146,7 @@ main() {
   awk -F'\t' '$3 == "R" && $5 == "mixed" && !seen[$1 FS $2]++ { print "nota: " $1 ":" $2 ": la línea dice «hecho» y «pendiente» a la vez; revísala a mano" }' "$tmp/refs" >&2
 
   # 5. Archivos de versión contra el último tag X.Y.Z.
-  local ultimo v
-  ultimo="$(sed -n 's/^v\{0,1\}\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' "$tmp/tags" | mayor)"
+  local v
   if [ -n "$ultimo" ]; then
     for vf in $vfiles; do
       [ -f "$vf" ] || continue

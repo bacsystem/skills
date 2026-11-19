@@ -88,7 +88,8 @@ Skip when: the user only wants a quick local commit with no review/PR.
   (e.g. `git@host-alias:org/repo.git`) whose name is not `origin`. Use the
   resolved remote name for the push (step 9) and the post-merge tag (step 10).
 - **Changes** = tracked modifications (staged or unstaged) and/or new files.
-  Whitespace-only or no changes → stop.
+  Whitespace-only or no changes → stop, except the release PR of a
+  batch-release project, which starts from a clean tree (step 6).
 
 ## Workflow
 
@@ -101,7 +102,8 @@ Run in order. Stop and report if a precondition fails.
    Resolve the push remote (`git remote -v`; see the Remote rule). Detect
    whether a `develop` branch exists (`git show-ref --verify --quiet
    refs/heads/develop` or `refs/remotes/<remote>/develop`) — if so, it's the
-   PR base for this run (GitFlow repo); otherwise the base is `main`. Check
+   PR base for this run (GitFlow repo); otherwise the base is `main`. The
+   release PR of a batch-release project always targets `main` (step 6). Check
    `gh auth status`. Sort the changed files into source, tests, docs, config,
    and the three that change the deploy: **migrations, contract artifacts
    (OpenAPI, schemas) and environment variables**. Any of those three makes
@@ -195,7 +197,7 @@ Run in order. Stop and report if a precondition fails.
      issues*, and *Deploy & rollback* when step 1 found a migration, a contract
      artifact or an environment variable.
    - PR base is the branch resolved in step 1 (`develop` if it exists, else
-     `main`), title = commit subject. **Show the body and ask before
+     `main`; the release PR of a batch-release project always `main`), title = commit subject. **Show the body and ask before
      creating.** On confirmation: `gh pr create --base <resolved base>`. If
      `gh` is unavailable, output the body and the compare URL instead.
    - After creating it, report the URL and `gh pr checks`. If the project's

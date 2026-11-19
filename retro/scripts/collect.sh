@@ -77,7 +77,10 @@ main() {
     blk=$({ grep -o -E '\[(BLOQUEANTE|BLOCKER)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
     imp=$({ grep -o -E '\[(IMPORTANTE|IMPORTANT)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
     min=$({ grep -o -E '\[(MENOR|MINOR)\]' <<<"$bodies" || true; } | wc -l | tr -d ' ')
-    read -r work merges < <(gh api --paginate "repos/$repo/pulls/$pr/commits" | jq -s 'add // []' | contar_commits "$created")
+    # Sin sustitución de proceso: un fallo de gh (rate limit, red) tiene que abortar
+    # y no convertirse en «0 commits, 0 merges».
+    commits_json=$(gh api --paginate "repos/$repo/pulls/$pr/commits" | jq -s 'add // []')
+    read -r work merges <<<"$(contar_commits "$created" <<<"$commits_json")"
     elapsed="-"
     [ -z "$merged" ] || elapsed=$(tiempo_entre "$created" "$merged")
     branch=$(jq -r '.head.ref | @uri' <<<"$meta")

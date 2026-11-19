@@ -65,7 +65,7 @@ run before approving your own work, the second sets the short report form.
    the report and go on. `mergeStateStatus: BLOCKED` on its own usually means a
    required approval is missing, which is what this review is for: not a reason
    to stop. A local branch or uncommitted work has no checks: skip
-   this step.
+   this check (the verdict then rests on your own run, see below).
    **Again before any `APROBADO`, first review or re-review:** the PR is not
    in conflict (`mergeable` is not `CONFLICTING`, `mergeStateStatus` is not
    `DIRTY`), and the suite ran green on the exact head SHA the report names

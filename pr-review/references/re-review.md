@@ -17,7 +17,10 @@ point is to close the loop, not to re-judge everything from scratch:
    commits since the previous review comment). A fix is new code: check it
    against the five axes like any other change. A fix that introduces a new
    defect — a misleading doc line, a weaker test, a regression elsewhere — is
-   a new finding with its own ID.
+   a new finding with its own ID. If the new commits include a merge of the
+   base, read that merge's diff too (*Merges of the base* in `SKILL.md`).
+   Before approving, recheck step 0 on the new head: no conflict, and the
+   checks ran green on that SHA.
 3. **Don't repeat the previous "done well"** unless the new commits changed
    it. Praise only what the new commits did well.
 4. Findings that were deliberately left out (the author argued against them,

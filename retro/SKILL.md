@@ -32,9 +32,19 @@ Skip when: a single PR is still in flight — wait for the batch.
 ## Workflow
 
 1. **Measure.** Run `scripts/collect.sh <owner/repo> <PR>...` (read-only, `gh`
-   and `jq`). It prints, per PR: review rounds, findings by severity, commits
-   after opening, hours to merge, failed CI runs and CI minutes. Check by hand
-   any number that looks off; the counts are approximate.
+   and `jq`). It prints, per PR: review rounds (one per review, re-review or
+   closing comment, not per "Verdict" line), QA reports, findings by
+   severity, work commits and merges after opening (separate columns; merges include the base and, on a stacked branch, the branch below),
+   time to merge (minutes, or hours with one decimal), failed CI runs with the
+   job and first failing test of each (from `gh run view --log-failed`, when
+   the log is still available) and CI minutes. Check by hand any number that
+   looks off; the counts are approximate. Read the failure causes before
+   counting a red CI as a defect. A timing test that misses its bound is a
+   false alarm only with evidence that the environment caused it (the
+   runner's load, the race detector, a measurement that passes outside it);
+   without that evidence, investigate it as a possible regression. When the owner merges the
+   whole batch at once, the time to merge measures the wait for that merge,
+   not the work.
 2. **Read the findings.** Open the review and QA comments of the PRs with the
    most rounds or `IMPORTANT`/`BLOCKER` findings. Group the findings by
    **defect class** (fail-open on missing data, tenant/principal leak, time

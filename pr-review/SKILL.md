@@ -365,7 +365,9 @@ The axis that catches bugs. Don't read the change and judge whether it
 - **Claims in the PR description and docs are verified.** Test counts,
   "N/N mutations", "tested in Docker", "no behavior change" — cross-check
   them against the reports, the test diff or the commands shown. A number
-  nobody can reproduce from the evidence is a finding.
+  nobody can reproduce from the evidence is a finding. A body that says CI ran
+  something (a job, a suite, a scan) is checked against `gh pr checks`: if no
+  check shows it, the claim is a finding, whatever the local run says.
 - **The commits say what the change is.** Read `gh pr view <n> --json
   commits`. Where the type drives the version, a `fix:` that adds behavior, or
   a contract break without `!` and a `BREAKING CHANGE:` footer, publishes the

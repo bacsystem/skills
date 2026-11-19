@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.14] - 2026-11-19
+
+### Cambiado
+- `agents/tech-lead.md`: quien coordina abre los PR solo con `git-flow` (comprueba con `git merge-tree` que el PR no nazca en conflicto; uno en conflicto no corre la CI y gasta una ronda). Un criterio que depende de otra historia se resuelve antes de empezar: va al PR de la historia de la que depende o a una issue propia, nunca al final de un PR ya revisado.
+- `agents/architect.md`: la revisión previa suma el punto 11, dependencias entre historias (cada criterio que depende de código de otra historia, con dónde va). Una corrección a un ADR aceptado la decide el architect y va como nota fechada; la decisión no se reescribe.
+- `agents/go-dev.md` y `agents/qa.md`: los tests de conjuntos (permisos, catálogos, listas blancas) comparan contra una lista escrita a mano, no contra la fórmula del código; un test de cableado monta el cableado de producción; un chequeo de paridad cubre cada dimensión del criterio; una guarda sobre una lista de nombres se prueba con una mutación por nombre.
+- `agents/devops.md` y `agents/go-dev.md`: herramientas de CI fijadas por lockfile o checksum, en una versión con al menos 14 días publicada; runtime desde el archivo de versión del repo, no el del runner; los scripts distinguen «encontró un problema» de «no pudo correr».
+- `git-flow`: con varios PR abiertos sobre `[Unreleased]`, sugiere `CHANGELOG.md merge=union` en `.gitattributes`; quien integra revisa que no se dupliquen encabezados.
+- `pr-review`: un cuerpo de PR que dice que la CI corrió algo se contrasta con `gh pr checks`; si ningún check lo muestra, es un hallazgo.
+
 ## [0.3.13] - 2026-11-19
 
 ### Corregido

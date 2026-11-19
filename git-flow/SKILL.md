@@ -147,10 +147,12 @@ Run in order. Stop and report if a precondition fails.
    that heading if missing). With several PRs open on `[Unreleased]` at once,
    suggest `CHANGELOG.md merge=union` in `.gitattributes`, so parallel entries
    merge without conflicts. Any merge of `CHANGELOG.md` is verified, union or
-   not: no section heading (`### Added`, `### Changed`) is duplicated, and
-   when the base brought a release (a new `## [X.Y.Z]` under `[Unreleased]`),
-   this PR's entries are still under `[Unreleased]` and not inside the released
-   section, where a clean merge can silently file them.
+   not, because a clean merge after a release (a new `## [X.Y.Z]` under
+   `[Unreleased]`) can file this PR's entries inside the released section, or
+   leave a released entry under `[Unreleased]`: `git diff <remote>/<base> --
+   CHANGELOG.md` must show only this PR's lines, all added under
+   `[Unreleased]`, with no released section touched and no heading
+   duplicated.
    Only the release PR (`chore(release): vX.Y.Z`)
    computes the version, from every `[Unreleased]` entry (any `feat` or breaking
    change → per the project's rule), renames `[Unreleased]` to `[X.Y.Z] - date`

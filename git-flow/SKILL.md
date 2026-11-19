@@ -146,8 +146,12 @@ Run in order. Stop and report if a precondition fails.
    touch the version: step 7 only adds its entry under `## [Unreleased]` (create
    that heading if missing). With several PRs open on `[Unreleased]` at once,
    suggest `CHANGELOG.md merge=union` in `.gitattributes`, so parallel entries
-   merge without conflicts; whoever integrates still checks that no section
-   heading (`### Added`, `### Changed`) ends up duplicated. Only the release PR (`chore(release): vX.Y.Z`)
+   merge without conflicts. Any merge of `CHANGELOG.md` is verified, union or
+   not: no section heading (`### Added`, `### Changed`) is duplicated, and
+   when the base brought a release (a new `## [X.Y.Z]` under `[Unreleased]`),
+   this PR's entries are still under `[Unreleased]` and not inside the released
+   section, where a clean merge can silently file them.
+   Only the release PR (`chore(release): vX.Y.Z`)
    computes the version, from every `[Unreleased]` entry (any `feat` or breaking
    change → per the project's rule), renames `[Unreleased]` to `[X.Y.Z] - date`
    and updates the version files; its tag is created after merge (step 10, or a

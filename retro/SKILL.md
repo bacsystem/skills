@@ -51,7 +51,10 @@ Skip when: a single PR is still in flight — wait for the batch.
    improvement for this repo).
    **Classify the base merges** before calling them a bottleneck: for each
    merge commit, `git merge-tree --write-tree --name-only <parent1> <parent2>`
-   with the repo's attributes and again with `-c attr.tree=<empty tree>`
+   (Git 2.38 or later) with the repo's attributes and again with
+   `-c attr.tree=<empty tree>` (Git 2.43 or later: older versions ignore
+   `attr.tree`, both runs then match and a changelog-only conflict looks
+   real; upgrade Git before classifying)
    (`4b825dc642cb6eb9a060e54bf8d69288fbee4904`) sorts each merge into one
    group: conflicts only in the changelog (which a `merge=union` driver
    solves locally but GitHub still flags), real conflicts in a shared list

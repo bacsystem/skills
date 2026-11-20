@@ -42,9 +42,10 @@ sin_marcado='[
   {"body": "**QA #254, SHA `d724521`: APRUEBA.** Chromium real."},
   {"body": "## Re-QA PR #248 - SHA 72f8416: APTO"},
   {"body": "Nota del coordinador sobre el paso pendiente de la QA: corrió en la CI."},
-  {"body": "Fix for H1 and H2 (commit da49ab3). Review probe numbers below."}
+  {"body": "Fix for H1 and H2 (commit da49ab3). Review probe numbers below."},
+  {"body": "## Code review de `main...feat/x`: corrección. La QA va aparte."}
 ]'
-igual "rondas sin marcado" 6 "$(contar_primera_linea "$RONDA" <<<"$sin_marcado")"
+igual "rondas sin marcado" 7 "$(contar_primera_linea "$RONDA" <<<"$sin_marcado")"
 igual "informes de QA sin marcado, sin falsos positivos" 4 "$(contar_primera_linea "$QA" <<<"$sin_marcado")"
 
 commits='[
@@ -79,5 +80,7 @@ jobs='{"jobs": [
 ]}'
 igual "paso que falló, sin test reconocido" "api: paso «OpenAPI lint»" "$(paso_fallido <<<"$jobs")"
 igual "sin job fallido" "" "$(paso_fallido <<<'{"jobs": []}')"
+jobs_pipe='{"jobs": [{"name": "ci (a)", "conclusion": "failure", "steps": [{"name": "lint | build\nfinal", "conclusion": "failure"}]}]}'
+igual "paso con «|» y salto de línea, en una celda" "ci: paso «lint / build final»" "$(paso_fallido <<<"$jobs_pipe")"
 
 [ "$fallos" -eq 0 ] && echo "All tests passed." || { echo "$fallos fallo(s)."; exit 1; }

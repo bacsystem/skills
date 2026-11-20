@@ -16,8 +16,9 @@ set -euo pipefail
 RONDA='^(Veredicto|Verdict|Re-revisión|Re-review|Revisión|Review|Code review|pr-review|Cierre|Closing)\b'
 # Un informe de QA abre con «QA»/«Re-QA», o es una revisión que también es QA
 # («Revisión y QA …», «Code review y QA …», con la QA en las primeras palabras:
-# «Code review de …: … La QA va aparte» no lo es), o un encabezado que nombra la QA.
-QA='^(Re-)?QA\b|^(Re-revisión|Re-review|Revisión|Review|Code review)\b[^.:·(`]{0,20}\b(re-)?QA\b|^#+ .*\bQA\b'
+# «Code review de …: … La QA va aparte» no lo es), o un encabezado que nombra la QA en sus
+# primeras palabras («## Code review de …: … La QA va aparte» tampoco cuenta).
+QA='^(Re-)?QA\b|^(Re-revisión|Re-review|Revisión|Review|Code review)\b[^.:·(`]{0,20}\b(re-)?QA\b|^#+ [^.:·(`]{0,40}\bQA\b'
 
 # Cuenta los comentarios (JSON de la API de issues, por stdin) cuya primera línea
 # cumple la regex $1, sin el marcado del principio o tal cual (para los
@@ -61,10 +62,12 @@ primer_test_fallido() {
 }
 
 # Sin test reconocido: el job y el primer paso que fallaron, del JSON de
-# `gh run view --json jobs` (stdin). Vacío si no hay ninguno.
+# `gh run view --json jobs` (stdin), en una sola celda de la tabla: sin `|` ni
+# saltos de línea. Vacío si no hay ninguno.
 paso_fallido() {
   jq -r '[.jobs[] | select(.conclusion == "failure")
-    | "\(.name | sub(" \\(.*"; "")): paso «\([.steps[] | select(.conclusion == "failure") | .name][0] // "?")»"][0] // empty'
+    | "\(.name | sub(" \\(.*"; "")): paso «\([.steps[] | select(.conclusion == "failure") | .name][0] // "?")»"][0] // empty
+    | gsub("[\r\n]+"; " ") | gsub("\\|"; "/")'
 }
 
 # $1 = repo, $2 = id del run. Nunca falla: sin log, imprime vacío.

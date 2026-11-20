@@ -10,16 +10,16 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 ### Corregido
 - `retro/scripts/collect.sh` contaba 15 rondas en un lote que tuvo 39. Las revisiones que abren sin `#` ni negrita («Code review de …», «Re-revisión del coordinador · …», «**QA #N …») no se reconocían. Los cambios:
   - La primera línea se compara sin el marcado del principio.
-  - Un informe que junta revisión y QA cuenta para las dos solo si la QA está en sus primeras palabras («Code review y QA de …»): «… La QA va aparte» no cuenta.
+  - Un informe que junta revisión y QA cuenta para las dos solo si la QA está en sus primeras palabras («Code review y QA de …»): «… La QA va aparte» no cuenta, tampoco como encabezado (`## Code review de …: … La QA va aparte`).
   - Antes de buscar el test que falló, se quitan los códigos de color ANSI, también el texto `^[` con que los escribe `gh run view --log-failed`. Antes, un fallo de Vitest salía como «sin test reconocido».
-  - Si no reconoce ningún test, nombra el job y el paso que fallaron (`gh run view --json jobs`).
+  - Si no reconoce ningún test, nombra el job y el paso que fallaron (`gh run view --json jobs`), sin `|` ni saltos de línea, para no romper la celda de la tabla.
   - Un test por caso en `scripts/tests/test-retro-collect.sh`.
 - `.github/workflows/scripts.yml`: la CI corre los tests de `retro`, `docs-sync` y `next-version.sh` de `git-flow`, que hasta ahora solo corrían en local.
 
 ### Cambiado
 - `retro`:
   - se contrastan las rondas del script contra el PR con más comentarios;
-  - los merges de la base se clasifican con `git merge-tree`, con y sin los atributos del repo (`attr.tree` vacío): solo el changelog (un `merge=union` los resuelve en local, pero GitHub los marca igual), conflicto real en una lista compartida, otro conflicto real, rama apilada con conflicto y limpios. Los grupos suman el total, y la comparación con la retro anterior usa su misma definición.
+  - los merges de la base se clasifican con `git merge-tree`, con y sin los atributos del repo (`attr.tree` vacío; pide Git 2.43 o posterior, y `merge-tree --write-tree` 2.38): solo el changelog (un `merge=union` los resuelve en local, pero GitHub los marca igual), conflicto real en una lista compartida, otro conflicto real, rama apilada con conflicto y limpios. Los grupos suman el total, y la comparación con la retro anterior usa su misma definición.
 - `pr-review`:
   - Dos respuestas que el contrato dice indistinguibles hacen el mismo trabajo después del paso caro, con el trabajo ficticio en todo camino de error. Lo prueban un test determinista que cuenta ese trabajo y una sonda de tiempo intercalada con los parámetros de producción. Una cota de 0,6x a 1,6x no lo prueba.
   - En la re-revisión, un hallazgo que se cierra con una mutación o una corrida queda abierto hasta ejecutarla. Una mutación razonada no lo cierra.
@@ -30,9 +30,9 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   - las respuestas iguales hacen el mismo trabajo;
   - las semillas no usan la constante vigilada;
   - una columna de estado nueva llega a toda siembra y reinicio;
-  - un job periódico corre al arrancar el worker;
+  - un job periódico no depende de que el worker dure su período: correrlo al arrancar vale solo si es idempotente y sin efectos externos; uno con efectos externos corre a hora fija o al arrancar solo si ya le toca;
   - una guarda de cadena de conexión valida la configuración del driver.
-- `agents/qa.md`: el invariante de un arreglo intermitente se contrasta con el diseño; las respuestas iguales se miden por el transporte real; si el proyecto declara qué está habilitado, se recorren todas las rutas, con sesión y sin ella, y ninguna pantalla mock responde sin sesión; un paso que el entorno no pudo correr queda pendiente, nunca razonado.
+- `agents/qa.md`: el invariante de un arreglo intermitente se contrasta con el diseño; las respuestas iguales se miden por el transporte real; si el proyecto declara qué está habilitado, se recorren todas las rutas, con sesión y sin ella, y cada una deshabilitada responde lo que pida su contrato (404 o 403); ninguna pantalla mock responde sin sesión; un paso que el entorno no pudo correr queda pendiente, nunca razonado.
 - `agents/nextjs-dev.md`:
   - una ruta pública lee el cuerpo con tope mientras llega;
   - las cookies salen del contrato;

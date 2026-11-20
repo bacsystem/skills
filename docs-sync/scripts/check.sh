@@ -150,9 +150,18 @@ main() {
   if [ -n "$out" ]; then echo "$out"; desvios=$(wc -l <<<"$out" | tr -d ' '); fi
 
   # 4b. Párrafos de estado que solo citan versiones anteriores al último tag.
-  if [ -n "$ultimo" ]; then
+  #     Un párrafo termina en una línea en blanco, un encabezado, un ítem de lista o
+  #     una fila de tabla (cada ítem y cada fila se juzga solo). El CHANGELOG no
+  #     cuenta: sus secciones publicadas citan versiones viejas a propósito.
+  local est_files=() g
+  for g in "$@"; do case "$(basename "$g")" in CHANGELOG*|changelog*) ;; *) est_files+=("$g") ;; esac; done
+  if [ -n "$ultimo" ] && [ "${#est_files[@]}" -gt 0 ]; then
     out="$(awk -v ultimo="$ultimo" -v extra="${DOCS_SYNC_STATUS_WORDS:-}" '
-      function igual(a, b) { sub(/^v/, "", a); return a == b }
+      function mayor_que(a, b,   x, y, i) {
+        sub(/^v/, "", a); split(a, x, "."); split(b, y, ".")
+        for (i = 1; i <= 3; i++) { if (x[i] + 0 != y[i] + 0) return x[i] + 0 > y[i] + 0 }
+        return 0
+      }
       function cierra() {
         if (estado && !ign && nv > 0 && !actual)
           print archivo ":" ini ": párrafo de estado que cita " vs " y no el último tag v" ultimo "; revisa si sigue vigente"
@@ -162,21 +171,33 @@ main() {
       /^[[:space:]]*(```|~~~)/ { cierra(); codigo = !codigo; next }
       codigo { next }
       /^[[:space:]]*$/ { cierra(); next }
+      # Encabezado, ítem de lista o fila de tabla: empieza un párrafo propio.
+      /^[[:space:]]*(#|[-*+][[:space:]]|[0-9]+[.)][[:space:]]|\|)/ { cierra() }
       {
         if (!ini) ini = FNR
         l = tolower($0)
-        if (l ~ /^[[:space:]]*[-*>#|]*[[:space:]]*(estado|status|state)[[:space:]]*:/ || l ~ /todav[ií]a|a[uú]n no|currently|not yet/ || (extra != "" && l ~ extra)) estado = 1
+        # Acentos como alternativas, no como clase: [ií] son bytes sueltos en UTF-8
+        # y no coinciden en mawk ni con LC_ALL=C.
+        if (l ~ /^[[:space:]]*[-*+>#|]*[[:space:]]*(estado|status|state)[[:space:]]*:/ \
+            || l ~ /todav(i|í|Í)a|a(u|ú|Ú)n no|not yet/ \
+            || l ~ /(^|[^a-z])currently([^a-z]|$)/ \
+            || (extra != "" && l ~ extra)) estado = 1
         if ($0 ~ /<!--[[:space:]]*docs-sync:[[:space:]]*ignore[[:space:]]*-->/) ign = 1
-        r = $0
+        r = $0; pre = ""
         while (match(r, /v[0-9]+\.[0-9]+\.[0-9]+/)) {
-          v = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH)
+          antes = (RSTART > 1 ? substr(r, RSTART - 1, 1) : substr(pre, length(pre), 1))
+          v = substr(r, RSTART, RLENGTH); pre = substr(r, 1, RSTART + RLENGTH - 1); r = substr(r, RSTART + RLENGTH)
+          # Igual que el paso 1: no cuentan las versiones de otro paquete o repo
+          # (pkg@v…, repo#v…, ruta/v…) ni las mayores que el último tag.
+          if (antes ~ /[[:alnum:]_#@\/.-]/) continue
+          if (mayor_que(v, ultimo)) continue
           nv++
-          if (igual(v, ultimo)) actual = 1
+          if (substr(v, 2) == ultimo) actual = 1
           else if (index(" " vs ",", " " v ",") == 0) vs = (vs == "" ? v : vs ", " v)
         }
       }
       END { cierra() }
-    ' "$@")"
+    ' "${est_files[@]}")"
     if [ -n "$out" ]; then echo "$out"; desvios=$((desvios + $(wc -l <<<"$out" | tr -d ' '))); fi
   fi
 

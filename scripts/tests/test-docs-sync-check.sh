@@ -147,4 +147,71 @@ out="$(corre o/s v.md)"
 igual "tags sin v: v0.1.0 existe" 0 "$(grep -c 'v0.1.0 no existe' <<<"$out")"
 contiene "tags sin v: v0.1.5 falta" "v.md:2: v0.1.5 no existe como tag" "$out"
 
+
+# 9. párrafo de estado que solo cita una versión anterior al último tag → desvío
+printf '# API\n\nEstado: kernel completo (release v0.1.0). Todavía\nno hay módulos.\n' > "$T/e.md"
+out="$(corre o/r e.md)"
+contiene "estado viejo: archivo:línea del párrafo" "e.md:3: párrafo de estado que cita v0.1.0" "$out"
+contiene "estado viejo: exit 1" "exit=1" "$out"
+
+# 9b. el mismo párrafo que también cita el último tag → nada
+printf 'Estado: kernel en v0.1.0; la ola 1 entró en el release\nv0.2.0.\n' > "$T/e2.md"
+out="$(corre o/r e2.md)"
+contiene "estado al día: exit 0" "exit=0" "$out"
+
+# 9c. una línea histórica sin marcador de estado → nada
+printf -- 'Kernel cerrado en v0.1.0.\n' > "$T/e3.md"
+out="$(corre o/r e3.md)"
+contiene "línea histórica: exit 0" "exit=0" "$out"
+
+# 9c2. el escape y los bloques de código saltean el párrafo
+printf 'Estado: en v0.1.0 <!-- docs-sync: ignore -->\n\n```\nEstado: v0.1.0\n```\n' > "$T/e3b.md"
+out="$(corre o/r e3b.md)"
+contiene "escape y código: exit 0" "exit=0" "$out"
+
+# 9c3. «todavía» y «aún no» con acento, también con LC_ALL=C (bytes, no caracteres)
+printf 'Todavía falta, desde v0.1.0.\n\nAún no sale nada de v0.1.0.\n' > "$T/e3c.md"
+out="$(cd "$T" && LC_ALL=C bash "$script" o/r e3c.md 2>&1; echo "exit=$?")"
+contiene "acentos con LC_ALL=C: todavía" "e3c.md:1: párrafo de estado" "$out"
+contiene "acentos con LC_ALL=C: aún no" "e3c.md:3: párrafo de estado" "$out"
+
+# 9c4. versiones de otro paquete, mayores que el último tag, y «concurrently» → nada
+printf 'Estado: usa pkg@v0.1.0, repo#v0.1.0 y Node v18.0.0.\n\nRuns concurrently since v0.1.0.\n' > "$T/e3d.md"
+out="$(corre o/r e3d.md)"
+contiene "otros paquetes, mayores y concurrently: exit 0" "exit=0" "$out"
+
+# 9c5. cada ítem de lista es su propio párrafo: el último tag en uno no tapa al otro
+printf -- '- Estado: auth en v0.2.0\n- Estado: pagos en v0.1.0\n' > "$T/e3e.md"
+out="$(corre o/r e3e.md)"
+contiene "ítems separados: marca el viejo" "e3e.md:2: párrafo de estado" "$out"
+igual "ítems separados: no marca el actual" 0 "$(grep -c 'e3e.md:1:' <<<"$out")"
+
+# 9c6. varios archivos, versiones repetidas en el mensaje una sola vez, y el CHANGELOG no cuenta
+printf 'Estado: v0.1.0 y otra vez v0.1.0.\n' > "$T/e3f.md"
+printf '## [0.1.0]\n\nEstado: release v0.1.0.\n' > "$T/CHANGELOG.md"
+out="$(corre o/r e3f.md CHANGELOG.md)"
+contiene "varios archivos: versión sin repetir" "e3f.md:1: párrafo de estado que cita v0.1.0 y no" "$out"
+igual "CHANGELOG excluido" 0 "$(grep -c 'CHANGELOG.md:' <<<"$out")"
+
+# 9c7. el último párrafo de un archivo no se junta con el primero del siguiente
+printf 'Estado: auth en v0.1.0\n' > "$T/e3g.md"
+printf 'Versión actual v0.2.0\n' > "$T/e3h.md"
+out="$(corre o/r e3g.md e3h.md)"
+contiene "corte entre archivos" "e3g.md:1: párrafo de estado" "$out"
+
+# 9c8. una valla de 4 comillas con una de 3 adentro sigue siendo código
+printf '````\n```\nEstado: v0.1.0\n````\n' > "$T/e3i.md"
+out="$(corre o/r e3i.md)"
+contiene "valla de 4 con 3 adentro: exit 0" "exit=0" "$out"
+
+# 9c9. «not yet» partido en dos líneas del mismo párrafo
+printf 'The backend is not\nyet available in v0.1.0.\n' > "$T/e3j.md"
+out="$(corre o/r e3j.md)"
+contiene "frase partida en dos líneas" "e3j.md:1: párrafo de estado" "$out"
+
+# 9d. marcador extra con DOCS_SYNC_STATUS_WORDS
+printf 'Situación actual: v0.1.0\n' > "$T/e4.md"
+out="$(cd "$T" && DOCS_SYNC_STATUS_WORDS='situación actual' bash "$script" o/r e4.md 2>&1; echo "exit=$?")"
+contiene "marcador extra: desvío" "e4.md:1: párrafo de estado" "$out"
+
 [ "$fallos" -eq 0 ] && echo "All tests passed." || { echo "$fallos fallo(s)."; exit 1; }

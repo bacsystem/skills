@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.17] - 2026-11-20
+
+### Corregido
+- `retro/scripts/collect.sh` contaba 15 rondas en un lote que tuvo 39. Las revisiones que abren sin `#` ni negrita («Code review de …», «Re-revisión del coordinador · …», «**QA #N …») no se reconocían. Los cambios:
+  - La primera línea se compara sin el marcado del principio.
+  - Un informe que junta revisión y QA cuenta para las dos solo si la QA está en sus primeras palabras («Code review y QA de …»): «… La QA va aparte» no cuenta.
+  - Antes de buscar el test que falló, se quitan los códigos de color ANSI, también el texto `^[` con que los escribe `gh run view --log-failed`. Antes, un fallo de Vitest salía como «sin test reconocido».
+  - Si no reconoce ningún test, nombra el job y el paso que fallaron (`gh run view --json jobs`).
+  - Un test por caso en `scripts/tests/test-retro-collect.sh`.
+
+### Cambiado
+- `retro`:
+  - se contrastan las rondas del script contra el PR con más comentarios;
+  - los merges de la base se clasifican con `git merge-tree`, con y sin los atributos del repo (`attr.tree` vacío), en tres grupos: los que chocan solo en el changelog (un `merge=union` los resuelve en local, pero GitHub los marca igual), los que tienen conflictos reales en listas compartidas y los de una rama apilada.
+- `pr-review`:
+  - Dos respuestas que el contrato dice indistinguibles hacen el mismo trabajo después del paso caro, con el trabajo ficticio en todo camino de error. Lo prueban un test determinista que cuenta ese trabajo y una sonda de tiempo intercalada con los parámetros de producción. Una cota de 0,6x a 1,6x no lo prueba.
+  - En la re-revisión, un hallazgo que se cierra con una mutación o una corrida queda abierto hasta ejecutarla. Una mutación razonada no lo cierra.
+- `agents/go-dev.md`:
+  - el invariante de un test concurrente sale del diseño, con sus reinicios;
+  - el pool del test fija un tiempo de espera de conexión explícito;
+  - un fallo intermitente que no se reproduce se fuerza con un test determinista antes de tocar código;
+  - las respuestas iguales hacen el mismo trabajo;
+  - las semillas no usan la constante vigilada;
+  - una columna de estado nueva llega a toda siembra y reinicio;
+  - un job periódico corre al arrancar el worker;
+  - una guarda de cadena de conexión valida la configuración del driver.
+- `agents/qa.md`: el invariante de un arreglo intermitente se contrasta con el diseño; las respuestas iguales se miden por el transporte real; se recorren todas las rutas, con sesión y sin ella; un paso que el entorno no pudo correr queda pendiente, nunca razonado.
+- `agents/nextjs-dev.md`:
+  - una ruta pública lee el cuerpo con tope mientras llega;
+  - las cookies salen del contrato;
+  - las longitudes se miden en la unidad del contrato;
+  - el reloj falso falsea solo lo que el test usa;
+  - el código generado se regenera después de integrar la base;
+  - un E2E salteado en la CI cuenta como no corrido.
+- `agents/devops.md`: los contenedores efímeros de test usan `tmpfs` y se borran con sus volúmenes (los anónimos llenan el disco); no se imprimen secretos en recetas ni se pasan por argv; las listas escritas a mano en la CI son puntos de conflicto, así que mejor descubrirlas.
+- `agents/tech-lead.md`: los criterios que dependen de código no mergeado se marcan al lanzar la historia; un alto del dueño frena todo trabajo nuevo; un contrato aprobado no se reabre con alcance nuevo.
+- `agents/architect.md`: una guarda cubre todas las sentencias del rol que logran lo mismo, y un permiso reservado se protege en cada vía que lo otorga; un contrato no se cierra mientras faltan decisiones del dueño que lo cambian.
+
 ## [0.3.16] - 2026-11-19
 
 ### Corregido

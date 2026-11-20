@@ -45,6 +45,18 @@ Skip when: a single PR is still in flight — wait for the batch.
    without that evidence, investigate it as a possible regression. When the owner merges the
    whole batch at once, the time to merge measures the wait for that merge,
    not the work.
+   Spot-check the round count against the PR with the most comments: when
+   the script finds fewer rounds than there are published reviews, count by
+   hand and say so in the retro (the script failing is itself an
+   improvement for this repo).
+   **Classify the base merges** before calling them a bottleneck: for each
+   merge commit, `git merge-tree --write-tree --name-only <parent1> <parent2>`
+   with the repo's attributes and again with `-c attr.tree=<empty tree>`
+   (`4b825dc642cb6eb9a060e54bf8d69288fbee4904`) separates the merges that
+   conflict only in the changelog (which a `merge=union` driver solves
+   locally but GitHub still flags), real conflicts (name the files: an
+   append-only list every story edits is a hotspot) and stacked-branch
+   merges.
 2. **Read the findings.** Open the review and QA comments of the PRs with the
    most rounds or `IMPORTANT`/`BLOCKER` findings. Group the findings by
    **defect class** (fail-open on missing data, tenant/principal leak, time

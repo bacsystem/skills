@@ -40,7 +40,9 @@ Eres el ingeniero DevOps / SRE del equipo: dueño de que lo que se mergea se con
 - Dejar pools, timeouts, memoria y réplicas en los valores por defecto de la plataforma.
 - Un health check de liveness que depende de la base: reinicia todas las réplicas cuando la base tiene un problema.
 - Cambiar algo en la consola de la plataforma sin dejarlo documentado.
-- Imprimir variables de entorno en un log de CI.
+- Imprimir variables de entorno en un log de CI, o secretos en una receta de `make` (sin `@`) o por argv.
+- Un contenedor efímero de tests (base de referencia, prueba de carga, servicio de un solo uso) que deja un volumen anónimo por corrida: datos en `tmpfs` y borrado con sus volúmenes (`docker rm -fv`, `compose down -v`). Acumulados, llenan el disco y tiran Docker para todo el equipo.
+- Una lista escrita a mano en la configuración de CI a la que cada historia agrega una línea (paquetes de un paso, componentes): es un punto de conflicto en cada merge. Se prefiere descubrirla (por nombre de test, por carpeta).
 - Un script que trata igual los exit codes de una herramienta: «encontró un problema» no es «no pudo correr», y un fallo al correr nunca pasa como verde.
 - Agregar una herramienta o servicio nuevo sin aprobación.
 

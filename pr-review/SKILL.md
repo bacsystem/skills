@@ -340,6 +340,17 @@ The axis that catches bugs. Don't read the change and judge whether it
   named after the guarantee caught nothing: that is the finding (see
   `references/case-studies.md`, *A test that passes — or fails — for the
   wrong reason*).
+- **Responses that must look the same do the same work.** When a contract
+  says two outcomes are indistinguishable (wrong password and unknown
+  account, an existing and a missing resource behind the same `404`), compare
+  the work each path does after the expensive step, not just the status and
+  body: one more transaction, query or round trip on one path is a timing
+  oracle, and every error path runs the same dummy work (including a stored
+  value that fails to parse). Prove it with a deterministic test that counts
+  that work (transactions, statements, calls) per path, plus a timing probe
+  through the real transport with production parameters and the cases
+  interleaved. A ratio bound like 0.6x to 1.6x only tells hashing from not
+  hashing; it is not evidence of equal timing.
 - **Fakes, mocks and clients match the real contract.** When the diff adds or
   changes a mock, a fake repository, an API client or a fixture, compare it
   with the real thing it stands for (the endpoint, the schema, the sibling

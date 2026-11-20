@@ -10,13 +10,21 @@ set -euo pipefail
 # Una ronda es un comentario cuya primera línea abre una revisión, una re-revisión
 # o el cierre de la revisión (el formato de `pr-review`). Las líneas «Veredicto»
 # de dentro de un comentario (tablas de cierre, informes de QA) no cuentan.
-RONDA='^(\*\*)?(Veredicto|Verdict)|^#+ (Re-revisión|Re-review|Revisión|Review|Code review|Cierre|Closing)'
-QA='^#+ .*\bQA\b'
+# La primera línea se compara sin el marcado del principio (`#`, `**`, emojis,
+# espacios): «Code review de …», «## Re-revisión 3 · …» y «**QA #12, SHA …» abren
+# igual que un encabezado.
+RONDA='^(Veredicto|Verdict|Re-revisión|Re-review|Revisión|Review|Code review|pr-review|Cierre|Closing)\b'
+# Un informe de QA abre con «QA»/«Re-QA», o es una revisión que también es QA
+# («Revisión y QA …», «Code review y QA …», con la QA en las primeras palabras:
+# «Code review de …: … La QA va aparte» no lo es), o un encabezado que nombra la QA.
+QA='^(Re-)?QA\b|^(Re-revisión|Re-review|Revisión|Review|Code review)\b[^.:·(`]{0,20}\b(re-)?QA\b|^#+ .*\bQA\b'
 
 # Cuenta los comentarios (JSON de la API de issues, por stdin) cuya primera línea
-# cumple la regex $1.
+# cumple la regex $1, sin el marcado del principio o tal cual (para los
+# encabezados de la regex QA).
 contar_primera_linea() {
-  jq --arg r "$1" '[.[] | select(.body | split("\n")[0] | test($r))] | length'
+  jq --arg r "$1" '[.[] | (.body | split("\n")[0]) as $l
+    | select(($l | sub("^[^\\p{L}]+"; "") | test($r)) or ($l | test($r)))] | length'
 }
 
 # Commits subidos después de abrir el PR ($1 = created_at), JSON por stdin.
@@ -36,9 +44,11 @@ tiempo_entre() {
 }
 
 # Primer test que falló en un log de `gh run view --log-failed` (stdin), con el
-# job: Go (`--- FAIL:`), Playwright (`✘`) o Vitest/Jest (`FAIL`). Vacío si no se reconoce.
+# job: Go (`--- FAIL:`), Playwright (`✘`) o Vitest/Jest (`FAIL`). Los códigos de
+# color ANSI se quitan antes (Vitest pinta `FAIL`), tanto el byte ESC como el texto
+# `^[` con que `gh run view --log-failed` los escribe. Vacío si no se reconoce.
 primer_test_fallido() {
-  awk -F'\t' '
+  sed -e $'s/\x1b\\[[0-9;]*[A-Za-z]//g' -e 's/\^\[\[[0-9;]*[A-Za-z]//g' | awk -F'\t' '
     {
       msg = $NF; sub(/^[0-9T:.-]+Z /, "", msg)
       if (match(msg, /--- FAIL: [^ ]+/))   { t = substr(msg, RSTART + 10, RLENGTH - 10) }
@@ -50,9 +60,19 @@ primer_test_fallido() {
     }' | tr '|' '/'
 }
 
+# Sin test reconocido: el job y el primer paso que fallaron, del JSON de
+# `gh run view --json jobs` (stdin). Vacío si no hay ninguno.
+paso_fallido() {
+  jq -r '[.jobs[] | select(.conclusion == "failure")
+    | "\(.name | sub(" \\(.*"; "")): paso «\([.steps[] | select(.conclusion == "failure") | .name][0] // "?")»"][0] // empty'
+}
+
 # $1 = repo, $2 = id del run. Nunca falla: sin log, imprime vacío.
 causa() {
-  { gh run view "$2" --repo "$1" --log-failed 2>/dev/null || true; } | primer_test_fallido
+  local t
+  t=$({ gh run view "$2" --repo "$1" --log-failed 2>/dev/null || true; } | primer_test_fallido)
+  [ -n "$t" ] || t=$({ gh run view "$2" --repo "$1" --json jobs 2>/dev/null || echo '{"jobs":[]}'; } | paso_fallido)
+  printf '%s' "$t"
 }
 
 main() {
@@ -98,7 +118,7 @@ main() {
     echo "| #$pr | $title | $rounds | $qas | $blk | $imp | $min | $work | $merges | $elapsed | $failed | $causes | $minutes |"
   done
   echo
-  echo "_Cuentas aproximadas: las rondas son los comentarios que empiezan con el veredicto, una re-revisión o el cierre del skill \`pr-review\`; los hallazgos salen de sus etiquetas de severidad en todos los comentarios. «Merges» cuenta los commits con dos padres subidos tras abrir el PR: los de la base y, en una rama apilada, los de la rama de abajo. La causa de la falla es el primer test que falló en el log del run (\`gh run view --log-failed\`), si el log sigue disponible. Revisa a mano los valores que no cuadren._"
+  echo "_Cuentas aproximadas: las rondas son los comentarios que empiezan con el veredicto, una re-revisión o el cierre del skill \`pr-review\`; los hallazgos salen de sus etiquetas de severidad en todos los comentarios. «Merges» cuenta los commits con dos padres subidos tras abrir el PR: los de la base y, en una rama apilada, los de la rama de abajo. La causa de la falla es el primer test que falló en el log del run (\`gh run view --log-failed\`), si el log sigue disponible; si no reconoce ningún test, el job y el paso que fallaron. Revisa a mano los valores que no cuadren._"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then main "$@"; fi

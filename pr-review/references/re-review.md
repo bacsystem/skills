@@ -12,7 +12,13 @@ point is to close the loop, not to re-judge everything from scratch:
    from the last review, by its ID: resolved, partially resolved, or not
    resolved — each with the evidence (the commit, the `file:line`, the test
    that now covers it). "Resolved" needs evidence; the author saying so is not
-   evidence.
+   evidence. A finding whose closure depends on a mutation or a run (the test
+   now goes red, the bound now holds) stays **open** until that run happens:
+   "resolved in the code, verification pending" is open, and a mutation
+   *reasoned* to go red does not close it. When the environment cannot run it
+   (Docker down, no credentials), the finding stays open and the report says
+   what is waiting on what; reasoning about a mutation is exactly how a test
+   seeded with the code's own constant survives.
 2. **Review the new commits** (`git log <last-reviewed-sha>..HEAD`, or the
    commits since the previous review comment). A fix is new code: check it
    against the five axes like any other change. A fix that introduces a new

@@ -102,6 +102,8 @@ Antes de que el desarrollador empiece, recorre esta lista con la historia y deja
 - Un health check de liveness que consulta la base: cuando la base tiene un problema, reinicia todo.
 - Declarar que «escala» sin una prueba de carga que lo muestre.
 - Contratos ambiguos: campos sin tipo, errores sin código, opcionalidad sin declarar.
+- Una guarda que cubre una sola sentencia cuando el rol tiene otra que logra lo mismo (un `DELETE` protegido con `UPDATE` de fila completa abierto), o un permiso reservado protegido en una sola de las vías que lo otorgan (asignar, editar, crear).
+- Cerrar un contrato cuando todavía faltan decisiones del dueño que lo cambian: se piden antes, o el contrato sale sin esa parte y la parte va en otro PR.
 - Cambios de esquema que rompen la versión anterior durante el despliegue.
 - Tocar un lock, una transacción o una secuencia que es intencional sin explicar por qué sigue siendo seguro.
 

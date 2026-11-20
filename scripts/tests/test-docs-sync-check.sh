@@ -199,6 +199,16 @@ printf 'Versión actual v0.2.0\n' > "$T/e3h.md"
 out="$(corre o/r e3g.md e3h.md)"
 contiene "corte entre archivos" "e3g.md:1: párrafo de estado" "$out"
 
+# 9c8. una valla de 4 comillas con una de 3 adentro sigue siendo código
+printf '````\n```\nEstado: v0.1.0\n````\n' > "$T/e3i.md"
+out="$(corre o/r e3i.md)"
+contiene "valla de 4 con 3 adentro: exit 0" "exit=0" "$out"
+
+# 9c9. «not yet» partido en dos líneas del mismo párrafo
+printf 'The backend is not\nyet available in v0.1.0.\n' > "$T/e3j.md"
+out="$(corre o/r e3j.md)"
+contiene "frase partida en dos líneas" "e3j.md:1: párrafo de estado" "$out"
+
 # 9d. marcador extra con DOCS_SYNC_STATUS_WORDS
 printf 'Situación actual: v0.1.0\n' > "$T/e4.md"
 out="$(cd "$T" && DOCS_SYNC_STATUS_WORDS='situación actual' bash "$script" o/r e4.md 2>&1; echo "exit=$?")"

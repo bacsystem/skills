@@ -162,26 +162,41 @@ main() {
         for (i = 1; i <= 3; i++) { if (x[i] + 0 != y[i] + 0) return x[i] + 0 > y[i] + 0 }
         return 0
       }
-      function cierra() {
+      function cierra(   t) {
+        # Las frases se buscan en el texto del párrafo con los saltos de línea como
+        # espacios: «not» al final de una línea y «yet» al principio de la otra cuentan.
+        t = " " txt " "
+        if (t ~ /todav(i|í|Í)a|a(u|ú|Ú)n[[:space:]]+no|not[[:space:]]+yet/ \
+            || t ~ /[^a-z]currently[^a-z]/ \
+            || (extra != "" && t ~ extra)) estado = 1
         if (estado && !ign && nv > 0 && !actual)
           print archivo ":" ini ": párrafo de estado que cita " vs " y no el último tag v" ultimo "; revisa si sigue vigente"
-        estado = 0; ign = 0; nv = 0; actual = 0; vs = ""; ini = 0
+        estado = 0; ign = 0; nv = 0; actual = 0; vs = ""; ini = 0; txt = ""
       }
       FNR == 1 { if (NR > 1) cierra(); archivo = FILENAME; codigo = 0 }
-      /^[[:space:]]*(```|~~~)/ { cierra(); codigo = !codigo; next }
-      codigo { next }
+      # Bloques de código: una valla de 3 o más ` o ~ abre; cierra solo una valla del
+      # mismo carácter, de igual o mayor largo y sin texto después.
+      codigo {
+        if (match($0, /^[[:space:]]*(`+|~+)[[:space:]]*$/)) {
+          f = $0; gsub(/[[:space:]]/, "", f)
+          if (substr(f, 1, 1) == valla_c && length(f) >= valla_n) codigo = 0
+        }
+        next
+      }
+      match($0, /^[[:space:]]*(```+|~~~+)/) {
+        f = substr($0, RSTART, RLENGTH); gsub(/[[:space:]]/, "", f)
+        cierra(); codigo = 1; valla_c = substr(f, 1, 1); valla_n = length(f); next
+      }
       /^[[:space:]]*$/ { cierra(); next }
       # Encabezado, ítem de lista o fila de tabla: empieza un párrafo propio.
       /^[[:space:]]*(#|[-*+][[:space:]]|[0-9]+[.)][[:space:]]|\|)/ { cierra() }
       {
         if (!ini) ini = FNR
         l = tolower($0)
+        txt = txt " " l
         # Acentos como alternativas, no como clase: [ií] son bytes sueltos en UTF-8
-        # y no coinciden en mawk ni con LC_ALL=C.
-        if (l ~ /^[[:space:]]*[-*+>#|]*[[:space:]]*(estado|status|state)[[:space:]]*:/ \
-            || l ~ /todav(i|í|Í)a|a(u|ú|Ú)n no|not yet/ \
-            || l ~ /(^|[^a-z])currently([^a-z]|$)/ \
-            || (extra != "" && l ~ extra)) estado = 1
+        # y no coinciden en mawk ni con LC_ALL=C. Las frases se buscan en cierra().
+        if (l ~ /^[[:space:]]*[-*+>#|]*[[:space:]]*(estado|status|state)[[:space:]]*:/) estado = 1
         if ($0 ~ /<!--[[:space:]]*docs-sync:[[:space:]]*ignore[[:space:]]*-->/) ign = 1
         r = $0; pre = ""
         while (match(r, /v[0-9]+\.[0-9]+\.[0-9]+/)) {

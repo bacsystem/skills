@@ -14,11 +14,12 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   - Antes de buscar el test que falló, se quitan los códigos de color ANSI, también el texto `^[` con que los escribe `gh run view --log-failed`. Antes, un fallo de Vitest salía como «sin test reconocido».
   - Si no reconoce ningún test, nombra el job y el paso que fallaron (`gh run view --json jobs`).
   - Un test por caso en `scripts/tests/test-retro-collect.sh`.
+- `.github/workflows/scripts.yml`: la CI corre los tests de `retro`, `docs-sync` y `next-version.sh` de `git-flow`, que hasta ahora solo corrían en local.
 
 ### Cambiado
 - `retro`:
   - se contrastan las rondas del script contra el PR con más comentarios;
-  - los merges de la base se clasifican con `git merge-tree`, con y sin los atributos del repo (`attr.tree` vacío), en tres grupos: los que chocan solo en el changelog (un `merge=union` los resuelve en local, pero GitHub los marca igual), los que tienen conflictos reales en listas compartidas y los de una rama apilada.
+  - los merges de la base se clasifican con `git merge-tree`, con y sin los atributos del repo (`attr.tree` vacío): solo el changelog (un `merge=union` los resuelve en local, pero GitHub los marca igual), conflicto real en una lista compartida, otro conflicto real, rama apilada con conflicto y limpios. Los grupos suman el total, y la comparación con la retro anterior usa su misma definición.
 - `pr-review`:
   - Dos respuestas que el contrato dice indistinguibles hacen el mismo trabajo después del paso caro, con el trabajo ficticio en todo camino de error. Lo prueban un test determinista que cuenta ese trabajo y una sonda de tiempo intercalada con los parámetros de producción. Una cota de 0,6x a 1,6x no lo prueba.
   - En la re-revisión, un hallazgo que se cierra con una mutación o una corrida queda abierto hasta ejecutarla. Una mutación razonada no lo cierra.
@@ -31,7 +32,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   - una columna de estado nueva llega a toda siembra y reinicio;
   - un job periódico corre al arrancar el worker;
   - una guarda de cadena de conexión valida la configuración del driver.
-- `agents/qa.md`: el invariante de un arreglo intermitente se contrasta con el diseño; las respuestas iguales se miden por el transporte real; se recorren todas las rutas, con sesión y sin ella; un paso que el entorno no pudo correr queda pendiente, nunca razonado.
+- `agents/qa.md`: el invariante de un arreglo intermitente se contrasta con el diseño; las respuestas iguales se miden por el transporte real; si el proyecto declara qué está habilitado, se recorren todas las rutas, con sesión y sin ella, y ninguna pantalla mock responde sin sesión; un paso que el entorno no pudo correr queda pendiente, nunca razonado.
 - `agents/nextjs-dev.md`:
   - una ruta pública lee el cuerpo con tope mientras llega;
   - las cookies salen del contrato;

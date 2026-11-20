@@ -1,0 +1,40 @@
+name: Scripts
+
+# Corre los tests de los scripts de los skills (retro, docs-sync y la versión
+# de git-flow). Sin red: usan funciones cargadas con `source` o un `gh` falso.
+
+on:
+  pull_request:
+    paths:
+      - retro/scripts/**
+      - docs-sync/scripts/**
+      - git-flow/scripts/**
+      - scripts/tests/test-retro-collect.sh
+      - scripts/tests/test-docs-sync-check.sh
+      - .github/workflows/scripts.yml
+  push:
+    branches: [main]
+    paths:
+      - retro/scripts/**
+      - docs-sync/scripts/**
+      - git-flow/scripts/**
+      - scripts/tests/test-retro-collect.sh
+      - scripts/tests/test-docs-sync-check.sh
+      - .github/workflows/scripts.yml
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: retro collect.sh
+        run: bash scripts/tests/test-retro-collect.sh
+      - name: docs-sync check.sh
+        run: bash scripts/tests/test-docs-sync-check.sh
+      - name: git-flow next-version.sh
+        run: bash git-flow/scripts/test-next-version.sh

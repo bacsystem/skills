@@ -64,7 +64,9 @@ Cada token que entra en tu contexto se vuelve a pagar en cada turno siguiente, y
 - Aprobar por confianza en el autor o porque los tests «seguro pasan».
 - Repartir antes de tener el contrato y luego pagar el retrabajo de ambos lados.
 - Dejar que dos tareas toquen el mismo archivo o reservar la misma migración.
-- Sumar a un PR ya revisado un criterio que dependía de otra historia.
+- Sumar a un PR ya revisado un criterio que dependía de otra historia. Al lanzar una historia, recorre sus criterios y marca los que dependen de código no mergeado; se mueven antes de empezar, no al cerrar.
+- Abrir trabajo nuevo (issues, PR, agentes) mientras el dueño pidió un alto: un alto frena todo hasta que el dueño lo levante.
+- Reabrir un PR de contrato ya aprobado con alcance nuevo (decisiones que llegan después): va en otro PR, y las historias que implementan el contrato esperan su merge o citan el SHA aprobado.
 - Reenviar mensajes, pedir acuses o mandar resúmenes sin que nadie los pida.
 
 ## Límites

@@ -30,6 +30,24 @@ igual "rondas por comentario" 4 "$(contar_primera_linea "$RONDA" <<<"$comentario
 igual "informes de QA (con o sin emoji)" 3 "$(contar_primera_linea "$QA" <<<"$comentarios")"
 igual "sin comentarios" 0 "$(contar_primera_linea "$RONDA" <<<'[]')"
 
+# Rondas e informes que abren sin `#` ni negrita, como los publica `pr-review`
+# en la práctica, y falsos positivos que nombran la QA más adelante.
+sin_marcado='[
+  {"body": "Code review de `main...feat/x` (`abc1234`): corrección. La QA va aparte.\n\n**Veredicto: APROBADO**"},
+  {"body": "Re-revisión del coordinador · `abc..def` (solo docs)."},
+  {"body": "Re-revisión 3 de `abc..def` (`def`): corrección."},
+  {"body": "## /pr-review · #7 (docs, cambio chico)"},
+  {"body": "Code review y QA de `a...b` (`49cc584`): corrección y criterios."},
+  {"body": "## Revisión + QA PR #9 (SHA 561185b)"},
+  {"body": "**QA #254, SHA `d724521`: APRUEBA.** Chromium real."},
+  {"body": "## Re-QA PR #248 - SHA 72f8416: APTO"},
+  {"body": "Nota del coordinador sobre el paso pendiente de la QA: corrió en la CI."},
+  {"body": "Fix for H1 and H2 (commit da49ab3). Review probe numbers below."},
+  {"body": "## Code review de `main...feat/x`: corrección. La QA va aparte."}
+]'
+igual "rondas sin marcado" 7 "$(contar_primera_linea "$RONDA" <<<"$sin_marcado")"
+igual "informes de QA sin marcado, sin falsos positivos" 4 "$(contar_primera_linea "$QA" <<<"$sin_marcado")"
+
 commits='[
   {"commit": {"committer": {"date": "2026-11-19T09:00:00Z"}}, "parents": [{}]},
   {"commit": {"committer": {"date": "2026-11-19T11:00:00Z"}}, "parents": [{}]},
@@ -47,5 +65,22 @@ igual "falla de Go" "api: TestConcurrentRecords" "$(primer_test_fallido <<<"$go_
 pw_log="e2e (playwright)${tab}UNKNOWN STEP${tab}2026-11-19T02:14:02.5934890Z   ✘   93 [desktop] › e2e/a.spec.ts:3:5 › agenda: abre el cajón (7.2s)"
 igual "falla de Playwright" "e2e: [desktop] › e2e/a.spec.ts:3:5 › agenda: abre el cajón" "$(primer_test_fallido <<<"$pw_log")"
 igual "log sin test reconocido" "" "$(primer_test_fallido <<<"build${tab}step${tab}2026-11-19T00:00:00Z Error: exit 1")"
+esc=$'\x1b'
+vitest_log="checks (lint, unit)${tab}Run pnpm test${tab}2026-11-20T06:00:19.2959374Z ${esc}[41m${esc}[1m FAIL ${esc}[22m${esc}[49m src/a.test.tsx${esc}[2m > ${esc}[22mLogin${esc}[2m > ${esc}[22mpide esperar"
+igual "falla de Vitest con colores ANSI" "checks: src/a.test.tsx > Login > pide esperar" "$(primer_test_fallido <<<"$vitest_log")"
+# Así lo escribe `gh run view --log-failed`: el ESC como el texto «^[».
+vitest_gh="checks (lint, unit)${tab}Run pnpm test${tab}2026-11-20T06:00:19.2959374Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/a.test.tsx^[[2m > ^[[22mLogin"
+igual "falla de Vitest con «^[» literal" "checks: src/a.test.tsx > Login" "$(primer_test_fallido <<<"$vitest_gh")"
+jobs='{"jobs": [
+  {"name": "web (lint)", "conclusion": "success", "steps": [{"name": "lint", "conclusion": "success"}]},
+  {"name": "api (gofmt, vet, test)", "conclusion": "failure", "steps": [
+    {"name": "go test", "conclusion": "success"},
+    {"name": "OpenAPI lint", "conclusion": "failure"},
+    {"name": "build", "conclusion": "skipped"}]}
+]}'
+igual "paso que falló, sin test reconocido" "api: paso «OpenAPI lint»" "$(paso_fallido <<<"$jobs")"
+igual "sin job fallido" "" "$(paso_fallido <<<'{"jobs": []}')"
+jobs_pipe='{"jobs": [{"name": "ci (a)", "conclusion": "failure", "steps": [{"name": "lint | build\nfinal", "conclusion": "failure"}]}]}'
+igual "paso con «|» y salto de línea, en una celda" "ci: paso «lint / build final»" "$(paso_fallido <<<"$jobs_pipe")"
 
 [ "$fallos" -eq 0 ] && echo "All tests passed." || { echo "$fallos fallo(s)."; exit 1; }

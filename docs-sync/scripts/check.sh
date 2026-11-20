@@ -14,6 +14,12 @@
 #   DOCS_SYNC_VERSION_FILES   archivos de versión (por defecto: «package.json VERSION»)
 #   DOCS_SYNC_MAX_DISTANCE    palabras como máximo entre la palabra de estado y el #N (6)
 #   DOCS_SYNC_STRICT_VERSIONS 1 = también marca las versiones mayores que el último tag
+#   DOCS_SYNC_STATUS_WORDS    marcadores extra de «párrafo de estado», separados por | (regex)
+#
+# Párrafos de estado: un párrafo (líneas hasta una en blanco) que empieza con
+# «Estado:»/«Status:»/«State:» o dice «todavía», «aún no», «currently» o «not yet»
+# describe el presente. Si cita versiones y ninguna es el último tag, es un desvío:
+# lo más probable es que el texto se haya quedado en una versión anterior.
 #
 # Escape: `<!-- docs-sync: ignore -->` en la línea, o en la anterior, la saltea.
 set -euo pipefail
@@ -142,6 +148,37 @@ main() {
     $3 == "V" && !(substr($4, 2) in tag) && (estricto == "1" || (ultimo != "" && !mayor_que($4, ultimo))) { print $1 ":" $2 ": " $4 " no existe como tag" }
   ' "$tmp/states" "$tmp/tags" "$tmp/refs")"
   if [ -n "$out" ]; then echo "$out"; desvios=$(wc -l <<<"$out" | tr -d ' '); fi
+
+  # 4b. Párrafos de estado que solo citan versiones anteriores al último tag.
+  if [ -n "$ultimo" ]; then
+    out="$(awk -v ultimo="$ultimo" -v extra="${DOCS_SYNC_STATUS_WORDS:-}" '
+      function igual(a, b) { sub(/^v/, "", a); return a == b }
+      function cierra() {
+        if (estado && !ign && nv > 0 && !actual)
+          print archivo ":" ini ": párrafo de estado que cita " vs " y no el último tag v" ultimo "; revisa si sigue vigente"
+        estado = 0; ign = 0; nv = 0; actual = 0; vs = ""; ini = 0
+      }
+      FNR == 1 { if (NR > 1) cierra(); archivo = FILENAME; codigo = 0 }
+      /^[[:space:]]*(```|~~~)/ { cierra(); codigo = !codigo; next }
+      codigo { next }
+      /^[[:space:]]*$/ { cierra(); next }
+      {
+        if (!ini) ini = FNR
+        l = tolower($0)
+        if (l ~ /^[[:space:]]*[-*>#|]*[[:space:]]*(estado|status|state)[[:space:]]*:/ || l ~ /todav[ií]a|a[uú]n no|currently|not yet/ || (extra != "" && l ~ extra)) estado = 1
+        if ($0 ~ /<!--[[:space:]]*docs-sync:[[:space:]]*ignore[[:space:]]*-->/) ign = 1
+        r = $0
+        while (match(r, /v[0-9]+\.[0-9]+\.[0-9]+/)) {
+          v = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH)
+          nv++
+          if (igual(v, ultimo)) actual = 1
+          else if (index(" " vs ",", " " v ",") == 0) vs = (vs == "" ? v : vs ", " v)
+        }
+      }
+      END { cierra() }
+    ' "$@")"
+    if [ -n "$out" ]; then echo "$out"; desvios=$((desvios + $(wc -l <<<"$out" | tr -d ' '))); fi
+  fi
 
   # Líneas con palabras de los dos tipos: no se juzgan, se avisan.
   awk -F'\t' '$3 == "R" && $5 == "mixed" && !seen[$1 FS $2]++ { print "nota: " $1 ":" $2 ": la línea dice «hecho» y «pendiente» a la vez; revísala a mano" }' "$tmp/refs" >&2

@@ -147,4 +147,26 @@ out="$(corre o/s v.md)"
 igual "tags sin v: v0.1.0 existe" 0 "$(grep -c 'v0.1.0 no existe' <<<"$out")"
 contiene "tags sin v: v0.1.5 falta" "v.md:2: v0.1.5 no existe como tag" "$out"
 
+
+# 9. párrafo de estado que solo cita una versión anterior al último tag → desvío
+printf '# API\n\nEstado: kernel completo (release v0.1.0). Todavía\nno hay módulos.\n' > "$T/e.md"
+out="$(corre o/r e.md)"
+contiene "estado viejo: archivo:línea del párrafo" "e.md:3: párrafo de estado que cita v0.1.0" "$out"
+contiene "estado viejo: exit 1" "exit=1" "$out"
+
+# 9b. el mismo párrafo que también cita el último tag → nada
+printf 'Estado: kernel en v0.1.0; la ola 1 entró en el release\nv0.2.0.\n' > "$T/e2.md"
+out="$(corre o/r e2.md)"
+contiene "estado al día: exit 0" "exit=0" "$out"
+
+# 9c. una línea histórica sin marcador de estado → nada; y el escape la saltea
+printf -- '- Kernel cerrado en v0.1.0\n\nEstado: en v0.1.0 <!-- docs-sync: ignore -->\n\n```\nEstado: v0.1.0\n```\n' > "$T/e3.md"
+out="$(corre o/r e3.md)"
+contiene "historia, escape y código: exit 0" "exit=0" "$out"
+
+# 9d. marcador extra con DOCS_SYNC_STATUS_WORDS
+printf 'Situación actual: v0.1.0\n' > "$T/e4.md"
+out="$(cd "$T" && DOCS_SYNC_STATUS_WORDS='situación actual' bash "$script" o/r e4.md 2>&1; echo "exit=$?")"
+contiene "marcador extra: desvío" "e4.md:1: párrafo de estado" "$out"
+
 [ "$fallos" -eq 0 ] && echo "All tests passed." || { echo "$fallos fallo(s)."; exit 1; }

@@ -5,6 +5,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.3.18] - 2026-11-20
+
+### Añadido
+- `docs-sync/scripts/check.sh` marca los **párrafos de estado** que se quedaron en una versión anterior: un párrafo que empieza con «Estado:»/«Status:»/«State:» o dice «todavía», «aún no», «currently» o «not yet», que cita versiones y ninguna es el último tag. Antes daba «sin desvíos» sobre un README que decía «release v0.19.0 … todavía no hay módulos» cuando el último tag ya era v0.20.0. Respeta los bloques de código y el escape `docs-sync: ignore`; marcadores extra con `DOCS_SYNC_STATUS_WORDS`. `docs-sync/SKILL.md` lo documenta junto con su límite (una frase de estado sin versión ni `#N` sigue pidiendo lectura a mano). Cuatro casos nuevos en `scripts/tests/test-docs-sync-check.sh`, que fallan si se desactiva la regla.
+
 ## [0.3.17] - 2026-11-20
 
 ### Corregido
